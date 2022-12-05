@@ -8,7 +8,7 @@ In a similar context, a GOAL and METRIC can be linked to any of the entities in 
 
 **Closed Loop, and the family of concerns that affect Managing Closed Loops** 
 ![image](https://user-images.githubusercontent.com/111851430/186325543-bc3d4a5b-d316-4763-89e1-74e16efe8960.png)
-*Figure 1. Simplified cross-sectional model for automating closedloops
+*Figure 1. Simplified cross-sectional model for automating closedloops*
 
 
 
@@ -16,6 +16,7 @@ In a similar context, a GOAL and METRIC can be linked to any of the entities in 
 In this detailed entity relationship diagram (ERD), albeit also stripped down view, i'm diagraming the details of the classes and base attributes that will be supporting the physical data model. Please note that this is really a stripped down version that is meant to enable capture, in some "fullness", the capability of managing a closedloop based on given goals, ownership, attributed tactical strategies to realizing the closedloops goal, say a set of activities orchestrated in a certain sequence, or indeed a number of workflows - feedforward (control path) and feedback that enable realize the mandates implied for the closedloop. I'll share more about the data databsed dictionery, and a modular set of models based on an entity grouping in the comming days. 
 
 ![clam-diagram0](https://user-images.githubusercontent.com/111851430/205546702-3d963692-8f61-47b5-a357-a6bae1dfdea4.png)
-*Figure 2. Detailed cross-sectional ERD centered around managing the information systems managing closedloops
+*Figure 2. Detailed cross-sectional ERD centered around managing the information systems managing closedloops*
 
-TBC.
+
+**This is Work In Progress.**
