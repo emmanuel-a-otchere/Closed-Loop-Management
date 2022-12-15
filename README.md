@@ -148,8 +148,8 @@ A component here is described as a unit of "Software Specification boarded on pr
 ClosedLoop Management components are hereby clustered into 3 capabilities - the Design studio, Manager and Controller. 
 
 <p align="center">
-  <img width="800" height="auto" src="https://user-images.githubusercontent.com/111851430/207762323-bd8c9729-4197-467f-a7d9-05d3091beebb.png" style="border-radius:50%" >
-  
+  <img width="800" height="auto" src="https://user-images.githubusercontent.com/111851430/207766761-7eb800e9-8fde-4288-8e17-2e65e4399935.png" style="border-radius:50%" >
+
 *Figure 4 Closed Loop Management function and sub-functions*
 
 1. Closed Loop Design Studio \
