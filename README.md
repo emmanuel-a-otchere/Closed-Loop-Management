@@ -148,48 +148,48 @@ A component here is described as a unit of "Software Specification boarded on pr
 ClosedLoop Management components are hereby clustered into 3 capabilities - the Design studio, Manager and Controller. 
 
 <p align="center">
-  <img width="800" height="auto" src="https://user-images.githubusercontent.com/111851430/207766761-7eb800e9-8fde-4288-8e17-2e65e4399935.png" style="border-radius:50%" >
+  <img width="800" height="auto" src="https://user-images.githubusercontent.com/111851430/207787691-4342621e-dad6-4af5-bece-3131ad510707.png" style="border-radius:50%" >
 
 *Figure 4 Closed Loop Management function and sub-functions*
 
-1. Closed Loop Design Studio \
+#### 1. Closed Loop Design Studio 
 The ClosedLoop Design Studio provides the functions to engage a designer with the requisite approvals, manage ontology related to closedloops, and to enable model closedloops with all the supporting functions needed to specify the closedloop. 
 
-+ 1.1. Closed Loop Design user interface \
-Closed Loop Design user interface is a sub-function of the Closed Loop Deisgn Studio. It provides an integrated design environment to enable a Closed Loop designer to build and configure Closed loops. The interface serves as a gateway to enable the right personas with the right capabilities to define and closed loop goals and related policies, build closedloop models, closed loop workflows, set goals/objectives and to manage closedloop ontologies.
+  + 1.1. Closed Loop Design user interface \
+  Closed Loop Design user interface is a sub-function of the Closed Loop Deisgn Studio. It provides an integrated design environment to enable a Closed Loop designer to build and configure Closed loops. The interface serves as a gateway to enable the right personas with the right capabilities to define and closed loop goals and related policies, build closedloop models, closed loop workflows, set goals/objectives and to manage closedloop ontologies.
 
-+ 1.2. Closed Loop Model Builder \
-Closed Loop Model Builder is a sub-function of Closed Loop Design Studio. It provides the functions for a closed loop owner or closed loop designer to build the closed loop objects, and use them to build underlying workflows. The Model builder provides the functions to fully realize and verify the closedloop workflows and goals, as well as simulate, as well as document the closedloop design.
+  + 1.2. Closed Loop Model Builder \
+  Closed Loop Model Builder is a sub-function of Closed Loop Design Studio. It provides the functions for a closed loop owner or closed loop designer to build the closed loop objects, and use them to build underlying workflows. The Model builder provides the functions to fully realize and verify the closedloop workflows and goals, as well as simulate, as well as document the closedloop design.
  
-+ 1.3. Closed Loop Ontology Manager \
-Closed Looop Ontology Manager is a sub-function of Closed Loop Deisgn Studio. It provides the functions to manage closed loop ontologies. Closed Loop ontologies are considered a key technology enabling semantic interoperability and integration of data and processes. The Ontology manager provides functions to define the taxonomy for closed loops based on a specific domain(s) or field of applicability of closed loops. It enables a rich data understanding of the domain or field in relation to activities, workflows and existing closed loops. 
+  + 1.3. Closed Loop Ontology Manager \
+  Closed Looop Ontology Manager is a sub-function of Closed Loop Deisgn Studio. It provides the functions to manage closed loop ontologies. Closed Loop ontologies are considered a key technology enabling semantic interoperability and integration of data and processes. The Ontology manager provides functions to define the taxonomy for closed loops based on a specific domain(s) or field of applicability of closed loops. It enables a rich data understanding of the domain or field in relation to activities, workflows and existing closed loops. 
 
-2. Closed Loop Manager \
+#### 2. Closed Loop Manager 
 Closed Loop Manager provides the function to handle the post specification of a closedloop. It manages the need to validate, verify, expose or publish and catalog closed loops.
 
-+ 2.1. Closed Loop Validator \
-Closed Loop Validator is sub-function of the Closed Loop Manager and is meant to support workflow managers, system/closed loop/ goal integrators and environment administrators (systems admins, network admins, goal admins) to take a modeled closedloop in for: dynamic testing (unit testing of workflows, integration testing of the closedloop architecture, system testing of the closedloop design specification and acceptance testing against the original requirement description); check validity against the needs of the owner; and testing integrity with respective to environment (single or multi-environment in the case of closed loops that traverse multiple environment. 
+  + 2.1. Closed Loop Validator \
+  Closed Loop Validator is sub-function of the Closed Loop Manager and is meant to support workflow managers, system/closed loop/ goal integrators and environment administrators (systems admins, network admins, goal admins) to take a modeled closedloop in for: dynamic testing (unit testing of workflows, integration testing of the closedloop architecture, system testing of the closedloop design specification and acceptance testing against the original requirement description); check validity against the needs of the owner; and testing integrity with respective to environment (single or multi-environment in the case of closed loops that traverse multiple environment. 
 
-+ 2.2. Closed Loop Publisher \
-Closed Loop Publisher is a sub-function of the Closed Loop Manager and is meant to provide the enablers to publish a closed loop that has been verified, validated and certified ready for operation into an environment's catalog.
+  + 2.2. Closed Loop Publisher \
+  Closed Loop Publisher is a sub-function of the Closed Loop Manager and is meant to provide the enablers to publish a closed loop that has been verified, validated and certified ready for operation into an environment's catalog.
 
-+ 2.3. Closed Loop Catalog Manager \
-Closed Loop Catalog Manager is a sub-function of the Closed Loop Manager which serves as the closed loop catalog. This function will manage availability and exposure, as well as manage changes to closed loops in their environments. Closed loop catalog management can include maintaining descriptions, settings changes to goals and objectives of closed loops and their exposed workflows, and managing inventorying of closedloops resources (workflows, activities and underlying physical/virtual resources).
+  + 2.3. Closed Loop Catalog Manager \
+  Closed Loop Catalog Manager is a sub-function of the Closed Loop Manager which serves as the closed loop catalog. This function will manage availability and exposure, as well as manage changes to closed loops in their environments. Closed loop catalog management can include maintaining descriptions, settings changes to goals and objectives of closed loops and their exposed workflows, and managing inventorying of closedloops resources (workflows, activities and underlying physical/virtual resources).
 
-3. Closed Loop Controller \
+#### 3. Closed Loop Controller 
 Closed Loop Controller is function to enable monitor, orchestrate, administer and choreograph closed loops. It available for closed loop operators to enable monitor, orchestrate closedloops (based on closedloop mechanisms models), administer closedloop in operations and manage closedloop interacting and integrating in or across environments (choreograph).  
 
-+ 3.1. Closed Loop Monitor \
-Closed Loop Monitor is a sub-function of the Closed Loop Controller. This sub-function is responsible for monitoring closed loops against defined goals/objectives, and the environments they operate in by providing information (including reports, performance data and stats) about closedloop operations, and enabling capture events needed to support both the closed loop operations, closed loop management goals and closed loop state changes.
+  + 3.1. Closed Loop Monitor \
+  Closed Loop Monitor is a sub-function of the Closed Loop Controller. This sub-function is responsible for monitoring closed loops against defined goals/objectives, and the environments they operate in by providing information (including reports, performance data and stats) about closedloop operations, and enabling capture events needed to support both the closed loop operations, closed loop management goals and closed loop state changes.
 
-+ 3.2. Closed Loop Orchestrator \
-Closed Loop Orchestrator is a sub-function of the Closed Loop Controller. The sub-function provides control of interactions and integrations of closedloop mechanisms with the underlying or supporting resources/systems/components/entities. 
+  + 3.2. Closed Loop Orchestrator \
+  Closed Loop Orchestrator is a sub-function of the Closed Loop Controller. The sub-function provides control of interactions and integrations of closedloop mechanisms with the underlying or supporting resources/systems/components/entities. 
 
-+ 3.3. Closed Loop Administrator \
-Closed Loop Administrator is a sub-function of the Closed Loop Controller which provides the capability to administer (systems, network, security etc.) the START, END, RESTART, RELOAD, ENABLE, DISABLING active or running closed loops. It also provides capabilities to test or check the health of closed loops towards meeting the management needs or the goals linked to design of the closed loop.
+  + 3.3. Closed Loop Administrator \
+  Closed Loop Administrator is a sub-function of the Closed Loop Controller which provides the capability to administer (systems, network, security etc.) the START, END, RESTART, RELOAD, ENABLE, DISABLING active or running closed loops. It also provides capabilities to test or check the health of closed loops towards meeting the management needs or the goals linked to design of the closed loop.
 
-+ 3.4. Closed Loop Choreographer \
-Closed Loop Choreographer is a sub-function of Closed Loop Controller. This sub-functions includes capabilities to provide an environment or multi-environment governance that means cordinating the managing the interactions between different closed loops based on shared resources or shared environments, as well as oversight on the performance of closed loops in relation to their operating environment. This sub-function provides conflict resolution, resource allocation and availability according to set environment management goals. 
+  + 3.4. Closed Loop Choreographer \
+  Closed Loop Choreographer is a sub-function of Closed Loop Controller. This sub-functions includes capabilities to provide an environment or multi-environment governance that means cordinating the managing the interactions between different closed loops based on shared resources or shared environments, as well as oversight on the performance of closed loops in relation to their operating environment. This sub-function provides conflict resolution, resource allocation and availability according to set environment management goals. 
 
 
 
