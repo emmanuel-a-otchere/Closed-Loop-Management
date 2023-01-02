@@ -85,11 +85,9 @@ In this detailed entity relationship diagram (ERD), albeit also stripped down vi
 
 In the context of business process modeling, Action and Activity can be used to refer to similar concepts. Both Action and Activity can be thought of as representing a task or unit of work that needs to be performed as part of a larger process. However, for purposes of this modeling, we are applying some distinguishing differences between Action and Activity that are worth noting:
 
-    **Scope: Action typically refers to a small, atomic task that is performed as part of a larger process. In contrast, Activity typically refers to a larger, more complex task that may involve multiple steps and may involve other actions or activities as part of its execution.
-
-    **Level of abstraction: Action is usually a more specific, concrete concept than Activity, which tends to be more abstract. For example, "sending an email" might be considered an action, while "performing customer outreach" might be considered an activity.
-
-    ***Relationship to business process: Action is typically seen as a lower-level building block that is used to construct more complex processes. Activity, on the other hand, is usually seen as a higher-level concept that represents a more significant piece of work within a business process. 
+   * Scope: Action typically refers to a small, atomic task that is performed as part of a larger process. In contrast, Activity typically refers to a larger, more complex task that may involve multiple steps and may involve other actions or activities as part of its execution.
+   * Level of abstraction: Action is usually a more specific, concrete concept than Activity, which tends to be more abstract. For example, "sending an email" might be considered an action, while "performing customer outreach" might be considered an activity.
+   * Relationship to business process: Action is typically seen as a lower-level building block that is used to construct more complex processes. Activity, on the other hand, is usually seen as a higher-level concept that represents a more significant piece of work within a business process. 
 
 A HL representative model is below.
 
