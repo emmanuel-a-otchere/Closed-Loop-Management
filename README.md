@@ -95,9 +95,22 @@ Given the above assumption, managing goals, ownership, attributed tactical strat
 *Figure 2 A stripped out ERD focused around the core concepts to manage closed loops*
 
 
-I'll share more about the data dictionery, along with modular set of data models on an ongoing basis.
-
 >Note. This stripped down version is meant to enable capture the bearest minimums to create a functioning information network. Some extra rich details on the clases have been left out to enable implementation flavors to occur. There are added capabilities to enable manage entities like goals, measures, activities, actors/roles, workflows etc.  
+
+A simple class diagram that tries to provide a very abstract view as an information model is presented below. 
+In the context of business process modeling, Action and Activity can be used to refer to similar concepts. Both Action and Activity can be thought of as representing a task or unit of work that needs to be performed as part of a larger process. However, for purposes of this modeling, we are applying some distinguishing differences between Action and Activity that are worth noting:
+
+Scope: Action typically refers to a small, atomic task that is performed as part of a larger process. In contrast, Activity typically refers to a larger, more complex task that may involve multiple steps and may involve other actions or activities as part of its execution.
+
+Level of abstraction: Action is usually a more specific, concrete concept than Activity, which tends to be more abstract. For example, "sending an email" might be considered an action, while "performing customer outreach" might be considered an activity.
+
+Relationship to business process: Action is typically seen as a lower-level building block that is used to construct more complex processes. Activity, on the other hand, is usually seen as a higher-level concept that represents a more significant piece of work within a business process. 
+
+This is the representative high level model.
+
+![image](https://user-images.githubusercontent.com/30234220/210195303-dce97a55-e340-4896-a971-46d3f6edc1f5.png)
+*Figure 2-2 An abstract model linking the core concepts.*
+
 
 ## State Model
 The state model is helpful to understand the lifecycle from strategy, capability development, business value definition and operatoins (fulfillment, assurance and reporting) of the closedloop. 
