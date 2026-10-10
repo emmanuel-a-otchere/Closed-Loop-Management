@@ -1,0 +1,10 @@
+# Code owners -- every change requires review by the canonical author.
+
+*       @emmanuel-a-otchere
+
+/.github/      @emmanuel-a-otchere
+/context/      @emmanuel-a-otchere
+/docs/         @emmanuel-a-otchere
+/api/          @emmanuel-a-otchere
+/tests/        @emmanuel-a-otchere
+scripts/       @emmanuel-a-otchere

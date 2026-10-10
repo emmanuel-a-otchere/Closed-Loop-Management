@@ -1,0 +1,8 @@
+{
+  "kind": "MAPE",
+  "name": "memory-pressure-mape",
+  "monitor":  {"id": "55555555-5555-5555-5555-555555555555", "name": "read-memstat"},
+  "analyze":  {"id": "66666666-6666-6666-6666-666666666666", "name": "pressure-score"},
+  "plan":     {"id": "77777777-7777-7777-7777-777777777777", "name": "reclaim-vectors"},
+  "execute":  {"id": "88888888-8888-8888-8888-888888888888", "name": "drop-caches"}
+}

@@ -1,0 +1,8 @@
+{
+  "name": "cpu-thermal-loop",
+  "description": "Closed loop that monitors CPU temperature and adjusts fan speed.",
+  "decisionModelRef": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "kind": "OODA"
+  }
+}

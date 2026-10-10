@@ -1,0 +1,370 @@
+{
+  "info": {
+    "description": "REST API + OAS 3.1 data model for managing closed loops through automation. CRUD decision models, goals, workflows, activities; activate / deactivate loops; daisy-chain or hierarchically interlink loops.",
+    "name": "Closed Loop Automation Management (CLAM)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Liveness probe",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ],
+          "raw": "{{baseUrl}}/health"
+        }
+      }
+    },
+    {
+      "name": "Create a closed loop",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "POST",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop"
+        }
+      }
+    },
+    {
+      "name": "List closed loops",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop"
+        }
+      }
+    },
+    {
+      "name": "Get a closed loop",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop",
+            "{{loopId}}"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop/{{loopId}}"
+        }
+      }
+    },
+    {
+      "name": "Patch a closed loop",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "PATCH",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop",
+            "{{loopId}}"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop/{{loopId}}"
+        }
+      }
+    },
+    {
+      "name": "Delete a closed loop",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "DELETE",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop",
+            "{{loopId}}"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop/{{loopId}}"
+        }
+      }
+    },
+    {
+      "name": "Read a closed loop's state",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop",
+            "{{loopId}}",
+            "state"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop/{{loopId}}/state"
+        }
+      }
+    },
+    {
+      "name": "Transition a closed loop to a new state",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "description": "Returns either a ``StateResponse`` (200) or an error envelope (404/409).",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "POST",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "closedLoop",
+            "{{loopId}}",
+            "state"
+          ],
+          "raw": "{{baseUrl}}/api/v1/closedLoop/{{loopId}}/state"
+        }
+      }
+    },
+    {
+      "name": "Create a decision model",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "POST",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "decisionModel"
+          ],
+          "raw": "{{baseUrl}}/api/v1/decisionModel"
+        }
+      }
+    },
+    {
+      "name": "List decision models",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "decisionModel"
+          ],
+          "raw": "{{baseUrl}}/api/v1/decisionModel"
+        }
+      }
+    },
+    {
+      "name": "Get a decision model",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "decisionModel",
+            "{{modelId}}"
+          ],
+          "raw": "{{baseUrl}}/api/v1/decisionModel/{{modelId}}"
+        }
+      }
+    },
+    {
+      "name": "Delete a decision model",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "DELETE",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "decisionModel",
+            "{{modelId}}"
+          ],
+          "raw": "{{baseUrl}}/api/v1/decisionModel/{{modelId}}"
+        }
+      }
+    },
+    {
+      "name": "API root",
+      "request": {
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "method": "GET",
+        "url": {
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [],
+          "raw": "{{baseUrl}}/"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    }
+  ]
+}
