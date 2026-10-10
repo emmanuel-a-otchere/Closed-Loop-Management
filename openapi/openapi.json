@@ -1,0 +1,1261 @@
+{
+  "components": {
+    "schemas": {
+      "ActivityRef": {
+        "additionalProperties": false,
+        "description": "Lightweight projection of an Activity used inside other entities.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "ActivityRef",
+        "type": "object"
+      },
+      "ClosedLoop": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "decisionModelRef": {
+            "$ref": "#/components/schemas/DecisionModelRef"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/ClosedLoopLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ClosedLoopState",
+            "default": "designed"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "workflows": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRef"
+            },
+            "title": "Workflows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "decisionModelRef"
+        ],
+        "title": "ClosedLoop",
+        "type": "object"
+      },
+      "ClosedLoopCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionModelRef": {
+            "$ref": "#/components/schemas/DecisionModelRef"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "decisionModelRef"
+        ],
+        "title": "ClosedLoopCreate",
+        "type": "object"
+      },
+      "ClosedLoopLink": {
+        "additionalProperties": false,
+        "properties": {
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LinkKind"
+          },
+          "source": {
+            "$ref": "#/components/schemas/DecisionModelRef"
+          },
+          "target": {
+            "$ref": "#/components/schemas/DecisionModelRef"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind"
+        ],
+        "title": "ClosedLoopLink",
+        "type": "object"
+      },
+      "ClosedLoopState": {
+        "description": "Lifecycle state of a closed loop.\n\nThe transition diagram lives in ``docs/data-model/clam-data-model-1.0.md``\nunder \"State machine\". A transition is requested via\n``POST /api/v1/closedLoop/{id}/state`` and is validated by the API.",
+        "enum": [
+          "designed",
+          "validated",
+          "published",
+          "active",
+          "paused",
+          "error",
+          "retired"
+        ],
+        "title": "ClosedLoopState",
+        "type": "string"
+      },
+      "ClosedLoopUpdate": {
+        "additionalProperties": false,
+        "description": "Partial-update payload for PATCH.",
+        "properties": {
+          "decisionModelRef": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionModelRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "ClosedLoopUpdate",
+        "type": "object"
+      },
+      "CustomDecisionModel": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "CUSTOM",
+            "default": "CUSTOM",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/CustomDecisionModelStep"
+            },
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "steps"
+        ],
+        "title": "CustomDecisionModel",
+        "type": "object"
+      },
+      "CustomDecisionModelStep": {
+        "additionalProperties": false,
+        "properties": {
+          "activityRef": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "activityRef"
+        ],
+        "title": "CustomDecisionModelStep",
+        "type": "object"
+      },
+      "DecisionModelKind": {
+        "enum": [
+          "OODA",
+          "MAPE",
+          "CUSTOM"
+        ],
+        "title": "DecisionModelKind",
+        "type": "string"
+      },
+      "DecisionModelRef": {
+        "additionalProperties": false,
+        "description": "Lightweight reference to a DecisionModel.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DecisionModelKind"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "title": "DecisionModelRef",
+        "type": "object"
+      },
+      "Goal": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/GoalScope",
+            "default": "CLOSED_LOOP"
+          },
+          "scopeRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoperef"
+          },
+          "target": {
+            "$ref": "#/components/schemas/GoalTarget"
+          }
+        },
+        "required": [
+          "name",
+          "target"
+        ],
+        "title": "Goal",
+        "type": "object"
+      },
+      "GoalDirection": {
+        "enum": [
+          "AT_LEAST",
+          "AT_MOST",
+          "EXACTLY"
+        ],
+        "title": "GoalDirection",
+        "type": "string"
+      },
+      "GoalScope": {
+        "enum": [
+          "CLOSED_LOOP",
+          "WORKFLOW",
+          "ACTIVITY"
+        ],
+        "title": "GoalScope",
+        "type": "string"
+      },
+      "GoalTarget": {
+        "properties": {
+          "direction": {
+            "$ref": "#/components/schemas/GoalDirection",
+            "default": "AT_LEAST"
+          },
+          "metric": {
+            "description": "The metric being targeted (e.g. 'cpu_temp_c').",
+            "title": "Metric",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "description": "The numeric value of the target.",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "metric",
+          "value"
+        ],
+        "title": "GoalTarget",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LinkKind": {
+        "enum": [
+          "DAISY_CHAIN",
+          "HIERARCHICAL",
+          "FEEDBACK"
+        ],
+        "title": "LinkKind",
+        "type": "string"
+      },
+      "MapeDecisionModel": {
+        "additionalProperties": false,
+        "properties": {
+          "analyze": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "execute": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "MAPE",
+            "default": "MAPE",
+            "title": "Kind",
+            "type": "string"
+          },
+          "monitor": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ActivityRef"
+          }
+        },
+        "required": [
+          "name",
+          "monitor",
+          "analyze",
+          "plan",
+          "execute"
+        ],
+        "title": "MapeDecisionModel",
+        "type": "object"
+      },
+      "OodaDecisionModel": {
+        "additionalProperties": false,
+        "properties": {
+          "act": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "decide": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "OODA",
+            "default": "OODA",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "observe": {
+            "$ref": "#/components/schemas/ActivityRef"
+          },
+          "orient": {
+            "$ref": "#/components/schemas/ActivityRef"
+          }
+        },
+        "required": [
+          "name",
+          "observe",
+          "orient",
+          "decide",
+          "act"
+        ],
+        "title": "OodaDecisionModel",
+        "type": "object"
+      },
+      "Page": {
+        "additionalProperties": false,
+        "description": "Generic pagination envelope.",
+        "properties": {
+          "items": {
+            "items": {},
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "pageSize": {
+            "title": "Pagesize",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "title": "Page",
+        "type": "object"
+      },
+      "StateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/ClosedLoopState"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "StateResponse",
+        "type": "object"
+      },
+      "StateTransitionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "targetState": {
+            "$ref": "#/components/schemas/ClosedLoopState"
+          }
+        },
+        "required": [
+          "targetState"
+        ],
+        "title": "StateTransitionRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkflowRef": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "WorkflowRef",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "Emmanuel A. Otchere",
+      "url": "https://github.com/emmanuel-a-otchere/Closed-Loop-Management"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "summary": "REST API + OAS 3.1 data model for managing closed loops through automation. CRUD decision models, goals, workflows, activities; activate / deactivate loops; daisy-chain or hierarchically interlink loops.",
+    "title": "Closed Loop Automation Management (CLAM)",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Root  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "API root",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/closedLoop": {
+      "get": {
+        "operationId": "list_closed_loops_api_v1_closedLoop_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List closed loops",
+        "tags": [
+          "closedLoop"
+        ]
+      },
+      "post": {
+        "operationId": "create_closed_loop_api_v1_closedLoop_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosedLoopCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoop"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a closed loop",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/closedLoop/{loopId}": {
+      "delete": {
+        "operationId": "delete_closed_loop_api_v1_closedLoop__loopId__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a closed loop",
+        "tags": [
+          "closedLoop"
+        ]
+      },
+      "get": {
+        "operationId": "get_closed_loop_api_v1_closedLoop__loopId__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoop"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a closed loop",
+        "tags": [
+          "closedLoop"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_closed_loop_api_v1_closedLoop__loopId__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosedLoopUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoop"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch a closed loop",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/closedLoop/{loopId}/state": {
+      "get": {
+        "operationId": "get_state_api_v1_closedLoop__loopId__state_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read a closed loop's state",
+        "tags": [
+          "closedLoop"
+        ]
+      },
+      "post": {
+        "description": "Returns either a ``StateResponse`` (200) or an error envelope (404/409).",
+        "operationId": "transition_state_api_v1_closedLoop__loopId__state_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StateTransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Invalid state transition"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition a closed loop to a new state",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/decisionModel": {
+      "get": {
+        "operationId": "list_decision_models_api_v1_decisionModel_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List decision models",
+        "tags": [
+          "decisionModel"
+        ]
+      },
+      "post": {
+        "operationId": "create_decision_model_api_v1_decisionModel_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "CUSTOM": "#/components/schemas/CustomDecisionModel",
+                    "MAPE": "#/components/schemas/MapeDecisionModel",
+                    "OODA": "#/components/schemas/OodaDecisionModel"
+                  },
+                  "propertyName": "kind"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/OodaDecisionModel"
+                  },
+                  {
+                    "$ref": "#/components/schemas/MapeDecisionModel"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CustomDecisionModel"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "CUSTOM": "#/components/schemas/CustomDecisionModel",
+                      "MAPE": "#/components/schemas/MapeDecisionModel",
+                      "OODA": "#/components/schemas/OodaDecisionModel"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OodaDecisionModel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MapeDecisionModel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CustomDecisionModel"
+                    }
+                  ],
+                  "title": "Response Create Decision Model Api V1 Decisionmodel Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a decision model",
+        "tags": [
+          "decisionModel"
+        ]
+      }
+    },
+    "/api/v1/decisionModel/{modelId}": {
+      "delete": {
+        "operationId": "delete_decision_model_api_v1_decisionModel__modelId__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "modelId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Modelid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a decision model",
+        "tags": [
+          "decisionModel"
+        ]
+      },
+      "get": {
+        "operationId": "get_decision_model_api_v1_decisionModel__modelId__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "modelId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Modelid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "CUSTOM": "#/components/schemas/CustomDecisionModel",
+                      "MAPE": "#/components/schemas/MapeDecisionModel",
+                      "OODA": "#/components/schemas/OodaDecisionModel"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OodaDecisionModel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MapeDecisionModel"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CustomDecisionModel"
+                    }
+                  ],
+                  "title": "Response Get Decision Model Api V1 Decisionmodel  Modelid  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a decision model",
+        "tags": [
+          "decisionModel"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Liveness and metadata.",
+      "name": "health"
+    },
+    {
+      "description": "Closed-loop CRUD + state.",
+      "name": "closedLoop"
+    },
+    {
+      "description": "Decision-model CRUD.",
+      "name": "decisionModel"
+    }
+  ]
+}
