@@ -1,0 +1,19 @@
+@startuml clam-state-machine
+title CLAM Closed Loop State Machine
+
+[*] --> designed
+designed --> validated : POST /state\ntargetState=validated
+validated --> published : POST /state\ntargetState=published
+published --> active : POST /state\ntargetState=active
+active --> paused : POST /state\ntargetState=paused
+active --> error : POST /state\ntargetState=error
+paused --> active : POST /state\ntargetState=active
+paused --> retired : POST /state\ntargetState=retired
+error --> active : POST /state\ntargetState=active
+error --> retired : POST /state\ntargetState=retired
+designed --> retired : POST /state\ntargetState=retired
+validated --> retired : POST /state\ntargetState=retired
+published --> retired : POST /state\ntargetState=retired
+retired --> [*]
+
+@enduml
