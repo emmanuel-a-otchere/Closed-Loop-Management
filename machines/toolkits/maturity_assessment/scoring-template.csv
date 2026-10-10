@@ -1,0 +1,11 @@
+dimension,description,score,evidence
+closed-loop-inventory,"Inventory of all production closed loops is maintained in one place.",,
+decision-model-coverage,"Every closed loop uses an explicit decision model (OODA, MAPE, or custom).",,
+goal-definition,"Every loop has a measurable goal with target + direction + owner.",,
+state-lifecycle,"Loops are managed via an explicit state machine.",,
+feedback-feedforward-separation,"Feedback and feedforward paths are modeled as separate workflows.",,
+metrics-collection,"Loops emit metrics (goal, current, drift, transitions) to a backend.",,
+activation-deactivation-controls,"Loops are activated/deactivated through a managed control plane.",,
+cross-loop-interlink,"Loops are connected (daisy-chain, hierarchical, feedback).",,
+observability,"Logs, metrics, traces are unified across loops.",,
+continuous-improvement,"Retire/redesign/upgrade based on observed metrics.",,
