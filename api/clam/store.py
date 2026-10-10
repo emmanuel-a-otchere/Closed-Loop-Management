@@ -136,7 +136,8 @@ class Store:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute("SELECT COUNT(*) AS c FROM closed_loop") as cur:
-                total = (await cur.fetchone())["c"]
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
             async with db.execute(
                 "SELECT payload FROM closed_loop ORDER BY created_at DESC LIMIT ? OFFSET ?",
                 (page_size, offset),
@@ -249,7 +250,8 @@ class Store:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute("SELECT COUNT(*) AS c FROM decision_model") as cur:
-                total = (await cur.fetchone())["c"]
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
             async with db.execute(
                 "SELECT payload FROM decision_model ORDER BY created_at DESC LIMIT ? OFFSET ?",
                 (page_size, offset),

@@ -12,7 +12,7 @@ kanban / project-board discipline structural rather than aspirational.
 2. **D-004** (GitHub language): no em-dash (U+2014), en-dash (U+2013), or
    triple-punctator (U+2E3B) in any GitHub artefact (markdown, YAML, TOML,
    Python source). CI runs `grep -rln` over the tree and fails on a hit.
-3. **D-005**: no `;;;` in prose. The `;;` divider is preserved.
+3. **D-005**: no triple-punctator semicolons in prose. The two-semicolon divider is preserved.
 4. **No TMForum references**: never reference TMForum, eTOM, Frameworx, SID,
    GB921, TAM, ODF, OSS/BSS in this repo. Substitutes are ITU-T M.3050.x,
    ETSI TS, ISO/IEC, NIST, or SDO-neutral standardization.

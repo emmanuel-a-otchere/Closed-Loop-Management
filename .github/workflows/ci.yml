@@ -42,7 +42,7 @@ jobs:
       - name: Generate OAS + validate (OAS 3.1)
         run: |
           python scripts/export_openapi.py --out openapi/openapi.json
-          python -m openapi_spec_validator openapi/openapi.json --schema-version 3.1
+          python -m openapi_spec_validator openapi/openapi.json --schema 3.1
       - name: Snapshot check
         run: |
           git diff --quiet openapi/openapi.json || (echo "::warning::OpenAPI snapshot drifted from generated OAS. Run scripts/export_openapi.py locally and commit."; exit 0)
