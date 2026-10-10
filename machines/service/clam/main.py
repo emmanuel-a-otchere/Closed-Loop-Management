@@ -120,6 +120,18 @@ def create_app(db_path: Path | None = None) -> FastAPI:
             "openapi": "/openapi.json",
         }
 
+    # Inject ErrorEnvelope into the OpenAPI components so the CLAM profile
+    # validator + downstream SDK generators see it explicitly.
+    original_openapi = app.openapi
+
+    def _openapi_with_envelope() -> dict[str, object]:
+        spec = original_openapi()
+        schemas = spec.setdefault("components", {}).setdefault("schemas", {})
+        schemas["ErrorEnvelope"] = ErrorEnvelope.model_json_schema(ref_template="#/components/schemas/{model}")
+        return spec
+
+    app.openapi = _openapi_with_envelope  # type: ignore[method-assign]
+
     return app
 
 
