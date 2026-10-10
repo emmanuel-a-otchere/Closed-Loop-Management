@@ -15,14 +15,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install (api + dev)
+      - name: Install (service + toolkits + dev)
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: Lint (ruff)
-        run: ruff check api/ tests/
+        run: ruff check machines/service/ machines/scripts/ machines/toolkits/ tests/
       - name: Type-check (mypy)
-        run: mypy api/
+        run: mypy machines/service/clam/
       - name: Test (pytest)
         run: pytest --cov=clam --cov-report=term-missing
 
@@ -37,15 +37,17 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install openapi-spec-validator
+          pip install -e ".[dev,toolkit-oas-validator]"
       - name: Generate OAS + validate (OAS 3.1)
         run: |
-          python scripts/export_openapi.py --out openapi/openapi.json
-          python -m openapi_spec_validator openapi/openapi.json --schema 3.1
+          python machines/scripts/export_openapi.py --out schemas/openapi/openapi.json
+          python -m openapi_spec_validator schemas/openapi/openapi.json --schema 3.1
+      - name: Run oas-validator toolkit
+        run: |
+          clam-oas-validator schemas/openapi/openapi.json
       - name: Snapshot check
         run: |
-          git diff --quiet openapi/openapi.json || (echo "::warning::OpenAPI snapshot drifted from generated OAS. Run scripts/export_openapi.py locally and commit."; exit 0)
+          git diff --quiet schemas/openapi/openapi.json || (echo "::warning::OpenAPI snapshot drifted from generated OAS. Re-run machines/scripts/export_openapi.py locally and commit."; exit 0)
 
   cardinal-rules:
     runs-on: ubuntu-latest

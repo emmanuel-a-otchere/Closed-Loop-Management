@@ -8,8 +8,9 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest_asyncio
-from clam.main import create_app
 from httpx import ASGITransport, AsyncClient
+
+from machines.service.clam.main import create_app
 
 
 @pytest_asyncio.fixture

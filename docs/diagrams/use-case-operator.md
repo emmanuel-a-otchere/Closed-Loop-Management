@@ -1,0 +1,23 @@
+# CLAM Use Case -- Closed Loop Operator
+
+```mermaid
+flowchart TB
+    subgraph Operator
+        O1[Create decision model]
+        O2[Create closed loop]
+        O3[Validate closed loop]
+        O4[Publish closed loop]
+        O5[Activate closed loop]
+        O6[Pause / resume]
+        O7[Retire closed loop]
+    end
+
+    O1 --> O2
+    O2 --> O3
+    O3 --> O4
+    O4 --> O5
+    O5 --> O6
+    O5 --> O7
+```
+
+Source: `docs/diagrams/src/use-case-operator.mmd`.

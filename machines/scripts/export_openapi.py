@@ -3,7 +3,7 @@
 
 Usage:
 
-    python scripts/export_openapi.py --out openapi/openapi.json
+    python machines/scripts/export_openapi.py --out schemas/openapi/openapi.json
 
 The output is the snapshot the CI pipeline lints. Do not hand-edit the
 output -- re-run this script after any change to the Pydantic models.
@@ -15,7 +15,7 @@ import argparse
 import json
 from pathlib import Path
 
-from clam.main import app
+from machines.service.clam.main import app
 
 
 def main() -> None:

@@ -1,0 +1,67 @@
+@startuml clam-entities
+title CLAM Entity Relationships
+
+entity "ClosedLoop" as CL {
+  *id : uuid
+  --
+  name : string
+  decisionModelRef : DecisionModelRef
+  state : ClosedLoopState
+  goals : Goal[]
+  workflows : WorkflowRef[]
+  links : ClosedLoopLink[]
+}
+
+entity "DecisionModel" as DM {
+  *id : uuid
+  --
+  kind : OODA | MAPE | CUSTOM
+  name : string
+  observe/orient/decide/act (OODA)
+  monitor/analyze/plan/execute (MAPE)
+  steps (CUSTOM)
+}
+
+entity "Goal" as G {
+  *id : uuid
+  --
+  name : string
+  target.metric : string
+  target.value : number
+  target.direction : AT_LEAST | AT_MOST | EXACTLY
+  scope : CLOSED_LOOP | WORKFLOW | ACTIVITY
+}
+
+entity "Workflow" as W {
+  *id : uuid
+  --
+  name : string
+  path : FEEDFORWARD | FEEDBACK
+  activities : ActivityRef[]
+}
+
+entity "Activity" as A {
+  *id : uuid
+  --
+  name : string
+  action : string
+  inputs : string[]
+  outputs : string[]
+}
+
+entity "ClosedLoopLink" as LK {
+  *id : uuid
+  --
+  source : ClosedLoopRef
+  target : ClosedLoopRef
+  kind : DAISY_CHAIN | HIERARCHICAL | FEEDBACK
+  condition : string
+}
+
+CL ||--o{ G : "has"
+CL ||--|| DM : "uses (ref)"
+CL ||--o{ W : "composes"
+CL }o--o{ CL : "links"
+W ||--o{ A : "contains"
+
+@enduml

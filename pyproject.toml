@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clam"
-version = "0.1.0"
-description = "Closed Loop Automation Management REST API + OAS 3.1 data model"
+version = "0.2.0"
+description = "Closed Loop Automation Management -- REST API, OAS 3.1 data model, and supporting toolkits"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 authors = [
     { name = "Emmanuel A. Otchere", email = "111851430+emmanuel-a-otchere@users.noreply.github.com" },
 ]
-keywords = ["closed-loop", "automation", "ooda", "mape", "rest", "openapi"]
+keywords = ["closed-loop", "automation", "ooda", "mape", "rest", "openapi", "toolkit"]
 classifiers = [
     "Framework :: FastAPI",
     "Programming Language :: Python :: 3.12",
@@ -36,14 +36,43 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "openapi-spec-validator>=0.7",
+    "openpyxl>=3.1",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+toolkit-oas-validator = [
+    "openapi-spec-validator>=0.7",
+]
+toolkit-loop-simulator = [
+    "httpx>=0.27",
+    "rich>=13.7",
+]
+toolkit-erd-to-oas = [
+    "openpyxl>=3.1",
+]
+toolkit-kpi-calculator = [
+    "pydantic>=2.9",
+    "rich>=13.7",
 ]
 
 [project.scripts]
-clam = "clam.cli:main"
+machines-service = "machines.service.clam.cli:main"
+clam-oas-validator = "machines.toolkits.oas_validator.cli:main"
+clam-loop-simulator = "machines.toolkits.loop_simulator.cli:main"
+clam-erd-to-oas = "machines.toolkits.erd_to_oas.cli:main"
+clam-maturity-assessment = "machines.toolkits.maturity_assessment.cli:main"
+clam-kpi-calculator = "machines.toolkits.kpi_calculator.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["api/clam"]
-exclude = ["tests", "docs", "examples", ".github"]
+packages = ["machines"]
+exclude = [
+    "tests",
+    "docs",
+    "datasets",
+    ".github",
+    "schemas",
+    "machines/scripts/seed_db.py",
+]
 
 [tool.ruff]
 target-version = "py312"
@@ -55,7 +84,7 @@ ignore = ["E501", "N803"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B008"]
-"api/clam/routers/*" = ["B008"]
+"machines/service/clam/routers/*" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"

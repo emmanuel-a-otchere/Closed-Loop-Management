@@ -1,28 +1,119 @@
 # Closed-Loop-Management
 
-REST API and OAS 3.1 data model for **Closed Loop Automation Management (CLAM)**.
+> **The paradigm for managing closed loops through automation, expressed
+> as a service, a data model, and a suite of supporting toolkits.**
 
-> This repo began in 2022 as an information-engineering exercise around managing
-> closed loops. The legacy 2022 conceptual model and ERD are preserved at
-> [`docs/data-model/legacy-2022-erd.xlsx`](docs/data-model/legacy-2022-erd.xlsx)
-> and in the original README history. Slice 1 (current) promotes that model into
-> a typed, served REST API that conforms to OAS 3.1.
+Every operational system that adapts to its environment is a closed loop.
+A thermostat, a back-pressure regulator, an auto-scaler, a rebalancing
+trader. Each takes in a signal, makes a decision, applies an action, and
+the action changes the signal that comes back in. **Closed-Loop-Management
+(CLAM)** is the body of work that turns closed loops into first-class
+managed artefacts: discoverable, lifecycle-controlled, linkable to one
+another, and observable end-to-end.
 
-## What CLAM is
+This repository is not just an API. It is a paradigm.
 
-CLAM is the management plane for closed loops running inside a closed-loop
-automation platform. A *closed loop* is a set of workflows with a control
-point, feedback path, and a goal. The API lets you:
+## Why closed loops need management
 
-- CRUD a **decision model** (OODA, MAPE, or custom).
-- CRUD **feedback and feedforward activities** and the **workflows** they compose.
-- Set a **goal or target** for constituent parts of a closed loop.
-- **Activate or deactivate** a closed loop and read its state.
-- **Daisy-chain or hierarchically interlink** closed loops so that one loop
-  can consume the outputs of another.
+Most closed loops today live inside a single application's source code.
+The loop is invisible outside that application; you cannot audit it,
+cannot move it, cannot retire it cleanly, and you certainly cannot
+interlink it with another loop without bolting code together.
 
-The data model is described in detail under [`docs/data-model/`](docs/data-model/).
-The API surface is described in detail under [`docs/api/`](docs/api/).
+Three things are missing:
+
+1. **A typed representation of the loop.** Without one, loops are
+   indistinguishable from the rest of the application.
+2. **An explicit lifecycle.** A loop is born, validated, published,
+   active, paused, retired. Each transition has implications. Without
+   an explicit state machine, transitions hide in code paths.
+3. **Separation of feedforward and feedback paths.** The action is not
+   the same shape as the signal that comes back in. Conflating them
+   hides bugs.
+
+CLAM answers all three.
+
+The full argument lives in [`docs/conceptual/paradigm.md`](docs/conceptual/paradigm.md).
+What follows is the surface: the assets you can download.
+
+## The paradigm at a glance
+
+```mermaid
+flowchart LR
+    S[Strategy] -->|design| C[Capability Readiness]
+    C -->|validate + publish| L[Lifecycle Mgmt]
+    L -->|activate| O[Operations Mgmt]
+    O -->|deactivate / retire| L
+    L -->|redesign| S
+    classDef phase fill:#1F6FEB,stroke:#0E4DAF,color:#fff
+    class S,C,L,O phase
+```
+
+The closed-loop lifecycle is the management plane. CLAM implements it as
+a REST API, a data model, and a set of toolkits that operate on the
+artefacts.
+
+## What you can download
+
+| Asset | Path | What it does |
+| --- | --- | --- |
+| **Service** | `machines/service/clam/` | FastAPI REST API. CRUD over closed loops, decision models, goals, workflows, activities, links. |
+| **Data model** | `schemas/data-model/` | Binding OAS-backed entities (`clam-data-model-1.0.md`) plus the legacy 2022 ERD lineage. |
+| **OAS schema** | `schemas/openapi/openapi.json` | The OAS 3.1 contract, validated in CI. |
+| **Postman collection** | `schemas/openapi/postman/clam.postman_collection.json` | Downloadable Postman v2.1 collection. |
+| **oas-validator toolkit** | `machines/toolkits/oas_validator/` | Profile-level OAS validator (CLAM rules on top of OAS 3.1). |
+| **loop-simulator toolkit** | `machines/toolkits/loop_simulator/` | Drives an OODA / MAPE / CUSTOM decision cycle against the API. |
+| **erd-to-oas toolkit** | `machines/toolkits/erd_to_oas/` | Reads an .xlsx ERD, emits an OAS schema fragment. |
+| **maturity-assessment toolkit** | `machines/toolkits/maturity_assessment/` | Non-technical questionnaire + CSV scoring template. |
+| **kpi-calculator toolkit** | `machines/toolkits/kpi_calculator/` | Consumes a simulator trace, emits a KPI report. |
+| **Datasets** | `datasets/examples/` | Reference payloads (OODA closed loop, OODA / MAPE / CUSTOM decision models). |
+| **Diagrams** | `docs/diagrams/` | Mermaid + PlantUML sources for ERD, lifecycle, state machine, sequence, use cases. |
+| **Docs** | `docs/` | API tour, examples, conceptual position paper. |
+| **Tests** | `tests/` | 9+ pytest tests covering every endpoint and state transition. |
+
+## The CLAM state machine
+
+Every closed loop runs through this lifecycle. Transitions are explicit
+and API-controlled.
+
+```mermaid
+stateDiagram-v2
+    [*] --> designed
+    designed --> validated : POST /state
+    validated --> published : POST /state
+    published --> active : POST /state
+    active --> paused : POST /state
+    active --> error : POST /state
+    paused --> active : POST /state
+    paused --> retired : POST /state
+    error --> active : POST /state
+    error --> retired : POST /state
+    designed --> retired : POST /state
+    validated --> retired : POST /state
+    published --> retired : POST /state
+    retired --> [*]
+```
+
+PlantUML source: [`docs/diagrams/src/state-machine.puml`](docs/diagrams/src/state-machine.puml).
+
+## The data model
+
+```mermaid
+erDiagram
+    CLOSED_LOOP ||--o{ GOAL : "has"
+    CLOSED_LOOP ||--|| DECISION_MODEL : "uses"
+    CLOSED_LOOP ||--o{ WORKFLOW : "composes"
+    CLOSED_LOOP }o--o{ CLOSED_LOOP : "links via"
+    WORKFLOW ||--o{ ACTIVITY : "contains"
+    WORKFLOW }o--|| WORKFLOW_PATH : "is on"
+    CLOSED_LOOP ||--|| CLOSED_LOOP_STATE : "is in"
+```
+
+The binding form is at [`schemas/data-model/clam-data-model-1.0.md`](schemas/data-model/clam-data-model-1.0.md).
+The legacy 2022 ERD is preserved at
+[`schemas/data-model/legacy-2022-erd.xlsx`](schemas/data-model/legacy-2022-erd.xlsx).
+
+PlantUML source: [`docs/diagrams/src/entities.puml`](docs/diagrams/src/entities.puml).
 
 ## Quick start (downloadable and testable)
 
@@ -31,8 +122,11 @@ Requires Python 3.12.
 ```bash
 git clone https://github.com/emmanuel-a-otchere/Closed-Loop-Management.git
 cd Closed-Loop-Management
-pip install -e .
-uvicorn clam.main:app --reload --port 8000
+pip install -e ".[dev]"
+python machines/scripts/seed_db.py
+
+# Start the service
+uvicorn machines.service.clam.main:app --reload --port 8000
 ```
 
 Then open:
@@ -41,73 +135,134 @@ Then open:
 - ReDoc: <http://localhost:8000/redoc>
 - Raw OpenAPI 3.1: <http://localhost:8000/openapi.json>
 
-A runnable Postman collection is generated at `docs/examples/postman-collection.json`
-and cURL examples are in [`docs/api/EXAMPLES.md`](docs/api/EXAMPLES.md).
+A runnable Postman collection is at
+[`schemas/openapi/postman/clam.postman_collection.json`](schemas/openapi/postman/clam.postman_collection.json);
+copy-paste cURL examples are in
+[`docs/api/EXAMPLES.md`](docs/api/EXAMPLES.md).
+
+### Drive the lifecycle with the simulator
+
+```bash
+# Install the loop-simulator extra
+pip install -e ".[toolkit-loop-simulator]"
+
+# Drive one of the seeded loops through several cycles
+clam-loop-simulator --base http://localhost:8000 \\
+    --loop-id <id-from-seed> --cycles 10 --trace trace.jsonl
+
+# Compute KPIs from the trace
+pip install -e ".[toolkit-kpi-calculator]"
+clam-kpi-calculator --in trace.jsonl --out kpi-report.json
+```
+
+### Assess your organisation's maturity
+
+The maturity-assessment toolkit is non-technical. Read the
+[`questionnaire`](machines/toolkits/maturity_assessment/questionnaire.md),
+fill in the
+[`scoring template`](machines/toolkits/maturity_assessment/scoring-template.csv),
+and score it:
+
+```bash
+clam-maturity-assessment --score scoring-template.csv
+```
+
+### Validate an OAS document against the CLAM profile
+
+```bash
+pip install -e ".[toolkit-oas-validator]"
+clam-oas-validator schemas/openapi/openapi.json
+```
+
+### Generate an OAS schema fragment from an ERD
+
+```bash
+pip install -e ".[toolkit-erd-to-oas]"
+clam-erd-to-oas schemas/data-model/legacy-2022-erd.xlsx \\
+    --out schemas/openapi/erd-fragment.json
+```
 
 ## Repository layout
 
 ```
-api/clam/              # FastAPI application (the service itself)
-  main.py              # app entry, router wiring, OpenAPI metadata
-  models.py            # Pydantic v2 models (the OAS source-of-truth)
-  store.py             # SQLite-backed store (aiosqlite)
-  routers/
-    closed_loop.py     # /closedLoop CRUD + state endpoints
-    decision_model.py  # /decisionModel CRUD
-docs/
+machines/
+  service/clam/                # FastAPI REST API
+    main.py                    # app entry, OpenAPI metadata
+    models.py                  # Pydantic v2 -- OAS source-of-truth
+    store.py                   # SQLite-backed store (aiosqlite)
+    routers/
+      closed_loop.py
+      decision_model.py
+      health.py
+  scripts/                     # Operational scripts
+    export_openapi.py          # regenerate schemas/openapi/openapi.json
+    postman_export.py          # regenerate the Postman collection
+    seed_db.py                 # populate SQLite with example data
+  toolkits/                    # Supporting toolkits (technical + non-technical)
+    oas_validator/
+    loop_simulator/
+    erd_to_oas/
+    maturity_assessment/
+    kpi_calculator/
+schemas/
+  openapi/openapi.json         # OAS 3.1 snapshot (CI artifact)
+  openapi/postman/             # Postman v2.1 collection
   data-model/
-    legacy-2022-erd.xlsx        # Original 2022 conceptual ERD (preserved)
-    clam-data-model-1.0.md      # OAS-backed entities (binding form)
-  api/
-    OVERVIEW.md                 # Tour of the API surface
-    EXAMPLES.md                 # Copy-paste cURL examples
-openapi/
-  openapi.json                   # Snapshot of generated OAS (CI artifact)
+    clam-data-model-1.0.md     # OAS-backed entities (binding form)
+    legacy-2022-erd.xlsx       # 2022 conceptual ERD (preserved)
+datasets/examples/             # Reference payloads
+docs/
+  conceptual/paradigm.md       # The position paper
+  api/OVERVIEW.md
+  api/EXAMPLES.md
+  diagrams/                    # Embedded diagrams (Mermaid + PlantUML)
+tests/                         # pytest + httpx test suite
+context/AGENT-DOCTRINE.md      # Governance rules for agents
 .github/
-  ISSUE_TEMPLATE/               # Issue templates
-  workflows/                     # CI: pytest + OAS lint + Spectral
-  epics/                         # WBS epic specs (one per slice phase)
-context/
-  AGENT-DOCTRINE.md              # Channel-binding governance doc
-examples/
-  closed-loop-oooda.json        # Sample closed loop (OODA decision model)
-  decision-model-mape.json      # Sample decision model (MAPE)
-scripts/
-  seed_db.py                     # Populate SQLite with examples
-pyproject.toml                   # Project + dependency manifest
+  workflows/ci.yml             # pytest + ruff + mypy + OAS validate + cardinal rules
+  epics/slice-{1..5}.md        # WBS epic specs
+  ISSUE_TEMPLATE/              # bug, feature
+  CODEOWNERS                   # cardinal author rule
+CHANGELOG.md
+LICENSE
+pyproject.toml
 ```
 
 ## Repository governance
 
 | Area | Where it lives |
 | --- | --- |
-| Project board | https://github.com/users/emmanuel-a-otchere/projects/14 |
-| Kanban board | http://192.168.50.160:7000/board/14 (discord-closed-loop-automation) |
+| Project board | https://github.com/users/emmanuel-a-otchere/projects/13 |
+| Kanban board | http://192.168.50.160:7000/board/14 (`discord-closed-loop-automation`) |
 | Card doctrine | `context/AGENT-DOCTRINE.md` |
-| WBS epics | `.github/epics/` (one file per phase) |
-| Milestones | GitHub milestones `v1.0.0 MVP` ... `v2.0.0 Architecture` |
+| WBS epics | `.github/epics/slice-{1..5}.md` |
+| Milestones | `v1.0.0 MVP`, `v1.1.0 Features`, `v2.0.0 Architecture` |
 
 ## Development
 
 ```bash
-pytest                    # run the test suite
-pytest --cov=clam         # with coverage
-ruff check api/           # linter
-mypy api/                 # type-checker
+pytest                              # run the test suite
+pytest --cov=clam                   # with coverage
+ruff check machines/service/ machines/scripts/ machines/toolkits/ tests/
+mypy machines/service/clam/
 ```
 
-CI runs the same set on every push (see `.github/workflows/ci.yml`).
+CI runs the same set on every push (see `.github/workflows/ci.yml`)
+plus OAS validation and the D-004 / D-005 / cardinal-author gates.
 
 ## Lineage
 
-The 2022 README + ERD define a comprehensive conceptual model: closed loop
-design studio, closed loop manager, closed loop controller, with sub-functions
-for design, validation, publication, catalog, monitoring, orchestration,
-administration, and choreography. That conceptual model is the foundation;
-this repo layers a typed, served, OAS-backed API on top of it.
+This repo began in 2022 as an information-engineering exercise around
+managing closed loops. The original 2022 README + ERD defined the
+comprehensive conceptual model: closed loop design studio, manager,
+controller, with sub-functions for design, validation, publication,
+catalog, monitoring, orchestration, administration, and choreography.
+That conceptual model is the foundation.
 
-The original README content from 2022-2023 is retained verbatim in the git
-history (commit `be64beb`). The current README is the v1.0 framing.
+The original README content from 2022-2023 is retained verbatim in git
+history (commit `be64beb`). Slice 1 (commit `4bb6cdd`) promoted the
+model into a typed, served REST API. The paradigm revamp frames the
+repo as the full body of machine assets -- not just an API.
 
 ## License
 

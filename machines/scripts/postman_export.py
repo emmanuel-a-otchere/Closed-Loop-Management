@@ -3,9 +3,9 @@
 
 Usage:
 
-    python scripts/postman_export.py --out docs/examples/postman-collection.json
+    python machines/scripts/postman_export.py --out schemas/openapi/postman/clam.postman_collection.json
 
-The script reads the OAS produced by ``scripts/export_openapi.py`` and
+The script reads the OAS produced by ``machines/scripts/export_openapi.py`` and
 emits a Postman v2.1 collection that targets ``{{baseUrl}}`` (default
 ``http://localhost:8000``).
 """
@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from clam.main import app
+from machines.service.clam.main import app
 
 METHOD_TO_POSTMAN: dict[str, dict[str, Any]] = {
     "get":    {"request": {"method": "GET"}},

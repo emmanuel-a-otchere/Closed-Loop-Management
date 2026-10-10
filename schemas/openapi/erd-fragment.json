@@ -1,0 +1,4357 @@
+{
+  "components": {
+    "schemas": {
+      "Sheet1": {
+        "properties": {
+          "/specifiesClosedLoopGoalManagement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "<Main Subject Area>": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Activity": {
+            "type": "string"
+          },
+          "ActivityGoal": {
+            "type": "string"
+          },
+          "ActivityGoalPolicy": {
+            "type": "string"
+          },
+          "ActivityGroup": {
+            "type": "string"
+          },
+          "ActivityLifecycle": {
+            "type": "string"
+          },
+          "ActivityManagement": {
+            "type": "string"
+          },
+          "ActivityMeasure": {
+            "type": "string"
+          },
+          "ActivityPartyRole": {
+            "type": "string"
+          },
+          "ActivityPolicy": {
+            "type": "string"
+          },
+          "ActivityPriority": {
+            "type": "string"
+          },
+          "ActivitySpecification": {
+            "type": "string"
+          },
+          "ActivitySpecificationRelationship": {
+            "type": "string"
+          },
+          "ActivityState": {
+            "type": "string"
+          },
+          "ActivityType": {
+            "type": "string"
+          },
+          "Attribute(s) of \"Activity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ActivityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleActions\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleActionsUnitType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleArea\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleConstraints\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleManagementSpecificationGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleOperators\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRulePartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleSpecificationRelationshipCharacteristics\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleTriggerEvent\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"BusinessRuleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoop\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivityPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopExitBy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManaegmentJobTypeSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobAdmin\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobAdminState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobEval\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobExecution\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobExecutionState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementJobTypeSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGoalType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementCapability\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementCapabilityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementComponent\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementComponentPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementComponentSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementComponentSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementComponentType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementJobType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementLifecycleSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementMethod\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopRelationshipSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopSpecificationStatus\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowActivityManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowActivityManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClosedLoopWorkflowType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClsoedLoopGoalManagementJobAdminLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ClsoedLoopGoalManagementJobAdminLifecycleState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"CostSchedule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Goal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalApproach\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalDirection\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalInstrument\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagementSpecifcationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalStrategy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalTargetPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalTargetPartyRoleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"GoalType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Management\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementCapability\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementCharacteristic\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementLevel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementPlan\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"ManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Metric\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"PartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Policy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"PolicyBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Role\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"Workflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityCost\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityCostType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivitySchedule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityScheduleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowActivityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowBusinessRuleInstructions\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementApproval\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementApprovalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowStartEndActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowTrigger\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Attribute(s) of \"WorkflowType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "BusinessRule": {
+            "type": "string"
+          },
+          "BusinessRuleActions": {
+            "type": "string"
+          },
+          "BusinessRuleActionsUnitType": {
+            "type": "string"
+          },
+          "BusinessRuleArea": {
+            "type": "string"
+          },
+          "BusinessRuleConstraints": {
+            "type": "string"
+          },
+          "BusinessRuleGroup": {
+            "type": "string"
+          },
+          "BusinessRuleManagement": {
+            "type": "string"
+          },
+          "BusinessRuleManagementSpecification": {
+            "type": "string"
+          },
+          "BusinessRuleManagementSpecificationGroup": {
+            "type": "string"
+          },
+          "BusinessRuleManagementSpecificationGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "BusinessRuleManagementSpecificationRelationship": {
+            "type": "string"
+          },
+          "BusinessRuleOperators": {
+            "type": "string"
+          },
+          "BusinessRulePartyRole": {
+            "type": "string"
+          },
+          "BusinessRuleSpecification": {
+            "type": "string"
+          },
+          "BusinessRuleSpecificationRelationship": {
+            "type": "string"
+          },
+          "BusinessRuleSpecificationRelationshipCharacteristics": {
+            "type": "string"
+          },
+          "BusinessRuleTriggerEvent": {
+            "type": "string"
+          },
+          "BusinessRuleType": {
+            "type": "string"
+          },
+          "Cardinality": {
+            "description": "Child to Parent Phrase",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Activity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivityGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivityLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ActivityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleActionsUnitType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleArea\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleManagementSpecificationGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleSpecificationRelationshipCharacteristics\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleTriggerEvent\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"BusinessRuleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoop\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopExitBy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManaegmentJobTypeSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJobAdmin\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJobExecution\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJobPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJobType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementJobTypeSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGoalType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementCapability\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementCapabilityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementComponent\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementComponentPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementComponentSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementComponentType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJobGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJobGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJobPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJobSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementJobType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementLifecycleSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopRelationshipSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopSpecificationStatus\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowActivityManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClosedLoopWorkflowType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ClsoedLoopGoalManagementJobAdminLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"CostSchedule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Goal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalApproach\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalDirection\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalInstrument\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalManagementSpecifcationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalStrategy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalTargetPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalTargetPartyRoleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"GoalType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Management\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementLevel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementModel\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"ManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Metric\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"PartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Policy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Role\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"Workflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityCostType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityScheduleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivitySpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowActivityType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowBusinessRuleInstructions\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementApprovalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowManagementType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowStartEndActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowTrigger\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Child Relationship(s) of \"WorkflowType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "ClosedLoop": {
+            "type": "string"
+          },
+          "ClosedLoopActivity": {
+            "type": "string"
+          },
+          "ClosedLoopActivityGoal": {
+            "type": "string"
+          },
+          "ClosedLoopActivityGoalPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopActivityMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopActivityPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopActivityPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopActivitySpecification": {
+            "type": "string"
+          },
+          "ClosedLoopActivitySpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopExitBy": {
+            "type": "string"
+          },
+          "ClosedLoopGoal": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManaegmentJobTypeSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagement": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementDomain": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementGoal": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementGoalMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementGroup": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJob": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobAdmin": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobAdminState": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobEval": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobExecution": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobExecutionState": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobType": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementJobTypeSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementState": {
+            "type": "string"
+          },
+          "ClosedLoopGoalManagementType": {
+            "type": "string"
+          },
+          "ClosedLoopGoalMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopGoalPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopGoalPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopGoalSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopGoalSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopGoalState": {
+            "type": "string"
+          },
+          "ClosedLoopGoalType": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "ClosedLoopGroup": {
+            "type": "string"
+          },
+          "ClosedLoopLifecycle": {
+            "type": "string"
+          },
+          "ClosedLoopManagement": {
+            "type": "string"
+          },
+          "ClosedLoopManagementBusinessRule": {
+            "type": "string"
+          },
+          "ClosedLoopManagementCapability": {
+            "type": "string"
+          },
+          "ClosedLoopManagementCapabilityType": {
+            "type": "string"
+          },
+          "ClosedLoopManagementComponent": {
+            "type": "string"
+          },
+          "ClosedLoopManagementComponentPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopManagementComponentSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopManagementComponentSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopManagementComponentType": {
+            "type": "string"
+          },
+          "ClosedLoopManagementDomain": {
+            "type": "string"
+          },
+          "ClosedLoopManagementGoal": {
+            "type": "string"
+          },
+          "ClosedLoopManagementGoalMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopManagementGoalPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopManagementGroup": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJob": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobGoal": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobGoalPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobGroup": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopManagementJobType": {
+            "type": "string"
+          },
+          "ClosedLoopManagementLifecycle": {
+            "type": "string"
+          },
+          "ClosedLoopManagementLifecycleSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopManagementMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopManagementMethod": {
+            "type": "string"
+          },
+          "ClosedLoopManagementPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopManagementPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopManagementSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopManagementSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopManagementState": {
+            "type": "string"
+          },
+          "ClosedLoopMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopModel": {
+            "type": "string"
+          },
+          "ClosedLoopPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopPriority": {
+            "type": "string"
+          },
+          "ClosedLoopRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopRelationshipSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopRole": {
+            "type": "string"
+          },
+          "ClosedLoopSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopSpecificationStatus": {
+            "type": "string"
+          },
+          "ClosedLoopState": {
+            "type": "string"
+          },
+          "ClosedLoopType": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflow": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowActivity": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowActivityManagement": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowActivityManagementMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowActivityMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowGoal": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowGoalPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowGroup": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowManagement": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowMeasure": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowPartyRole": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowPolicy": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowPriority": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowRole": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowSpecification": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowSpecificationRelationship": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowState": {
+            "type": "string"
+          },
+          "ClosedLoopWorkflowType": {
+            "type": "string"
+          },
+          "ClsoedLoopGoalManagementJobAdminLifecycle": {
+            "type": "string"
+          },
+          "ClsoedLoopGoalManagementJobAdminLifecycleState": {
+            "type": "string"
+          },
+          "CostSchedule": {
+            "type": "string"
+          },
+          "CostSchedule_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "Display1": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"+closedLoopDefinition\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"+closedLoopGoalManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"+closedLoopSpecification\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"<Main Subject Area>\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"Activity\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"BusinessRule\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"ClosedLoop\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"Goal\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"Management\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"Workflow\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopActivity\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopGoalManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopManagementComponent\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopManagementJob\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Entity(s) of \"_ClosedLoopWorkflow\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Goal": {
+            "type": "string"
+          },
+          "GoalApproach": {
+            "type": "string"
+          },
+          "GoalDirection": {
+            "type": "string"
+          },
+          "GoalGroup": {
+            "type": "string"
+          },
+          "GoalInstrument": {
+            "type": "string"
+          },
+          "GoalManagement": {
+            "type": "string"
+          },
+          "GoalManagementPartyRole": {
+            "type": "string"
+          },
+          "GoalManagementPolicy": {
+            "type": "string"
+          },
+          "GoalManagementSpecifcationRelationship": {
+            "type": "string"
+          },
+          "GoalManagementSpecification": {
+            "type": "string"
+          },
+          "GoalManagementState": {
+            "type": "string"
+          },
+          "GoalMeasure": {
+            "type": "string"
+          },
+          "GoalModel": {
+            "type": "string"
+          },
+          "GoalPartyRole": {
+            "type": "string"
+          },
+          "GoalPolicy": {
+            "type": "string"
+          },
+          "GoalSpecification": {
+            "type": "string"
+          },
+          "GoalSpecificationRelationship": {
+            "type": "string"
+          },
+          "GoalState": {
+            "type": "string"
+          },
+          "GoalStrategy": {
+            "type": "string"
+          },
+          "GoalTargetPartyRole": {
+            "type": "string"
+          },
+          "GoalTargetPartyRoleType": {
+            "type": "string"
+          },
+          "GoalType": {
+            "type": "string"
+          },
+          "IngressState": {
+            "type": "string"
+          },
+          "Management": {
+            "type": "string"
+          },
+          "ManagementCapability": {
+            "type": "string"
+          },
+          "ManagementCharacteristic": {
+            "type": "string"
+          },
+          "ManagementDomain": {
+            "type": "string"
+          },
+          "ManagementGroup": {
+            "type": "string"
+          },
+          "ManagementLevel": {
+            "type": "string"
+          },
+          "ManagementMeasure": {
+            "type": "string"
+          },
+          "ManagementModel": {
+            "type": "string"
+          },
+          "ManagementPartyRole": {
+            "type": "string"
+          },
+          "ManagementPlan": {
+            "type": "string"
+          },
+          "ManagementSpecification": {
+            "type": "string"
+          },
+          "ManagementSpecificationRelationship": {
+            "type": "string"
+          },
+          "ManagementType": {
+            "type": "string"
+          },
+          "Metric": {
+            "type": "string"
+          },
+          "Name": {
+            "description": "Definition",
+            "type": "string"
+          },
+          "One-to-Exactly-1": {
+            "type": "string"
+          },
+          "One-to-One-or-More (P)": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "One-to-Zero-One-or-More": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "One-to-Zero-or-One (Z)": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"Activity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ActivityState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleActions\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleConstraints\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleOperators\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRulePartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"BusinessRuleSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoop\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivityPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManaegmentJobTypeSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobAdmin\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobAdminState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobEval\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobExecution\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobExecutionState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementJobType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopGoalState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementCapability\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementComponent\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementComponentSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementGoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJob\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementJobSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementMethod\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopPriority\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopSpecificationRelationship\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowActivityManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowActivityManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClosedLoopWorkflowState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClsoedLoopGoalManagementJobAdminLifecycle\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ClsoedLoopGoalManagementJobAdminLifecycleState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"Goal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalStrategy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalTargetPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"GoalTargetPartyRoleType\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"Management\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementCapability\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementCharacteristic\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementDomain\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementGroup\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementPlan\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"ManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"PolicyBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"Workflow\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityCost\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivitySchedule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivitySpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowActivityState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowBusinessRule\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagement\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementApproval\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementGoal\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementGoalPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowManagementState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowMeasure\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowPartyRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowPolicy\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowRole\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowSpecification\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowStartEndActivity\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent Relationship(s) of \"WorkflowState\" Entity": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Parent to Child Phrase": {
+            "description": "Cardinality",
+            "type": "string"
+          },
+          "PartyRole": {
+            "type": "string"
+          },
+          "Policy": {
+            "type": "string"
+          },
+          "PolicyBusinessRule": {
+            "type": "string"
+          },
+          "ProducingEntity": {
+            "type": "string"
+          },
+          "Role": {
+            "type": "string"
+          },
+          "Role_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "Stored Display(s) of \"+closedLoopDefinition\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"+closedLoopGoalManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"+closedLoopSpecification\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"Activity\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"BusinessRule\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"ClosedLoop\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"Goal\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"Management\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"Metric\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"Workflow\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopActivity\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopGoalManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopManagement\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopManagementComponent\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopManagementJob\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Stored Display(s) of \"_ClosedLoopWorkflow\" Subject Area": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Subject Area": {
+            "type": "string"
+          },
+          "Subject Area(s) of \"CloasedLoop & Closely related Entities\" Diagram": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Workflow": {
+            "type": "string"
+          },
+          "WorkflowActivity": {
+            "type": "string"
+          },
+          "WorkflowActivityCost": {
+            "type": "string"
+          },
+          "WorkflowActivityCostType": {
+            "type": "string"
+          },
+          "WorkflowActivityGoal": {
+            "type": "string"
+          },
+          "WorkflowActivityGoalPolicy": {
+            "type": "string"
+          },
+          "WorkflowActivityGroup": {
+            "type": "string"
+          },
+          "WorkflowActivityLifecycle": {
+            "type": "string"
+          },
+          "WorkflowActivityMeasure": {
+            "type": "string"
+          },
+          "WorkflowActivityPartyRole": {
+            "type": "string"
+          },
+          "WorkflowActivitySchedule": {
+            "type": "string"
+          },
+          "WorkflowActivityScheduleType": {
+            "type": "string"
+          },
+          "WorkflowActivitySpecification": {
+            "type": "string"
+          },
+          "WorkflowActivitySpecificationRelationship": {
+            "type": "string"
+          },
+          "WorkflowActivityState": {
+            "type": "string"
+          },
+          "WorkflowActivityType": {
+            "type": "string"
+          },
+          "WorkflowBusinessRule": {
+            "type": "string"
+          },
+          "WorkflowBusinessRuleInstructions": {
+            "type": "string"
+          },
+          "WorkflowGoal": {
+            "type": "string"
+          },
+          "WorkflowGoalPolicy": {
+            "type": "string"
+          },
+          "WorkflowGroup": {
+            "type": "string"
+          },
+          "WorkflowManagement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementApproval": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementApprovalState": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementGoalPolicy": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementGroup": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementMeasure": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementPartyRole": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementPolicy": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementSpecification": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementSpecificationRelationship": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementState": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowManagementType": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "WorkflowMeasure": {
+            "type": "string"
+          },
+          "WorkflowPartyRole": {
+            "type": "string"
+          },
+          "WorkflowPolicy": {
+            "type": "string"
+          },
+          "WorkflowRole": {
+            "type": "string"
+          },
+          "WorkflowSpecification": {
+            "type": "string"
+          },
+          "WorkflowSpecificationRelationship": {
+            "type": "string"
+          },
+          "WorkflowStartEndActivity": {
+            "type": "string"
+          },
+          "WorkflowState": {
+            "type": "string"
+          },
+          "WorkflowTrigger": {
+            "type": "string"
+          },
+          "WorkflowType": {
+            "type": "string"
+          },
+          "Zero-or-One-to-One-or-More (P)": {
+            "type": "string"
+          },
+          "Zero-or-One-to-Zero-One-or-More": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "Zero-or-One-to-Zero-or-One (Z)": {
+            "type": "string"
+          },
+          "activityGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityLifecycle_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityPriority_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activitySpecifcation_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activitySpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activityType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "activity_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "actualCost": {
+            "type": "string"
+          },
+          "actualEnd": {
+            "description": "establishes when the closedloop",
+            "format": "date",
+            "type": "string"
+          },
+          "analyzer": {
+            "description": "Sets the partyRole delegated to analyze actions within management of the Goal.",
+            "type": "string"
+          },
+          "associatesTypeToClosedLoopGoalManagementJob": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "budgetCost": {
+            "type": "string"
+          },
+          "businessRuleActionsUnityType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleActions_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleArea_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleConstraint_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleManagementSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleManagementSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleOperator_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRulePartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleSpecificationRelationshipCharacteristics_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleTriggerEvent_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRuleType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "businessRule_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "characterizeAnActivityBasedOnClass": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "characterizeClosedLoopGoalManagementJobType": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "classifesGoalsByType": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "classifiesBusinessRules": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "closedLoopActivityGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivityGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivityMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivityPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivityPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivitySpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivitySpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopActivity_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopComponentSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopComponentSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopComponentType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopEndby_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementDomain_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementGoalMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobAdminLifecycleState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobAdminLifecycle_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobAdminState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobAdmin_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobEval_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobExecutionStates_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobExecution_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobTypeSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJobTypeSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementJob_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagementType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagemntJobPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalManagemntJobType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGoalType_id": {
+            "type": "string"
+          },
+          "closedLoopGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopLifecycle_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementBusinessRule_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementCapabilityType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementCapability_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementDomain_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementGoalMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJobType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementJob_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementLifecycleSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementLifecycle_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementMethod_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagementState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopMangementComponent_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopModel_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopPriority_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopRelationshipSpecification": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopSpecificationStatus_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowActivityManagementMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowActivityManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowActivityMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowActivity_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowPriority_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflowType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoopWorkflow_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "closedLoop_d": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "completion": {
+            "type": "boolean"
+          },
+          "completionEvent": {
+            "description": "A happening that trigger to completion of the activity.",
+            "type": "string"
+          },
+          "componentPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "conditions": {
+            "type": "string"
+          },
+          "constraintValue": {
+            "type": "string"
+          },
+          "consumingEntity": {
+            "type": "string"
+          },
+          "controlType": {
+            "description": "Establishes the control mechanism of the model",
+            "type": "string"
+          },
+          "controller": {
+            "description": "Sets the partyRole delegated to direct decisions that control actions within management of the Goal.",
+            "type": "string"
+          },
+          "craetionDate": {
+            "type": "string"
+          },
+          "crationDate": {
+            "type": "string"
+          },
+          "creationDate": {
+            "description": "Timestamp for creating an entry.",
+            "type": "string"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "defineClosedLoopGoalManagementJob": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "defineExitCriteria": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesActionToSetStateOfGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesActivityOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesCharacrteristicsForBusinessRuleRelationships": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesRelationshipsBetweenGoalSpecifications": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesStrategyOfGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "definesWorkflowOfAClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "dependent": {
+            "type": "string"
+          },
+          "descr": {
+            "description": "Text to describe the entry.",
+            "type": "string"
+          },
+          "describesClosedLoopManagementJobSpecificationRelationships": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "describesWorkflowManagement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "design": {
+            "description": "Provides the design of the model. Human-centered design, machine-centered design or hybrid.",
+            "type": "string"
+          },
+          "designatesIntrumentOfGoa": {
+            "description": "Zero-or-One-to-Zero-One-or-More",
+            "type": "string"
+          },
+          "domainGroup": {
+            "type": "string"
+          },
+          "domainManager": {
+            "description": "partyRole",
+            "type": "string"
+          },
+          "domainOwner": {
+            "description": "partyRole",
+            "type": "string"
+          },
+          "domainType": {
+            "type": "string"
+          },
+          "drive": {
+            "description": "States of model is policy driven or not.",
+            "type": "string"
+          },
+          "dsecr": {
+            "description": "Short descriptive text for this Business Rule Management entry. Inherits from Entity ABE.",
+            "type": "string"
+          },
+          "dsecribesManagementDomsinOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "egreePoint": {
+            "type": "string"
+          },
+          "egressPoint": {
+            "type": "string"
+          },
+          "egressState": {
+            "type": "string"
+          },
+          "end": {
+            "description": "establishes when the closedloop",
+            "format": "date",
+            "type": "string"
+          },
+          "endActivity": {
+            "description": "Represents the action that trips the workflow. Linked to Activity ABE.",
+            "type": "string"
+          },
+          "endEvent": {
+            "type": "string"
+          },
+          "errorEvent": {
+            "description": "Identifies events that signal occurence of an error.",
+            "type": "string"
+          },
+          "establishesGoalOwner": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "eventEnd": {
+            "type": "string"
+          },
+          "eventStart": {
+            "type": "string"
+          },
+          "exceptionEvent": {
+            "description": "Identifies events to signal abnormalities of the workflow.",
+            "type": "string"
+          },
+          "exitCondition": {
+            "description": "Identifies the condition to exit from the workflow.",
+            "type": "string"
+          },
+          "expectation": {
+            "description": "Sets the goal management expectations",
+            "type": "string"
+          },
+          "framework": {
+            "description": "States the management framework for this model.",
+            "type": "string"
+          },
+          "from": {
+            "description": "Source of goal achievement.",
+            "type": "string"
+          },
+          "goalApproach_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalDirection_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalInstrument_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagementPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagementPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagementSpecifciationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagementSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagementState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalModel_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalStrategy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalTargetType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalTarget_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goalType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "goal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "groupsActivityBasedOnSomeCharacteristics": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "groupsBusinessRules": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "identifiesGroupsOfWorkflows": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "identifiesRelationsBetweenClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "identifyRelationsBetweenClosedLoopManagementSpecs": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "importance": {
+            "type": "string"
+          },
+          "ingressPoint": {
+            "type": "string"
+          },
+          "ingressState": {
+            "type": "string"
+          },
+          "inputSource": {
+            "description": "Identifies source of input to the workflow.",
+            "type": "string"
+          },
+          "instantiateBusinessRuleForClosedLoopManagement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "instantiateGoalForWorkflow": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "instantiatesGoalForClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "instructionType": {
+            "type": "string"
+          },
+          "jobPriority": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "jobSchedule": {
+            "type": "string"
+          },
+          "lifecycleType": {
+            "type": "string"
+          },
+          "lifecycleTypeState": {
+            "type": "boolean"
+          },
+          "managementCapability_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementCategory": {
+            "type": "string"
+          },
+          "managementCharacteristic_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementDomain_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementLevel_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementModel_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementPlan_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managementStrategy": {
+            "type": "string"
+          },
+          "managementType": {
+            "type": "string"
+          },
+          "managementType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "management_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "managesPriortyOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "manner": {
+            "description": "Strategy link between goal instrument and goal approach.",
+            "type": "string"
+          },
+          "measureBy": {
+            "type": "string"
+          },
+          "measureGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "measurePeriod": {
+            "type": "string"
+          },
+          "measureState": {
+            "type": "string"
+          },
+          "mechanism": {
+            "type": "string"
+          },
+          "metric_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "name": {
+            "description": "A short label.",
+            "type": "string"
+          },
+          "ontologySource": {
+            "description": "Establishes the source of ontology for the management model.",
+            "type": "string"
+          },
+          "outputDestination": {
+            "description": "identifies a destination for the output of a workflow.",
+            "type": "string"
+          },
+          "overseesClosedLoopGoalManagementJobs": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "partyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "place": {
+            "description": "identifies the location where approval state was given.",
+            "type": "string"
+          },
+          "planEnd": {
+            "description": "Management plan's end data/time.",
+            "type": "string"
+          },
+          "planStart": {
+            "description": "Management plan's start data/time.",
+            "type": "string"
+          },
+          "planedEndDate": {
+            "type": "string"
+          },
+          "plannedCost": {
+            "type": "string"
+          },
+          "plannedDuration": {
+            "type": "string"
+          },
+          "plannedEnd": {
+            "description": "establishes when the closedloop",
+            "format": "date",
+            "type": "string"
+          },
+          "plannedStart": {
+            "description": "establishes when the closedloop",
+            "format": "date",
+            "type": "string"
+          },
+          "plannedStartDate": {
+            "type": "string"
+          },
+          "plannedTenure": {
+            "type": "string"
+          },
+          "planner": {
+            "description": "Sets the partyRole delegated to manage scheduling actions within management of the Goal.",
+            "type": "string"
+          },
+          "policyBusinessRule_id": {
+            "type": "string"
+          },
+          "policy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "processValue": {
+            "description": "Identifies the value to be assigned to the doAttribute.",
+            "type": "string"
+          },
+          "reasons": {
+            "type": "string"
+          },
+          "reporter": {
+            "description": "Sets the partyRole delegated to provide reporting for all actions within management of the Goal.",
+            "type": "string"
+          },
+          "sequentialOrder": {
+            "type": "string"
+          },
+          "setCharacteristicsOfClosedLoopManagementLifecycle": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setClosedLoopManagementToCollection": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setRelationshipBetweenClosedLoopGoalManagementJobTypeSpecifications": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setSpecificCharacteristicsOfClosedLoopManagementJob": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsApproachOfGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsBusinessAreaForBusinessRules": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsCharacteristicsOfClosedLoopRelationships": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsClosedLoopCategory": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsClosedLoopManagementCapabilityType": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsClosedLoopManagementJobAsPartOfCollection": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsClosedLoopManagementStatus": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsEntityAffectedByGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsGoalEndpoint": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsGroupOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsPartyRole": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsPartyRoleForMangement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsPartyRoleOfClosedLoop": {
+            "description": "Zero-or-One-to-Zero-One-or-More",
+            "type": "string"
+          },
+          "setsPartyRolesOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsPolicyForGoalManagement": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsRelationshipBetweenfClosedLoopComponentSpecifications": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsRelationshipModelOfGoal": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsStatusOfSpecificationOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsTypeClassificationOfClosedLoopWorkflow": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsTypeOfClosedLoopComponent": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsWorkflowGroupOfClosedLoop": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "setsWorkflowManagementPartyRole": {
+            "description": "linkTogetherWorkflows",
+            "type": "string"
+          },
+          "start": {
+            "description": "establishes when the closedloop",
+            "format": "date",
+            "type": "string"
+          },
+          "startActivity": {
+            "description": "Represents the action that triggers the workflow. Linked to activity_id",
+            "type": "string"
+          },
+          "startBy": {
+            "description": "Represents the trigger for a closedLoop to start.",
+            "type": "string"
+          },
+          "startEvent": {
+            "type": "string"
+          },
+          "state": {
+            "description": "Represents information the identifies goal management status over the lifecycle of the goal management.",
+            "type": "string"
+          },
+          "stateAfter": {
+            "type": "string"
+          },
+          "stateBefore": {
+            "type": "string"
+          },
+          "stateEgressCondition": {
+            "type": "string"
+          },
+          "stateIngresCondition": {
+            "type": "string"
+          },
+          "stateOrder": {
+            "type": "string"
+          },
+          "stateReasons": {
+            "description": "Free hand text to provide reasons attributable to the approval state.",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subType": {
+            "description": "Represents additional information that identify the secondary workflow types associated to a primary type.",
+            "type": "string"
+          },
+          "subtype": {
+            "description": "A sub-category of a end trigger.",
+            "type": "string"
+          },
+          "targetValue": {
+            "type": "string"
+          },
+          "to": {
+            "description": "Target entities affected by goal.",
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "unit": {
+            "description": "Represents the unit constraining the domain of the value identified in business rule.",
+            "type": "string"
+          },
+          "validFor": {
+            "description": "Period of time that signifies availability for use.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Represents the value to be assigned to this action.",
+            "type": "string"
+          },
+          "ver": {
+            "description": "Accounts for variations to specifications.",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "version__6634": {
+            "type": "string"
+          },
+          "whyInvoke": {
+            "description": "Sets the why of the business rule",
+            "type": "string"
+          },
+          "workflowActivityCostType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityCost_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityLifecycle_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityScheduleType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivitySchedule_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivitySpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivityType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowActivity_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowBusinessRuleInstruction_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowBusinessRule_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementApprovalState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementApproval_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementGoalPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementGoal_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementGroup_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementSpecifcation_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagementType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowManagement_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowMeasure_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowPartyRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowPolicy_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowRole_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowSpecificationRelationship_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowSpecification_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowStartEndActivity_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowState_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowTrigger_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflowType_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          },
+          "workflow_id": {
+            "description": "unique identifier",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    }
+  }
+}

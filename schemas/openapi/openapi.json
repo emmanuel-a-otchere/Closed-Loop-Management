@@ -304,6 +304,38 @@
         "title": "DecisionModelRef",
         "type": "object"
       },
+      "ErrorEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Details"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorEnvelope",
+        "type": "object"
+      },
       "Goal": {
         "additionalProperties": false,
         "properties": {

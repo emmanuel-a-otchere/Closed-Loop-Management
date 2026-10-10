@@ -1,0 +1,21 @@
+sequenceDiagram
+    autonumber
+    participant Client
+    participant API as CLAM API
+    participant Store as SQLite
+
+    Client->>API: POST /api/v1/decisionModel
+    API->>Store: INSERT decision_model
+    Store-->>API: id
+    API-->>Client: 201 + DecisionModel
+
+    Client->>API: POST /api/v1/closedLoop
+    Note right of API: body.decisionModelRef.id = <dm id>
+    API->>Store: INSERT closed_loop
+    Store-->>API: id
+    API-->>Client: 201 + ClosedLoop (state=designed)
+
+    Client->>API: POST /api/v1/closedLoop/{id}/state
+    Note right of API: targetState=validated
+    API->>Store: UPDATE state
+    API-->>Client: 200 + {state: validated}
