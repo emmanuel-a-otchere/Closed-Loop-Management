@@ -44,7 +44,7 @@ jobs:
           python -m openapi_spec_validator schemas/openapi/openapi.json --schema 3.1
       - name: Run oas-validator toolkit
         run: |
-          python -m machines.toolkits.oas_validator schemas/openapi/openapi.json
+          clam-oas-validator schemas/openapi/openapi.json
       - name: Snapshot check
         run: |
           git diff --quiet schemas/openapi/openapi.json || (echo "::warning::OpenAPI snapshot drifted from generated OAS. Re-run machines/scripts/export_openapi.py locally and commit."; exit 0)
