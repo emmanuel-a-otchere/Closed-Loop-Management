@@ -21,7 +21,7 @@ from ..models import (
     LinkKind,
     Page,
 )
-from ..store import CycleError, NotFoundError
+from ..store import CycleError, NotFoundError, TopologyError
 
 router = APIRouter(
     prefix="/api/v1/closedLoopLink",
@@ -50,6 +50,19 @@ def _cycle_response(exc: CycleError):
     )
 
 
+def _topology_response(exc: TopologyError):
+    return error_response(
+        status_code=409,
+        code=ErrorCode.TOPOLOGY_RULE,
+        message=str(exc),
+        details={
+            "rule": exc.rule,
+            "kind": exc.kind,
+            "offenders": [str(n) for n in exc.offenders],
+        },
+    )
+
+
 @router.post(
     "",
     response_model=ClosedLoopLink,
@@ -66,6 +79,8 @@ async def create_closed_loop_link(
         return await _store(request).create_closed_loop_link(payload)
     except CycleError as exc:
         return _cycle_response(exc)
+    except TopologyError as exc:
+        return _topology_response(exc)
 
 
 @router.post(
@@ -84,6 +99,8 @@ async def bulk_create_closed_loop_links(
         return await _store(request).bulk_create_closed_loop_links(payload.items)
     except CycleError as exc:
         return _cycle_response(exc)
+    except TopologyError as exc:
+        return _topology_response(exc)
 
 
 @router.get(

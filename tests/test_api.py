@@ -794,7 +794,7 @@ async def _make_closed_loop(client: AsyncClient) -> str:
 def _link_payload(
     source: str,
     target: str,
-    kind: str = "DAISY_CHAIN",
+    kind: str = "FEEDBACK",
     direction: str = "FORWARD",
 ) -> dict[str, object]:
     return {
@@ -990,3 +990,172 @@ async def test_link_oas_3_1_topology_paths_present(client: AsyncClient) -> None:
     schemas = spec["components"]["schemas"]
     assert "ClosedLoopLinkCreateBatch" in schemas
     assert "ClosedLoopTopology" in schemas
+
+
+# --- Slice 3 PR2 tests --------------------------------------------------------
+
+
+async def test_daisy_chain_single_outgoing_rejected(client: AsyncClient) -> None:
+    """DAISY_CHAIN source may have at most one outgoing DAISY_CHAIN link."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 201, r.text
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, c, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["code"] == "topology.rule_violated"
+    assert body["details"]["rule"] == "daisy_chain_single_outgoing"
+    assert body["details"]["kind"] == "DAISY_CHAIN"
+
+
+async def test_daisy_chain_single_incoming_rejected(client: AsyncClient) -> None:
+    """DAISY_CHAIN target may have at most one incoming DAISY_CHAIN link."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 201
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(c, b, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["details"]["rule"] == "daisy_chain_single_incoming"
+
+
+async def test_hierarchical_single_parent_rejected(client: AsyncClient) -> None:
+    """HIERARCHICAL target may have at most one HIERARCHICAL parent."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    child = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, child, kind="HIERARCHICAL"),
+    )
+    assert r.status_code == 201, r.text
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(b, child, kind="HIERARCHICAL"),
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["details"]["rule"] == "hierarchical_single_parent"
+
+
+async def test_feedback_peer_only_rejected(client: AsyncClient) -> None:
+    """FEEDBACK between ancestor/descendant is rejected."""
+    grandparent = await _make_closed_loop(client)
+    parent = await _make_closed_loop(client)
+    child = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(grandparent, parent, kind="HIERARCHICAL"),
+    )
+    assert r.status_code == 201
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(parent, child, kind="HIERARCHICAL"),
+    )
+    assert r.status_code == 201
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(grandparent, child, kind="FEEDBACK"),
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["details"]["rule"] == "feedback_peer_only"
+
+
+async def test_shadow_target_is_passive_rejected(client: AsyncClient) -> None:
+    """SHADOW target cannot drive a non-SHADOW link."""
+    primary = await _make_closed_loop(client)
+    mirror = await _make_closed_loop(client)
+    target = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(primary, mirror, kind="SHADOW"),
+    )
+    assert r.status_code == 201
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(mirror, target, kind="FEEDBACK"),
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["details"]["rule"] == "shadow_target_is_passive"
+
+
+async def test_topology_rule_envelope_shape(client: AsyncClient) -> None:
+    """Topology error envelope carries rule, kind, offenders."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 201
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(c, b, kind="DAISY_CHAIN"),
+    )
+    body = r.json()
+    assert body["code"] == "topology.rule_violated"
+    assert body["message"]
+    details = body["details"]
+    assert details["rule"] == "daisy_chain_single_incoming"
+    assert details["kind"] == "DAISY_CHAIN"
+    assert len(details["offenders"]) >= 2
+
+
+async def test_bulk_create_rejected_when_any_link_violates_rule(
+    client: AsyncClient,
+) -> None:
+    """All-or-nothing: a single topology violation rejects the whole batch."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, c, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 201
+    payload = {"items": [_link_payload(a, b, kind="DAISY_CHAIN")]}
+    r = await client.post("/api/v1/closedLoopLink/bulk", json=payload)
+    assert r.status_code == 409
+    assert r.json()["details"]["rule"] == "daisy_chain_single_outgoing"
+    # Verify nothing was persisted: only the original a->c link remains.
+    r = await client.get(f"/api/v1/closedLoopLink/from/{a}")
+    assert r.status_code == 200
+    links = r.json()
+    assert len(links) == 1
+    assert links[0]["target"]["id"] == c
+
+
+async def test_daisy_chain_chain_accepted(client: AsyncClient) -> None:
+    """A linear DAISY_CHAIN (a->b->c) is accepted."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    r1 = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    r2 = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(b, c, kind="DAISY_CHAIN"),
+    )
+    assert r1.status_code == 201, r1.text
+    assert r2.status_code == 201, r2.text

@@ -20,6 +20,7 @@ class ErrorCode(StrEnum):
     STATE_TRANSITION_INVALID = "closed_loop.state_transition_invalid"
     LIFECYCLE_CONSTRAINT = "lifecycle.constraint_violated"
     CYCLE_DETECTED = "topology.cycle_detected"
+    TOPOLOGY_RULE = "topology.rule_violated"
     INTERNAL_ERROR = "server.internal_error"
     DUPLICATE = "resource.duplicate"
 
