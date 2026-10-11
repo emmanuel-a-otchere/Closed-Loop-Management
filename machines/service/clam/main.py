@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -26,6 +28,7 @@ from .routers import (
     decision_model,
     goal,
     health,
+    request_log,
     workflow,
 )
 from .store import Store
@@ -138,6 +141,61 @@ def create_app(db_path: Path | None = None) -> FastAPI:
 
         return await call_next(request)  # type: ignore[operator]
 
+    @app.middleware("http")
+    async def _request_log_middleware(
+        request: Request, call_next: object
+    ) -> object:
+        """Structured request log middleware (PR1).
+
+        Captures method / path / status / latency_ms / request_id /
+        principal_id / source_ip / user_agent for every request
+        and writes the row to the request_log table after the
+        response is produced. Log writes are best-effort: a write
+        failure does not surface to the caller.
+        """
+        started = time.perf_counter()
+        # Correlation id: header X-Correlation-Id if present, else UUID4.
+        request_id = (
+            request.headers.get("x-correlation-id") or str(uuid.uuid4())
+        )
+        request.state.correlation_id = request_id
+        # Echo the id back to the caller for client-side correlation.
+        try:
+            response = await call_next(request)  # type: ignore[operator]
+        except Exception:  # pragma: no cover - defensive
+            response = JSONResponse(
+                status_code=500,
+                content=error_envelope(
+                    code=ErrorCode.INTERNAL_ERROR,
+                    message="Unhandled error.",
+                ).model_dump(),
+            )
+        latency_ms = (time.perf_counter() - started) * 1000.0
+        # Best-effort write.
+        try:
+            principal = getattr(request.state, "principal", None)
+            principal_id = (
+                principal.token_id if principal and getattr(principal, "token_id", None) else None
+            )
+            source_ip = (
+                request.client.host if request.client else None
+            )
+            user_agent = request.headers.get("user-agent")
+            await store.record_request_log(
+                method=request.method,
+                path=request.url.path,
+                status=response.status_code,
+                latency_ms=latency_ms,
+                request_id=request_id,
+                principal_id=principal_id,
+                source_ip=source_ip,
+                user_agent=user_agent,
+            )
+        except Exception:  # pragma: no cover - log failures are silent
+            pass
+        response.headers["x-correlation-id"] = request_id
+        return response
+
     app.state.store = store
 
     @app.exception_handler(RequestValidationError)
@@ -179,6 +237,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     app.include_router(workflow.router)
     app.include_router(goal.router)
     app.include_router(closed_loop_link.router)
+    app.include_router(request_log.router)
 
     @app.get(
         "/",

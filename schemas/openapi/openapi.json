@@ -1502,6 +1502,120 @@
         "title": "Page",
         "type": "object"
       },
+      "RequestLogEntry": {
+        "additionalProperties": false,
+        "description": "A single request log row (PR1).\n\nSurfaces the structured request telemetry captured by the\nrequest-log middleware. The principal_id is the bearer token id\nwhen auth is enabled, or null otherwise. The request_id is the\ncorrelation id (header X-Correlation-Id or generated UUID4).",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "latencyMs": {
+            "title": "Latencyms",
+            "type": "number"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "principalId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principalid"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "sourceIp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceip"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          },
+          "userAgent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Useragent"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "method",
+          "path",
+          "status",
+          "latencyMs",
+          "requestId"
+        ],
+        "title": "RequestLogEntry",
+        "type": "object"
+      },
+      "RequestLogPage": {
+        "additionalProperties": false,
+        "description": "Cursor-paginated recent request log entries (PR1).",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RequestLogEntry"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "limit"
+        ],
+        "title": "RequestLogPage",
+        "type": "object"
+      },
       "StateResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1881,6 +1995,72 @@
         "summary": "API root",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/_log/recent": {
+      "get": {
+        "description": "Return the most recent request-log entries (newest first).",
+        "operationId": "recent_request_log_api_v1__log_recent_get",
+        "parameters": [
+          {
+            "description": "Page size (1..1000, default 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Page size (1..1000, default 100)",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor (the previous page's nextCursor)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque cursor (the previous page's nextCursor)",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestLogPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recent request-log entries (cursor-paginated, ts DESC)",
+        "tags": [
+          "observability"
         ]
       }
     },

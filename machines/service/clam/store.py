@@ -11,7 +11,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import aiosqlite
 
@@ -37,6 +37,7 @@ from .models import (
     MapeDecisionModel,
     NestedClosedLoopRollup,
     OodaDecisionModel,
+    RequestLogEntry,
     StateTransitionRequest,
     Workflow,
     WorkflowCreate,
@@ -127,6 +128,23 @@ CREATE INDEX IF NOT EXISTS idx_workflow_activity_activity
     ON workflow_activity(activity_id);
 CREATE INDEX IF NOT EXISTS idx_closed_loop_workflow_workflow
     ON closed_loop_workflow(workflow_id);
+
+-- Slice 4 PR1: structured request log.
+CREATE TABLE IF NOT EXISTS request_log (
+    id TEXT PRIMARY KEY,
+    ts TEXT NOT NULL,
+    method TEXT NOT NULL,
+    path TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    latency_ms REAL NOT NULL,
+    request_id TEXT NOT NULL,
+    principal_id TEXT,
+    source_ip TEXT,
+    user_agent TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_request_log_ts
+    ON request_log(ts DESC);
 """
 
 
@@ -1779,6 +1797,128 @@ class Store:
             ) as cur:
                 rows = await cur.fetchall()
         return [(UUID(r["target_id"]), LinkKind(r["kind"])) for r in rows]
+
+    # --- RequestLog (PR1) ---------------------------------------------------
+
+    async def record_request_log(
+        self,
+        *,
+        method: str,
+        path: str,
+        status: int,
+        latency_ms: float,
+        request_id: str,
+        principal_id: str | None = None,
+        source_ip: str | None = None,
+        user_agent: str | None = None,
+    ) -> RequestLogEntry:
+        """Persist a single request-log row (PR1).
+
+        The row id is a fresh UUID4; the timestamp is the server's
+        current UTC clock. Writes are fire-and-forget from the
+        middleware's perspective: callers should not raise on a
+        write failure (log errors do not break the request path).
+        """
+        now = datetime.now(UTC)
+        row_id = uuid4()
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO request_log ("
+                "id, ts, method, path, status, latency_ms, "
+                "request_id, principal_id, source_ip, user_agent"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    str(row_id),
+                    now.isoformat(),
+                    method,
+                    path,
+                    status,
+                    latency_ms,
+                    request_id,
+                    principal_id,
+                    source_ip,
+                    user_agent,
+                ),
+            )
+            await db.commit()
+        return RequestLogEntry(
+            id=row_id,
+            ts=now,
+            method=method,
+            path=path,
+            status=status,
+            latencyMs=latency_ms,
+            requestId=request_id,
+            principalId=principal_id,
+            sourceIp=source_ip,
+            userAgent=user_agent,
+        )
+
+    async def list_request_log(
+        self, *, limit: int = 100, before_id: UUID | None = None
+    ) -> tuple[list[RequestLogEntry], UUID | None]:
+        """Return the most recent N request-log entries (PR1).
+
+        The list is ordered ts DESC, id DESC tie-break; pagination
+        uses an opaque cursor (the last row's id, encoded by the
+        caller).
+
+        The cursor is interpreted as: "rows older than the row
+        with this id". We resolve the cursor row's ts first and
+        then select rows with a strictly-older ts, tie-broken by
+        id. UUID4 values are not monotonic, so the cursor must
+        be a ts pair (cursor_ts + cursor_id); for simplicity we
+        look up the cursor row's ts and use ts < cursor_ts as
+        the WHERE.
+        """
+        limit = max(1, min(int(limit), 1000))
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor_ts: str | None = None
+            if before_id is not None:
+                async with db.execute(
+                    "SELECT ts FROM request_log WHERE id = ?",
+                    (str(before_id),),
+                ) as cur:
+                    row = await cur.fetchone()
+                if row is None:
+                    cursor_ts = "9999-12-31T23:59:59.999999+00:00"
+                else:
+                    cursor_ts = row["ts"]
+            if cursor_ts is None:
+                async with db.execute(
+                    "SELECT id, ts, method, path, status, latency_ms, "
+                    "request_id, principal_id, source_ip, user_agent "
+                    "FROM request_log ORDER BY ts DESC, id DESC LIMIT ?",
+                    (limit,),
+                ) as cur:
+                    rows = await cur.fetchall()
+            else:
+                async with db.execute(
+                    "SELECT id, ts, method, path, status, latency_ms, "
+                    "request_id, principal_id, source_ip, user_agent "
+                    "FROM request_log WHERE ts < ? "
+                    "ORDER BY ts DESC, id DESC LIMIT ?",
+                    (cursor_ts, limit),
+                ) as cur:
+                    rows = await cur.fetchall()
+        items = [
+            RequestLogEntry(
+                id=UUID(r["id"]),
+                ts=datetime.fromisoformat(r["ts"]),
+                method=r["method"],
+                path=r["path"],
+                status=r["status"],
+                latencyMs=r["latency_ms"],
+                requestId=r["request_id"],
+                principalId=r["principal_id"],
+                sourceIp=r["source_ip"],
+                userAgent=r["user_agent"],
+            )
+            for r in rows
+        ]
+        next_cursor = items[-1].id if len(items) == limit else None
+        return items, next_cursor
 
     # --- DecisionModel ------------------------------------------------------
 

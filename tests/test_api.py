@@ -1676,3 +1676,100 @@ async def test_goal_rollup_depth_caps_at_max_depth(client: AsyncClient) -> None:
     # (No dedicated no-nested endpoint yet; the path is covered by the
     # default. We add a stub assertion to keep the test suite aligned.)
     assert isinstance(body["depth"], int)
+
+
+# --- Slice 4 PR1 tests --------------------------------------------------------
+
+
+async def test_request_log_records_each_request(client: AsyncClient) -> None:
+    """Every successful request leaves a request_log row."""
+    r = await client.get("/health")
+    assert r.status_code == 200
+    r = await client.get("/api/v1/_log/recent?limit=10")
+    assert r.status_code == 200
+    body = r.json()
+    paths = [item["path"] for item in body["items"]]
+    assert "/health" in paths
+
+
+async def test_request_log_echoes_correlation_header(
+    client: AsyncClient,
+) -> None:
+    """Server echoes the X-Correlation-Id header when supplied."""
+    cid = "test-correlation-id-12345"
+    r = await client.get("/health", headers={"X-Correlation-Id": cid})
+    assert r.status_code == 200
+    assert r.headers.get("x-correlation-id") == cid
+
+
+async def test_request_log_generates_correlation_id_when_absent(
+    client: AsyncClient,
+) -> None:
+    """Server generates a UUID4 correlation id when no header is sent."""
+    r = await client.get("/health")
+    assert r.status_code == 200
+    cid = r.headers.get("x-correlation-id")
+    assert cid is not None
+    # Should be a UUID.
+    from uuid import UUID
+
+    UUID(cid)  # raises if not a uuid
+
+
+async def test_request_log_pagination_limit(client: AsyncClient) -> None:
+    """limit=3 returns at most 3 entries."""
+    for _ in range(5):
+        await client.get("/health")
+    r = await client.get("/api/v1/_log/recent?limit=3")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) <= 3
+    assert body["limit"] == 3
+
+
+async def test_request_log_pagination_cursor(client: AsyncClient) -> None:
+    """A cursor paginates through the older entries."""
+    for _ in range(6):
+        await client.get("/health")
+    r1 = await client.get("/api/v1/_log/recent?limit=2")
+    assert r1.status_code == 200
+    page1 = r1.json()
+    assert len(page1["items"]) == 2
+    assert page1["nextCursor"] is not None
+    # Page 2 with cursor.
+    r2 = await client.get(
+        f"/api/v1/_log/recent?limit=2&cursor={page1['nextCursor']}"
+    )
+    assert r2.status_code == 200
+    page2 = r2.json()
+    # Page 2 must not overlap page 1.
+    page1_ids = {item["id"] for item in page1["items"]}
+    page2_ids = {item["id"] for item in page2["items"]}
+    assert page1_ids.isdisjoint(page2_ids)
+
+
+async def test_request_log_records_status_and_latency(
+    client: AsyncClient,
+) -> None:
+    """Each row carries status code and latency in ms."""
+    r = await client.get("/health")
+    cid = r.headers["x-correlation-id"]
+    r = await client.get("/api/v1/_log/recent?limit=20")
+    body = r.json()
+    matches = [i for i in body["items"] if i["requestId"] == cid]
+    assert len(matches) == 1
+    assert matches[0]["status"] == 200
+    assert matches[0]["latencyMs"] >= 0
+    assert matches[0]["method"] == "GET"
+
+
+async def test_request_log_invalid_cursor_422(client: AsyncClient) -> None:
+    r = await client.get("/api/v1/_log/recent?cursor=not-a-uuid")
+    assert r.status_code == 422
+
+
+async def test_oas_3_1_request_log_path_present(client: AsyncClient) -> None:
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/_log/recent" in paths
