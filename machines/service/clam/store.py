@@ -33,6 +33,7 @@ from .models import (
     GoalCreate,
     GoalDirection,
     GoalUpdate,
+    LinkKind,
     MapeDecisionModel,
     OodaDecisionModel,
     StateTransitionRequest,
@@ -192,6 +193,27 @@ class LifecycleConstraintError(Exception):
         super().__init__(message)
 
 
+def hierarchical_closure(
+    graph: dict[UUID, list[tuple[UUID, LinkKind]]],
+) -> dict[UUID, set[UUID]]:
+    """Compute the transitive closure of HIERARCHICAL edges.
+
+    Returns ``source -> {all nodes reachable through HIERARCHICAL edges}``.
+    """
+    closure: dict[UUID, set[UUID]] = {}
+    for src in graph:
+        seen: set[UUID] = set()
+        stack: list[UUID] = [src]
+        while stack:
+            cur = stack.pop()
+            for nxt, k in graph.get(cur, []):
+                if k is LinkKind.HIERARCHICAL and nxt not in seen:
+                    seen.add(nxt)
+                    stack.append(nxt)
+        closure[src] = seen
+    return closure
+
+
 class NotFoundError(Exception):
     """Raised when an entity lookup fails."""
 
@@ -201,6 +223,29 @@ class CycleError(Exception):
 
     def __init__(self, *, cycle: list[UUID], message: str) -> None:
         self.cycle = cycle
+        super().__init__(message)
+
+
+class TopologyError(Exception):
+    """Raised when a proposed link violates a per-kind topology rule.
+
+    PR2 of Slice 3 layers per-kind semantics on top of cycle detection.
+    The rule that failed and the offending nodes are exposed for the
+    error envelope.
+    """
+
+    def __init__(
+        self,
+        *,
+        rule: str,
+        kind: str,
+        offenders: list[UUID],
+        message: str,
+    ) -> None:
+        self.rule = rule
+        self.kind = kind
+        self.offenders = offenders
+        self.message = message
         super().__init__(message)
 
 
@@ -781,6 +826,173 @@ class Store:
             graph.setdefault(src, []).append(tgt)
         return graph
 
+    async def create_closed_loop_pairwise_graph_with_kinds(
+        self,
+    ) -> dict[UUID, list[tuple[UUID, LinkKind]]]:
+        """Forward adjacency map with link kind attached.
+
+        Used by per-kind topology rules. Returns
+        ``source -> [(target, kind), ...]``.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT source_id, target_id, kind FROM closed_loop_link"
+            ) as cur:
+                rows = await cur.fetchall()
+        graph: dict[UUID, list[tuple[UUID, LinkKind]]] = {}
+        for row in rows:
+            src = UUID(row["source_id"])
+            tgt = UUID(row["target_id"])
+            kind = LinkKind(row["kind"])
+            graph.setdefault(src, []).append((tgt, kind))
+        return graph
+
+    async def validate_kind_topology(
+        self,
+        *,
+        source_id: UUID,
+        target_id: UUID,
+        kind: LinkKind,
+        proposed_edges: list[tuple[UUID, UUID, LinkKind]] | None = None,
+    ) -> None:
+        """Raise TopologyError if the proposed link violates per-kind rules.
+
+        Rules per kind (Slice 3 PR2):
+
+        - DAISY_CHAIN: linear-only. The source may have at most one
+          outgoing DAISY_CHAIN edge and the target may have at most
+          one incoming DAISY_CHAIN edge. A node cannot appear in
+          multiple positions of a daisy chain.
+        - HIERARCHICAL: parent/child acyclic tree. Cycle detection
+          already enforces acyclicity; here we additionally enforce
+          that the target has no other HIERARCHICAL parent and the
+          source has no other HIERARCHICAL child for this slot
+          (i.e., a node has at most one HIERARCHICAL parent).
+        - FEEDBACK: peer-only. The source and target must NOT have an
+          ancestor / descendant relationship in the HIERARCHICAL
+          subgraph (neither is the parent/child of the other in
+          any depth).
+        - SHADOW: read-only mirror. A SHADOW target cannot itself be
+          a source of any non-SHADOW link (the shadow mirror must
+          stay passive).
+
+        ``proposed_edges`` is an optional batch of edges that the
+        caller is about to commit (used by bulk_create); when given,
+        those edges are merged with the persisted graph for
+        validation.
+        """
+        # Build a working graph.
+        persisted = await self.create_closed_loop_pairwise_graph_with_kinds()
+        if proposed_edges:
+            for src, tgt, k in proposed_edges:
+                persisted.setdefault(src, []).append((tgt, k))
+
+        # Short-circuit on self-loop; cycle detection handles this
+        # already and the per-kind rules only add structure.
+        if source_id == target_id:
+            return
+
+        if kind is LinkKind.DAISY_CHAIN:
+            # Source may have at most one outgoing DAISY_CHAIN.
+            outgoing = persisted.get(source_id, [])
+            existing_daisy_out = [
+                tgt for tgt, k in outgoing if k is LinkKind.DAISY_CHAIN
+            ]
+            if existing_daisy_out:
+                raise TopologyError(
+                    rule="daisy_chain_single_outgoing",
+                    kind=kind.value,
+                    offenders=[source_id, *existing_daisy_out],
+                    message=(
+                        f"DAISY_CHAIN source {source_id} already has "
+                        f"{len(existing_daisy_out)} downstream DAISY_CHAIN "
+                        "link(s); only one is allowed (linear chain)."
+                    ),
+                )
+            # Target may have at most one incoming DAISY_CHAIN.
+            for src, edges in persisted.items():
+                for tgt, k in edges:
+                    if tgt == target_id and k is LinkKind.DAISY_CHAIN:
+                        raise TopologyError(
+                            rule="daisy_chain_single_incoming",
+                            kind=kind.value,
+                            offenders=[target_id, src],
+                            message=(
+                                f"DAISY_CHAIN target {target_id} already "
+                                f"has an incoming DAISY_CHAIN link from "
+                                f"{src}; only one is allowed."
+                            ),
+                        )
+
+        elif kind is LinkKind.HIERARCHICAL:
+            # Target may have at most one HIERARCHICAL parent.
+            for src, edges in persisted.items():
+                for tgt, k in edges:
+                    if tgt == target_id and k is LinkKind.HIERARCHICAL:
+                        raise TopologyError(
+                            rule="hierarchical_single_parent",
+                            kind=kind.value,
+                            offenders=[target_id, src],
+                            message=(
+                                f"HIERARCHICAL target {target_id} already "
+                                f"has a HIERARCHICAL parent {src}; each node "
+                                "may have at most one parent."
+                            ),
+                        )
+
+        elif kind is LinkKind.FEEDBACK:
+            # Source and target must be peers (no ancestor/descendant
+            # relationship through HIERARCHICAL edges).
+            hier = hierarchical_closure(persisted)
+            for a, b in (
+                (source_id, target_id),
+                (target_id, source_id),
+            ):
+                if b in hier.get(a, set()):
+                    raise TopologyError(
+                        rule="feedback_peer_only",
+                        kind=kind.value,
+                        offenders=[source_id, target_id],
+                        message=(
+                            f"FEEDBACK link between {source_id} and "
+                            f"{target_id} violates peer-only rule "
+                            "(ancestor/descendant relationship exists)."
+                        ),
+                    )
+
+        elif kind is LinkKind.SHADOW:
+            # SHADOW target must not itself be a source of any
+            # non-SHADOW link (the shadow mirror is passive).
+            for tgt, k in persisted.get(target_id, []):
+                if k is not LinkKind.SHADOW:
+                    raise TopologyError(
+                        rule="shadow_target_is_passive",
+                        kind=kind.value,
+                        offenders=[target_id, tgt],
+                        message=(
+                            f"SHADOW target {target_id} already drives a "
+                            f"non-SHADOW link to {tgt}; SHADOW mirrors "
+                            "must be read-only."
+                        ),
+                    )
+        # The mirror itself (source of a non-SHADOW link) must not be a
+        # SHADOW target of another node: SHADOW targets stay passive.
+        if kind is not LinkKind.SHADOW:
+            for src, edges in persisted.items():
+                for tgt, k in edges:
+                    if tgt == source_id and k is LinkKind.SHADOW:
+                        raise TopologyError(
+                            rule="shadow_target_is_passive",
+                            kind=kind.value,
+                            offenders=[source_id, src],
+                            message=(
+                                f"Non-SHADOW source {source_id} is itself a "
+                                f"SHADOW target of {src}; SHADOW mirrors "
+                                "must be read-only and cannot drive links."
+                            ),
+                        )
+
     async def detect_cycle(
         self, source_id: UUID, target_id: UUID
     ) -> list[UUID]:
@@ -899,6 +1111,7 @@ class Store:
                     ),
                 )
         existing = await self.create_closed_loop_pairwise_graph()
+        proposed: list[tuple[UUID, UUID, LinkKind]] = []
         for i, link in enumerate(links):
             src, tgt = link.source.id, link.target.id
             merged = {k: list(v) for k, v in existing.items()}
@@ -913,6 +1126,15 @@ class Store:
                         "with the existing link graph."
                     ),
                 )
+            # Per-kind topology rules: validate against the persisted
+            # graph + the proposed edges accepted so far.
+            await self.validate_kind_topology(
+                source_id=src,
+                target_id=tgt,
+                kind=link.kind,
+                proposed_edges=proposed,
+            )
+            proposed.append((src, tgt, link.kind))
         now = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
             for link in links:
@@ -966,7 +1188,7 @@ class Store:
         return []
 
     async def create_closed_loop_link(self, link: ClosedLoopLink) -> ClosedLoopLink:
-        """Insert a single link; raise CycleError if it would close a cycle."""
+        """Insert a single link; raise on cycle or topology rule violation."""
         cycle = await self.detect_cycle(link.source.id, link.target.id)
         if cycle:
             raise CycleError(
@@ -976,6 +1198,11 @@ class Store:
                     "link graph."
                 ),
             )
+        await self.validate_kind_topology(
+            source_id=link.source.id,
+            target_id=link.target.id,
+            kind=link.kind,
+        )
         now = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
