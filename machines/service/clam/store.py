@@ -35,6 +35,7 @@ from .models import (
     GoalUpdate,
     LinkKind,
     MapeDecisionModel,
+    NestedClosedLoopRollup,
     OodaDecisionModel,
     StateTransitionRequest,
     Workflow,
@@ -1526,44 +1527,157 @@ class Store:
             )
 
     async def aggregate_closed_loop_goals(
-        self, loop_id: UUID
+        self,
+        loop_id: UUID,
+        *,
+        include_nested: bool = True,
+        nested_kinds: tuple[LinkKind, ...] = (
+            LinkKind.HIERARCHICAL,
+            LinkKind.DAISY_CHAIN,
+        ),
+        max_depth: int = 5,
     ) -> dict[str, object]:
-        """Aggregate all goals scoped to the closed loop (PR2).
+        """Aggregate all goals scoped to the closed loop (PR2 + PR4 nested rollup).
 
-        Includes goals with:
-        - ``scope=CLOSED_LOOP`` and ``scopeRef=loop_id``
-        - ``scope=WORKFLOW`` and ``scopeRef`` in any of the loop's workflow refs
-        - ``scope=ACTIVITY`` and ``scopeRef`` in any of those workflows' activity refs
-        - the goal blobs nested inside the ``ClosedLoop.goals`` field
+        PR4 adds nested rollup: the rollup at the target loop also
+        includes goals from loops reachable through the topology
+        graph via outgoing edges whose kind is in ``nested_kinds``
+        (default: HIERARCHICAL + DAISY_CHAIN). FEEDBACK peers are
+        excluded; SHADOW mirrors are excluded.
 
-        For each goal, evaluate whether the latest ``currentValue`` satisfies
-        the target direction (``AT_LEAST``, ``AT_MOST``, ``EXACTLY``).
+        Per-kind semantics:
+
+        - HIERARCHICAL outgoing (parent -> child): child goals count
+          toward the parent rollup. This is the natural "parent loop
+          includes child goals" semantics.
+        - DAISY_CHAIN outgoing (upstream -> downstream): downstream
+          goals count toward the upstream rollup. The chain is a
+          linear pipeline; achievement propagates through it.
+        - FEEDBACK outgoing (peer): excluded. Feedback loops are
+          peers, not a hierarchy; their goals do not aggregate.
+        - SHADOW outgoing (primary -> mirror): excluded. Mirror
+          goals are read-only and do not affect primary achievement.
+
+        The depth limit prevents runaway recursion on graphs with
+        cycles (which should not exist -- cycle detection runs at
+        link creation -- but is a belt-and-suspenders safeguard).
+
+        Returns a dict compatible with ClosedLoopGoalRollup:
+          closedLoopId, goalCount, achievedCount, achievementPercent,
+          goals, nested (list of rollups), depth.
+        """
+        visited: set[UUID] = set()
+        nested_rollups: list[NestedClosedLoopRollup] = []
+        aggregated_goals: list[Goal] = []
+        direct_goals: list[Goal] = []
+        max_depth_reached = 0
+
+        async def walk(current: UUID, depth: int) -> None:
+            if current in visited:
+                return
+            visited.add(current)
+            nonlocal max_depth_reached
+            if depth > max_depth_reached:
+                max_depth_reached = depth
+            rollup = await self._rollup_single_loop(
+                current, direct_goals_out=direct_goals if current == loop_id else None
+            )
+            goals_here: list[Goal] = rollup["goals"]  # type: ignore[assignment]
+            if current == loop_id:
+                # Seed the unified goal list with the target loop's
+                # own goals (including dedupe with the payload's
+                # ClosedLoop.goals list).
+                aggregated_goals.extend(goals_here)
+                direct_goals.extend(goals_here)
+            else:
+                aggregated_goals.extend(goals_here)
+                # Nested rollups are reported under their parent
+                # but we don't double-count by including them again
+                # in the goals[] list (they're already in aggregated).
+                nested_rollups.append(
+                    NestedClosedLoopRollup(
+                        closedLoopId=current,
+                        depth=depth,
+                        goalCount=rollup["goalCount"],  # type: ignore[arg-type]
+                        achievedCount=rollup["achievedCount"],  # type: ignore[arg-type]
+                        achievementPercent=rollup["achievementPercent"],  # type: ignore[arg-type]
+                    )
+                )
+            if not include_nested or depth >= max_depth:
+                return
+            # Walk outgoing edges whose kind is in nested_kinds.
+            outgoing = await self._outgoing_link_kinds(current)
+            for child, kind in outgoing:
+                if kind in nested_kinds:
+                    await walk(child, depth + 1)
+
+        await walk(loop_id, 0)
+
+        # Dedupe by goal id (later wins = deepest scope).
+        seen: dict[UUID, Goal] = {}
+        for g in aggregated_goals:
+            seen[g.id] = g
+        unique_goals = list(seen.values())
+
+        # Achievement evaluation over the deduped set.
+        achieved_count = 0
+        for goal in unique_goals:
+            if goal.currentValue is None:
+                continue
+            target_value = goal.target.value
+            direction = goal.target.direction
+            if direction == GoalDirection.AT_LEAST:
+                satisfied = goal.currentValue >= target_value
+            elif direction == GoalDirection.AT_MOST:
+                satisfied = goal.currentValue <= target_value
+            else:  # EXACTLY
+                satisfied = goal.currentValue == target_value
+            if satisfied:
+                achieved_count += 1
+
+        total = len(unique_goals)
+        percent = (achieved_count / total * 100.0) if total else 0.0
+        return {
+            "closedLoopId": loop_id,
+            "goalCount": total,
+            "achievedCount": achieved_count,
+            "achievementPercent": round(percent, 2),
+            "goals": unique_goals,
+            "nested": nested_rollups,
+            "depth": max_depth_reached,
+        }
+
+    async def _rollup_single_loop(
+        self, loop_id: UUID, *, direct_goals_out: list[Goal] | None = None
+    ) -> dict[str, object]:
+        """Compute the goal rollup for a single loop (no nested expansion).
+
+        Internal helper used by aggregate_closed_loop_goals. Includes
+        CLOSED_LOOP / WORKFLOW / ACTIVITY-scoped goals reachable via
+        the junction tables (PR3), plus the payload's nested
+        ``ClosedLoop.goals`` list.
         """
         loop = await self.get_closed_loop(loop_id)
-        direct_goals: list[Goal] = list(loop.goals)
+        direct = list(loop.goals)
+        if direct_goals_out is not None:
+            direct_goals_out.clear()
+            direct_goals_out.extend(direct)
 
-        # Workflow / activity scopes that contribute to this loop's rollup.
-        workflow_ids: set[UUID] = {ref.id for ref in loop.workflows}
-        activity_ids: set[UUID] = set()
-        for workflow_id in workflow_ids:
-            try:
-                workflow = await self.get_workflow(workflow_id)
-            except NotFoundError:
-                continue
-            activity_ids.update(ref.id for ref in workflow.activities)
+        # Workflow / activity IDs from the junction tables.
+        workflow_ids = await self._workflow_ids_for_loop(loop_id)
+        activity_ids = await self._activity_ids_for_workflows(workflow_ids)
 
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            # CLOSED_LOOP scoped
             async with db.execute(
                 "SELECT payload FROM goal WHERE scope = 'CLOSED_LOOP' "
                 "AND json_extract(payload, '$.scopeRef') = ?",
                 (str(loop_id),),
             ) as cur:
                 closed_loop_goals = [
-                    Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                    Goal.model_validate_json(r["payload"])
+                    for r in await cur.fetchall()
                 ]
-            # WORKFLOW scoped
             workflow_scoped_rows: list[Goal] = []
             if workflow_ids:
                 placeholders = ",".join("?" for _ in workflow_ids)
@@ -1573,9 +1687,9 @@ class Store:
                     [str(w) for w in workflow_ids],
                 ) as cur:
                     workflow_scoped_rows = [
-                        Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                        Goal.model_validate_json(r["payload"])
+                        for r in await cur.fetchall()
                     ]
-            # ACTIVITY scoped
             activity_scoped_rows: list[Goal] = []
             if activity_ids:
                 placeholders = ",".join("?" for _ in activity_ids)
@@ -1585,20 +1699,19 @@ class Store:
                     [str(a) for a in activity_ids],
                 ) as cur:
                     activity_scoped_rows = [
-                        Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                        Goal.model_validate_json(r["payload"])
+                        for r in await cur.fetchall()
                     ]
 
-        # Deduplicate by goal id, keeping the row from the deepest scope.
         by_id: dict[UUID, Goal] = {}
         for goal in (
-            *direct_goals,
+            *direct,
             *closed_loop_goals,
             *workflow_scoped_rows,
             *activity_scoped_rows,
         ):
             by_id[goal.id] = goal
 
-        # Achievement evaluation.
         achieved_count = 0
         for goal in by_id.values():
             if goal.currentValue is None:
@@ -1623,6 +1736,49 @@ class Store:
             "achievementPercent": round(percent, 2),
             "goals": list(by_id.values()),
         }
+
+    async def _workflow_ids_for_loop(self, loop_id: UUID) -> set[UUID]:
+        """Workflow IDs associated with a loop via the junction table."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT workflow_id FROM closed_loop_workflow "
+                "WHERE closed_loop_id = ?",
+                (str(loop_id),),
+            ) as cur:
+                rows = await cur.fetchall()
+        return {UUID(r["workflow_id"]) for r in rows}
+
+    async def _activity_ids_for_workflows(
+        self, workflow_ids: set[UUID]
+    ) -> set[UUID]:
+        """Activity IDs referenced by the given workflows (junction table)."""
+        if not workflow_ids:
+            return set()
+        placeholders = ",".join("?" for _ in workflow_ids)
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                f"SELECT activity_id FROM workflow_activity "
+                f"WHERE workflow_id IN ({placeholders})",
+                [str(w) for w in workflow_ids],
+            ) as cur:
+                rows = await cur.fetchall()
+        return {UUID(r["activity_id"]) for r in rows}
+
+    async def _outgoing_link_kinds(
+        self, loop_id: UUID
+    ) -> list[tuple[UUID, LinkKind]]:
+        """Outgoing edges from a loop, as (target, kind) pairs."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT target_id, kind FROM closed_loop_link "
+                "WHERE source_id = ?",
+                (str(loop_id),),
+            ) as cur:
+                rows = await cur.fetchall()
+        return [(UUID(r["target_id"]), LinkKind(r["kind"])) for r in rows]
 
     # --- DecisionModel ------------------------------------------------------
 

@@ -467,15 +467,21 @@ class ErrorEnvelope(BaseModel):
 
 
 class ClosedLoopGoalRollup(BaseModel):
-    """Aggregated goal achievement for a closed loop (PR2).
+    """Aggregated goal achievement for a closed loop (PR2 + PR4 nested rollup).
 
     The rollup computes:
-    - ``goalCount``: total goals scoped to the loop (direct + indirect).
+    - ``goalCount``: total goals scoped to the loop (direct + indirect,
+      including nested loops reachable via HIERARCHICAL / DAISY_CHAIN
+      outgoing edges -- see PR4).
     - ``achievedCount``: goals whose latest ``currentValue`` satisfies the
       target direction.
     - ``achievementPercent``: ``achievedCount / goalCount`` (0..100), or 0
       when ``goalCount`` is 0.
     - ``goals``: the per-goal evaluation rows (latest value vs target).
+    - ``nested``: per-child-loop rollup snapshots. Each entry is a
+      ``NestedClosedLoopRollup`` carrying the child loop id, depth, and
+      its own goalCount / achievedCount / achievementPercent.
+    - ``depth``: maximum nested depth traversed (0 = no nested).
     - ``computedAt``: server-side timestamp.
     """
 
@@ -486,7 +492,21 @@ class ClosedLoopGoalRollup(BaseModel):
     achievedCount: int
     achievementPercent: float
     goals: list[Goal]
+    nested: list[NestedClosedLoopRollup] = Field(default_factory=list)
+    depth: int = 0
     computedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class NestedClosedLoopRollup(BaseModel):
+    """Per-child-loop rollup snapshot attached to a parent rollup (PR4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    closedLoopId: UUID
+    depth: int
+    goalCount: int
+    achievedCount: int
+    achievementPercent: float
 
 
 class ClosedLoopLinkCreateBatch(BaseModel):
