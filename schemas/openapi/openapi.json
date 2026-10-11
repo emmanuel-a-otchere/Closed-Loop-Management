@@ -577,6 +577,24 @@
         "title": "ClosedLoopLink",
         "type": "object"
       },
+      "ClosedLoopLinkCreateBatch": {
+        "additionalProperties": false,
+        "description": "Batch payload for bulk link creation (PR3).\n\nThe body is a JSON object containing a ``items`` array of links.\nThe endpoint validates cycle-freedom across the whole batch plus\nthe existing graph; on failure the entire batch is rejected.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClosedLoopLink"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ClosedLoopLinkCreateBatch",
+        "type": "object"
+      },
       "ClosedLoopRef": {
         "additionalProperties": false,
         "description": "Lightweight reference to a ClosedLoop.\n\nUsed inside ``ClosedLoopLink`` and other cross-loop structures so the\nlink topology stays decoupled from the full loop payload.",
@@ -617,6 +635,34 @@
         ],
         "title": "ClosedLoopState",
         "type": "string"
+      },
+      "ClosedLoopTopology": {
+        "additionalProperties": false,
+        "description": "Topology snapshot of the closed-loop link graph (PR3).",
+        "properties": {
+          "linkCount": {
+            "title": "Linkcount",
+            "type": "integer"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/ClosedLoopLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "nodeCount": {
+            "title": "Nodecount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "linkCount",
+          "nodeCount",
+          "links"
+        ],
+        "title": "ClosedLoopTopology",
+        "type": "object"
       },
       "ClosedLoopUpdate": {
         "additionalProperties": false,
@@ -2518,6 +2564,9 @@
             },
             "description": "Successful Response"
           },
+          "409": {
+            "description": "Cycle detected -- the link would close a loop"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2529,7 +2578,236 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create a closed loop link (daisy-chain, hierarchical, feedback, shadow)",
+        "summary": "Create a single closed loop link (cycle-checked)",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/bulk": {
+      "post": {
+        "operationId": "bulk_create_closed_loop_links_api_v1_closedLoopLink_bulk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosedLoopLinkCreateBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClosedLoopLink"
+                  },
+                  "title": "Response Bulk Create Closed Loop Links Api V1 Closedlooplink Bulk Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Cycle detected -- entire batch rejected"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "All-or-nothing bulk creation of closed loop links",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/from/{loopId}": {
+      "get": {
+        "operationId": "list_links_from_loop_api_v1_closedLoopLink_from__loopId__get",
+        "parameters": [
+          {
+            "description": "Closed loop ID",
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "description": "Closed loop ID",
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClosedLoopLink"
+                  },
+                  "title": "Response List Links From Loop Api V1 Closedlooplink From  Loopid  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List links originating from a closed loop (downstream)",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/path": {
+      "get": {
+        "operationId": "find_path_api_v1_closedLoopLink_path_get",
+        "parameters": [
+          {
+            "description": "Source closed loop ID",
+            "in": "query",
+            "name": "sourceId",
+            "required": true,
+            "schema": {
+              "description": "Source closed loop ID",
+              "format": "uuid",
+              "title": "Sourceid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Target closed loop ID",
+            "in": "query",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "description": "Target closed loop ID",
+              "format": "uuid",
+              "title": "Targetid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": "Response Find Path Api V1 Closedlooplink Path Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Shortest path between two closed loops via the link graph",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/to/{loopId}": {
+      "get": {
+        "operationId": "list_links_to_loop_api_v1_closedLoopLink_to__loopId__get",
+        "parameters": [
+          {
+            "description": "Closed loop ID",
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "description": "Closed loop ID",
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClosedLoopLink"
+                  },
+                  "title": "Response List Links To Loop Api V1 Closedlooplink To  Loopid  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List links targeting a closed loop (upstream)",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/topology": {
+      "get": {
+        "operationId": "get_topology_api_v1_closedLoopLink_topology_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoopTopology"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get the full closed-loop link topology",
         "tags": [
           "closedLoopLink"
         ]

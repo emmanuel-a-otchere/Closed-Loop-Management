@@ -19,6 +19,7 @@ class ErrorCode(StrEnum):
     NOT_FOUND = "resource.not_found"
     STATE_TRANSITION_INVALID = "closed_loop.state_transition_invalid"
     LIFECYCLE_CONSTRAINT = "lifecycle.constraint_violated"
+    CYCLE_DETECTED = "topology.cycle_detected"
     INTERNAL_ERROR = "server.internal_error"
     DUPLICATE = "resource.duplicate"
 

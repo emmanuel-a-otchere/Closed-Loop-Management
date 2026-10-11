@@ -196,6 +196,14 @@ class NotFoundError(Exception):
     """Raised when an entity lookup fails."""
 
 
+class CycleError(Exception):
+    """Raised when a link would close a cycle in the topology graph."""
+
+    def __init__(self, *, cycle: list[UUID], message: str) -> None:
+        self.cycle = cycle
+        super().__init__(message)
+
+
 class Store:
     """Thin async wrapper around an aiosqlite connection."""
 
@@ -758,7 +766,216 @@ class Store:
 
     # --- ClosedLoopLink -----------------------------------------------------
 
+    async def create_closed_loop_pairwise_graph(self) -> dict[UUID, list[UUID]]:
+        """Load all closed loop links as a forward adjacency map source -> [targets]."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT source_id, target_id FROM closed_loop_link"
+            ) as cur:
+                rows = await cur.fetchall()
+        graph: dict[UUID, list[UUID]] = {}
+        for row in rows:
+            src = UUID(row["source_id"])
+            tgt = UUID(row["target_id"])
+            graph.setdefault(src, []).append(tgt)
+        return graph
+
+    async def detect_cycle(
+        self, source_id: UUID, target_id: UUID
+    ) -> list[UUID]:
+        """Return the cycle chain if adding source -> target would close a cycle.
+
+        Walks the existing forward adjacency starting from ``target_id``;
+        if ``source_id`` is reachable from there, the proposed link would
+        close a cycle. Returns the visited-node chain that demonstrates
+        it (target_id, ..., source_id). Empty list means the link is safe.
+
+        Self-loops (source_id == target_id) are reported immediately as
+        a 1-node cycle.
+        """
+        if source_id == target_id:
+            return [source_id]
+        graph = await self.create_closed_loop_pairwise_graph()
+        visited: set[UUID] = set()
+        parents: dict[UUID, UUID | None] = {}
+        queue: list[UUID] = [target_id]
+        visited.add(target_id)
+        parents[target_id] = None
+        while queue:
+            current = queue.pop(0)
+            neighbours = graph.get(current, [])
+            for nbr in neighbours:
+                if nbr == source_id:
+                    chain: list[UUID] = [source_id]
+                    cursor: UUID | None = current
+                    if cursor is not None:
+                        chain.insert(0, cursor)
+                        cursor = parents[cursor]
+                    while cursor is not None:
+                        chain.insert(0, cursor)
+                        cursor = parents[cursor]
+                    # Close the cycle by appending target_id (the
+                    # proposed source->target edge would close it back).
+                    if chain[-1] != target_id:
+                        chain.append(target_id)
+                    return chain
+                if nbr not in visited:
+                    visited.add(nbr)
+                    parents[nbr] = current
+                    queue.append(nbr)
+        return []
+
+    async def find_link_path(
+        self, source_id: UUID, target_id: UUID
+    ) -> list[UUID]:
+        """BFS the link graph to find the shortest path source -> target."""
+        if source_id == target_id:
+            return [source_id]
+        graph = await self.create_closed_loop_pairwise_graph()
+        parents: dict[UUID, UUID | None] = {source_id: None}
+        visited: set[UUID] = {source_id}
+        queue: list[UUID] = [source_id]
+        while queue:
+            current = queue.pop(0)
+            for nbr in graph.get(current, []):
+                if nbr in visited:
+                    continue
+                parents[nbr] = current
+                if nbr == target_id:
+                    chain: list[UUID] = [target_id]
+                    cursor: UUID | None = current
+                    while cursor is not None:
+                        chain.insert(0, cursor)
+                        cursor = parents[cursor]
+                    return chain
+                visited.add(nbr)
+                queue.append(nbr)
+        return []
+
+    async def topology_view(self) -> list[ClosedLoopLink]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM closed_loop_link ORDER BY created_at"
+            ) as cur:
+                rows = await cur.fetchall()
+        return [ClosedLoopLink.model_validate_json(r["payload"]) for r in rows]
+
+    async def list_links_from(self, node_id: UUID) -> list[ClosedLoopLink]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM closed_loop_link WHERE source_id = ?",
+                (str(node_id),),
+            ) as cur:
+                rows = await cur.fetchall()
+        return [ClosedLoopLink.model_validate_json(r["payload"]) for r in rows]
+
+    async def list_links_to(self, node_id: UUID) -> list[ClosedLoopLink]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM closed_loop_link WHERE target_id = ?",
+                (str(node_id),),
+            ) as cur:
+                rows = await cur.fetchall()
+        return [ClosedLoopLink.model_validate_json(r["payload"]) for r in rows]
+
+    async def bulk_create_closed_loop_links(
+        self, links: list[ClosedLoopLink]
+    ) -> list[ClosedLoopLink]:
+        """All-or-nothing bulk insert with cycle validation across the batch."""
+        if not links:
+            return []
+        for i, link in enumerate(links):
+            src, tgt = link.source.id, link.target.id
+            if src == tgt:
+                raise CycleError(
+                    cycle=[src],
+                    message=(
+                        f"Link index {i} ({link.id}) is a self-loop: "
+                        f"source and target are the same loop."
+                    ),
+                )
+        existing = await self.create_closed_loop_pairwise_graph()
+        for i, link in enumerate(links):
+            src, tgt = link.source.id, link.target.id
+            merged = {k: list(v) for k, v in existing.items()}
+            for prev in links[:i]:
+                merged.setdefault(prev.source.id, []).append(prev.target.id)
+            cycle_chain = self._detect_cycle_in_graph(src, tgt, merged)
+            if cycle_chain:
+                raise CycleError(
+                    cycle=cycle_chain,
+                    message=(
+                        f"Link index {i} ({link.id}) would close a cycle "
+                        "with the existing link graph."
+                    ),
+                )
+        now = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            for link in links:
+                await db.execute(
+                    "INSERT INTO closed_loop_link (id, payload, source_id, target_id, kind, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        str(link.id),
+                        link.model_dump_json(),
+                        str(link.source.id),
+                        str(link.target.id),
+                        link.kind.value,
+                        now.isoformat(),
+                    ),
+                )
+            await db.commit()
+        return links
+
+    @staticmethod
+    def _detect_cycle_in_graph(
+        source_id: UUID,
+        target_id: UUID,
+        graph: dict[UUID, list[UUID]],
+    ) -> list[UUID]:
+        if source_id == target_id:
+            return [source_id]
+        visited: set[UUID] = set()
+        parents: dict[UUID, UUID | None] = {}
+        queue: list[UUID] = [target_id]
+        visited.add(target_id)
+        parents[target_id] = None
+        while queue:
+            current = queue.pop(0)
+            for nbr in graph.get(current, []):
+                if nbr == source_id:
+                    chain: list[UUID] = [source_id]
+                    cursor: UUID | None = current
+                    if cursor is not None:
+                        chain.insert(0, cursor)
+                        cursor = parents[cursor]
+                    while cursor is not None:
+                        chain.insert(0, cursor)
+                        cursor = parents[cursor]
+                    if chain[-1] != target_id:
+                        chain.append(target_id)
+                    return chain
+                if nbr not in visited:
+                    visited.add(nbr)
+                    parents[nbr] = current
+                    queue.append(nbr)
+        return []
+
     async def create_closed_loop_link(self, link: ClosedLoopLink) -> ClosedLoopLink:
+        """Insert a single link; raise CycleError if it would close a cycle."""
+        cycle = await self.detect_cycle(link.source.id, link.target.id)
+        if cycle:
+            raise CycleError(
+                cycle=cycle,
+                message=(
+                    f"Link {link.id} would close a cycle in the existing "
+                    "link graph."
+                ),
+            )
         now = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
@@ -1164,6 +1381,7 @@ def _deserialize_decision_model(payload: str) -> DecisionModel:
 
 
 __all__ = [
+    "CycleError",
     "LifecycleConstraintError",
     "NotFoundError",
     "StateTransitionError",
