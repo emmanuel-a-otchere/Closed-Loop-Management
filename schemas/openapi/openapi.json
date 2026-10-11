@@ -376,6 +376,105 @@
         "title": "ActivityUpdate",
         "type": "object"
       },
+      "AuthTokenCreate": {
+        "additionalProperties": false,
+        "description": "Request body for issuing a new auth token (Slice 3 PR1).",
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "scopes": {
+            "description": "Scopes to grant. Must contain only valid scope strings (read / write / admin).",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "title": "AuthTokenCreate",
+        "type": "object"
+      },
+      "AuthTokenInfo": {
+        "additionalProperties": false,
+        "description": "Public view of an issued token (no plaintext).",
+        "properties": {
+          "issuedAt": {
+            "format": "date-time",
+            "title": "Issuedat",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "tokenId": {
+            "title": "Tokenid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tokenId",
+          "name",
+          "scopes",
+          "issuedAt"
+        ],
+        "title": "AuthTokenInfo",
+        "type": "object"
+      },
+      "AuthTokenIssued": {
+        "additionalProperties": false,
+        "description": "Response body returned once when a token is issued.\n\nThe plaintext token is returned exactly once and never persisted;\nthe server only retains its SHA-256 fingerprint.",
+        "properties": {
+          "issuedAt": {
+            "format": "date-time",
+            "title": "Issuedat",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "plaintext": {
+            "title": "Plaintext",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "tokenId": {
+            "title": "Tokenid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tokenId",
+          "plaintext",
+          "name",
+          "scopes"
+        ],
+        "title": "AuthTokenIssued",
+        "type": "object"
+      },
       "ClosedLoop": {
         "additionalProperties": false,
         "properties": {
@@ -2050,6 +2149,130 @@
         "summary": "Transition an activity to a new lifecycle state",
         "tags": [
           "activity"
+        ]
+      }
+    },
+    "/api/v1/auth/tokens": {
+      "get": {
+        "operationId": "list_tokens_api_v1_auth_tokens_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuthTokenInfo"
+                  },
+                  "title": "Response List Tokens Api V1 Auth Tokens Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List active auth tokens (admin scope required when auth is enabled)",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "operationId": "issue_token_api_v1_auth_tokens_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTokenCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenIssued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Issue a new auth token (admin scope required when auth is enabled)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/tokens/{tokenId}": {
+      "delete": {
+        "operationId": "revoke_token_api_v1_auth_tokens__tokenId__delete",
+        "parameters": [
+          {
+            "description": "Token id to revoke",
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "description": "Token id to revoke",
+              "title": "Tokenid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke an auth token (admin scope required when auth is enabled)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/whoami": {
+      "get": {
+        "operationId": "whoami_api_v1_auth_whoami_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Whoami Api V1 Auth Whoami Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return the principal resolved for the current request",
+        "tags": [
+          "auth"
         ]
       }
     },
@@ -3731,6 +3954,10 @@
     {
       "description": "Liveness and metadata.",
       "name": "health"
+    },
+    {
+      "description": "Token issuance, listing, revocation; whoami.",
+      "name": "auth"
     },
     {
       "description": "Closed-loop CRUD + state.",
