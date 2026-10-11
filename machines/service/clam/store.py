@@ -14,6 +14,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import aiosqlite
+from pydantic import BaseModel
 
 from .models import (
     Activity,
@@ -22,6 +23,9 @@ from .models import (
     ActivityStateTransitionRequest,
     ActivityType,
     ActivityUpdate,
+    AuditAction,
+    AuditActor,
+    AuditEntry,
     ClosedLoop,
     ClosedLoopCreate,
     ClosedLoopLink,
@@ -145,6 +149,26 @@ CREATE TABLE IF NOT EXISTS request_log (
 
 CREATE INDEX IF NOT EXISTS idx_request_log_ts
     ON request_log(ts DESC);
+
+-- Slice 4 PR2: audit log.
+CREATE TABLE IF NOT EXISTS audit_log (
+    id TEXT PRIMARY KEY,
+    ts TEXT NOT NULL,
+    actor TEXT NOT NULL,
+    action TEXT NOT NULL,
+    entity_kind TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    before_payload TEXT,
+    after_payload TEXT,
+    correlation_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_entity
+    ON audit_log(entity_kind, entity_id, ts DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_ts
+    ON audit_log(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_correlation
+    ON audit_log(correlation_id);
 """
 
 
@@ -437,6 +461,7 @@ class Store:
         self, loop_id: UUID, request: StateTransitionRequest
     ) -> ClosedLoop:
         loop = await self.get_closed_loop(loop_id)
+        before_snapshot = loop.model_copy(deep=True)
         allowed = _VALID_TRANSITIONS.get(loop.state, set())
         if request.targetState not in allowed:
             raise StateTransitionError(loop.state, request.targetState, kind="closed_loop")
@@ -453,6 +478,15 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR2: audit hook.
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.CLOSED_LOOP_STATE_TRANSITION,
+            entity_kind="ClosedLoop",
+            entity_id=loop_id,
+            before=before_snapshot,
+            after=loop,
+        )
         return loop
 
     # --- Activity -----------------------------------------------------------
@@ -589,6 +623,7 @@ class Store:
         self, activity_id: UUID, request: ActivityStateTransitionRequest
     ) -> Activity:
         activity = await self.get_activity(activity_id)
+        before_snapshot = activity.model_copy(deep=True)
         allowed = _VALID_ACTIVITY_TRANSITIONS.get(activity.lifecycleState, set())
         if request.targetState not in allowed:
             raise StateTransitionError(
@@ -612,6 +647,15 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR2: audit hook.
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.ACTIVITY_STATE_TRANSITION,
+            entity_kind="Activity",
+            entity_id=activity_id,
+            before=before_snapshot,
+            after=activity,
+        )
         return activity
 
     # --- Workflow -----------------------------------------------------------
@@ -768,6 +812,7 @@ class Store:
         self, workflow_id: UUID, request: WorkflowStateTransitionRequest
     ) -> Workflow:
         workflow = await self.get_workflow(workflow_id)
+        before_snapshot = workflow.model_copy(deep=True)
         allowed = _VALID_ACTIVITY_TRANSITIONS.get(workflow.lifecycleState, set())
         if request.targetState not in allowed:
             raise StateTransitionError(
@@ -792,6 +837,15 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR2: audit hook.
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.WORKFLOW_STATE_TRANSITION,
+            entity_kind="Workflow",
+            entity_id=workflow_id,
+            before=before_snapshot,
+            after=workflow,
+        )
         return workflow
 
     # --- Goal ---------------------------------------------------------------
@@ -877,6 +931,7 @@ class Store:
 
     async def update_goal(self, goal_id: UUID, patch: GoalUpdate) -> Goal:
         goal = await self.get_goal(goal_id)
+        before_snapshot = goal.model_copy(deep=True)
         data = goal.model_dump()
         if patch.name is not None:
             data["name"] = patch.name
@@ -907,6 +962,15 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR2: audit hook.
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.GOAL_UPDATE,
+            entity_kind="Goal",
+            entity_id=goal_id,
+            before=before_snapshot,
+            after=updated,
+        )
         return updated
 
     async def delete_goal(self, goal_id: UUID) -> None:
@@ -1324,6 +1388,15 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR2: audit hook (only on success -- cycle / topology errors do
+        # not write audit rows; the request_log is the diagnostic).
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.CLOSED_LOOP_LINK_CREATE,
+            entity_kind="ClosedLoopLink",
+            entity_id=link.id,
+            after=link,
+        )
         return link
 
     async def get_closed_loop_link(self, link_id: UUID) -> ClosedLoopLink:
@@ -1381,6 +1454,12 @@ class Store:
         return items, total
 
     async def delete_closed_loop_link(self, link_id: UUID) -> None:
+        # Capture the link payload before deletion so the audit row
+        # records what was deleted (PR2).
+        try:
+            before = await self.get_closed_loop_link(link_id)
+        except NotFoundError:
+            before = None
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
                 "DELETE FROM closed_loop_link WHERE id = ?", (str(link_id),)
@@ -1388,6 +1467,13 @@ class Store:
             await db.commit()
             if cur.rowcount == 0:
                 raise NotFoundError(f"ClosedLoopLink {link_id} not found")
+        await self.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.CLOSED_LOOP_LINK_DELETE,
+            entity_kind="ClosedLoopLink",
+            entity_id=link_id,
+            before=before,
+        )
 
     # --- Cross-resource lifecycle constraints (PR2) ---------------------------
 
@@ -1919,6 +2005,101 @@ class Store:
         ]
         next_cursor = items[-1].id if len(items) == limit else None
         return items, next_cursor
+
+    # --- AuditLog (PR2) ----------------------------------------------------
+
+    async def record_audit(
+        self,
+        *,
+        actor: AuditActor,
+        action: AuditAction,
+        entity_kind: str,
+        entity_id: UUID,
+        before: BaseModel | None = None,
+        after: BaseModel | None = None,
+        correlation_id: str | None = None,
+    ) -> AuditEntry:
+        """Persist a single audit-log row (PR2).
+
+        The correlation_id defaults to the value stashed on the
+        per-request contextvar by the request-log middleware (PR1).
+        The middleware id is the canonical client-side correlation
+        identifier.
+        """
+        from .audit_context import get_correlation_id  # local cycle avoidance
+
+        if correlation_id is None:
+            correlation_id = get_correlation_id()
+        now = datetime.now(UTC)
+        row_id = uuid4()
+        before_blob: str | None = (
+            before.model_dump_json() if before is not None else None
+        )
+        after_blob: str | None = (
+            after.model_dump_json() if after is not None else None
+        )
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO audit_log ("
+                "id, ts, actor, action, entity_kind, entity_id, "
+                "before_payload, after_payload, correlation_id"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    str(row_id),
+                    now.isoformat(),
+                    actor.value,
+                    action.value,
+                    entity_kind,
+                    str(entity_id),
+                    before_blob,
+                    after_blob,
+                    correlation_id,
+                ),
+            )
+            await db.commit()
+        return AuditEntry(
+            id=row_id,
+            ts=now,
+            actor=actor,
+            action=action,
+            entityKind=entity_kind,
+            entityId=entity_id,
+            before=before_blob,
+            after=after_blob,
+            correlationId=correlation_id,
+        )
+
+    async def list_audit_for_entity(
+        self, *, entity_kind: str, entity_id: UUID
+    ) -> list[AuditEntry]:
+        """Return audit rows for a given entity, newest first (PR2).
+
+        Used by PR3's /audit endpoints and by the test suite.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, ts, actor, action, entity_kind, entity_id, "
+                "before_payload, after_payload, correlation_id "
+                "FROM audit_log WHERE entity_kind = ? AND entity_id = ? "
+                "ORDER BY ts DESC, id DESC",
+                (entity_kind, str(entity_id)),
+            ) as cur:
+                rows = await cur.fetchall()
+        return [
+            AuditEntry(
+                id=UUID(r["id"]),
+                ts=datetime.fromisoformat(r["ts"]),
+                actor=AuditActor(r["actor"]),
+                action=AuditAction(r["action"]),
+                entityKind=r["entity_kind"],
+                entityId=UUID(r["entity_id"]),
+                before=r["before_payload"],
+                after=r["after_payload"],
+                correlationId=r["correlation_id"],
+            )
+            for r in rows
+        ]
 
     # --- DecisionModel ------------------------------------------------------
 

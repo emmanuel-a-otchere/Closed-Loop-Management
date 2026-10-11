@@ -13,11 +13,13 @@ Token management endpoints:
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Path, Request, status
 
 from ..auth import Principal, Scope, auth_enabled, require_scope
 from ..errors import ErrorCode, error_response
-from ..models import AuthTokenCreate, AuthTokenInfo, AuthTokenIssued
+from ..models import AuditAction, AuditActor, AuthTokenCreate, AuthTokenInfo, AuthTokenIssued
 
 router = APIRouter(
     prefix="/api/v1/auth",
@@ -96,6 +98,27 @@ async def issue_token(
             message="Auth subsystem is not initialised.",
         )
     issued = store.issue(name=payload.name, scopes=scopes)
+    # PR2: audit hook.
+    clam_store = getattr(request.app.state, "store", None)
+    if clam_store is not None:
+        # Token ids are URL-safe tokens, not UUIDs; derive a stable
+        # UUID5 audit entity_id from the token id so the audit_log
+        # entity_id column type (UUID) holds.
+        audit_id = uuid.uuid5(
+            uuid.NAMESPACE_URL, f"token:{issued.token_id}"
+        )
+        await clam_store.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.AUTH_TOKEN_ISSUE,
+            entity_kind="AuthToken",
+            entity_id=audit_id,
+            after=AuthTokenInfo(
+                tokenId=issued.token_id,
+                name=issued.name,
+                scopes=[s.value for s in issued.scopes],
+                issuedAt=issued.issued_at,
+            ),
+        )
     return AuthTokenIssued(
         tokenId=issued.token_id,
         plaintext=issued.plaintext,
@@ -146,6 +169,16 @@ async def revoke_token(
             status_code=404,
             code=ErrorCode.NOT_FOUND,
             message=f"Token {tokenId!r} not found.",
+        )
+    # PR2: audit hook.
+    clam_store = getattr(request.app.state, "store", None)
+    if clam_store is not None:
+        audit_id = uuid.uuid5(uuid.NAMESPACE_URL, f"token:{tokenId}")
+        await clam_store.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.AUTH_TOKEN_REVOKE,
+            entity_kind="AuthToken",
+            entity_id=audit_id,
         )
 
 
