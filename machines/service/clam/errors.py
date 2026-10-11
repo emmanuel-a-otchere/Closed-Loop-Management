@@ -16,6 +16,8 @@ class ErrorCode(StrEnum):
     """
 
     VALIDATION_ERROR = "request.validation_error"
+    UNAUTHORIZED = "auth.unauthorized"
+    FORBIDDEN = "auth.forbidden"
     NOT_FOUND = "resource.not_found"
     STATE_TRANSITION_INVALID = "closed_loop.state_transition_invalid"
     LIFECYCLE_CONSTRAINT = "lifecycle.constraint_violated"

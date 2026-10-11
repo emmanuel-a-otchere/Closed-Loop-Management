@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from .auth import TokenStore, _AuthChallenge, auth_enabled, resolve_principal
 from .errors import (
     ErrorCode,
     error_envelope,
@@ -19,6 +20,7 @@ from .errors import (
 from .models import ErrorEnvelope
 from .routers import (
     activity,
+    auth,
     closed_loop,
     closed_loop_link,
     decision_model,
@@ -39,6 +41,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
 
     resolved_db = Path(db_path or os.environ.get("CLAM_DB_PATH", "clam.db"))
     store = Store(resolved_db)
+    token_store = TokenStore()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -71,6 +74,12 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         },
         openapi_tags=[
             {"name": "health", "description": "Liveness and metadata."},
+            {
+                "name": "auth",
+                "description": (
+                    "Token issuance, listing, revocation; whoami."
+                ),
+            },
             {"name": "closedLoop", "description": "Closed-loop CRUD + state."},
             {"name": "decisionModel", "description": "Decision-model CRUD."},
             {"name": "activity", "description": "Atomic step CRUD + lifecycle."},
@@ -80,6 +89,54 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         ],
         lifespan=lifespan,
     )
+
+    app.state.store = store
+    app.state.token_store = token_store
+
+    @app.exception_handler(_AuthChallenge)
+    async def _auth_challenge_handler(request: Request, exc: _AuthChallenge) -> JSONResponse:
+        # Surface the JSONResponse the dependency built as the
+        # final response (carrying the structured envelope).
+        return exc.response
+
+    @app.middleware("http")
+    async def _resolve_principal_middleware(
+        request: Request, call_next: object
+    ) -> object:
+        """Attach the principal for the request before the route runs.
+
+        Also enforces scope requirements for write methods when auth
+        is enabled.
+        """
+        principal = resolve_principal(request)
+        request.state.principal = principal
+
+        if auth_enabled():
+            from .auth import Scope, require_scope  # local cycle avoidance
+
+            method = request.method.upper()
+            path = request.url.path
+            # Bootstrap path: a fresh install must be able to issue the
+            # first admin token without auth. Skip enforcement only on
+            # POST /api/v1/auth/tokens when the store is empty.
+            bootstrap_issue = (
+                method == "POST"
+                and path == "/api/v1/auth/tokens"
+                and not token_store.list_tokens()
+            )
+            if (
+                method in {"POST", "PUT", "PATCH", "DELETE"}
+                and not bootstrap_issue
+            ):
+                # Auth revocation requires ADMIN; everything else WRITE.
+                required = Scope.WRITE
+                if path.startswith("/api/v1/auth"):
+                    required = Scope.ADMIN
+                denial = require_scope(principal, required)
+                if denial is not None:
+                    return denial
+
+        return await call_next(request)  # type: ignore[operator]
 
     app.state.store = store
 
@@ -115,6 +172,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         )
 
     app.include_router(health.router)
+    app.include_router(auth.router)
     app.include_router(closed_loop.router)
     app.include_router(decision_model.router)
     app.include_router(activity.router)
