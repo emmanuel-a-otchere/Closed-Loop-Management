@@ -1,0 +1,8 @@
+{
+  "id": "99999999-9999-9999-9999-999999999999",
+  "source": {"id": "55555555-5555-5555-5555-555555555555", "name": "cpu-thermal-loop"},
+  "target": {"id": "66666666-6666-6666-6666-666666666666", "name": "rack-thermal-loop"},
+  "kind": "DAISY_CHAIN",
+  "direction": "FORWARD",
+  "notes": "Forward fan-control loop into the rack-level thermal loop."
+}

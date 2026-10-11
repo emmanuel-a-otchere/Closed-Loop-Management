@@ -1,0 +1,11 @@
+{
+  "name": "sense-cpu-temp",
+  "description": "Reads CPU package temperature via sysfs.",
+  "activityType": "sense",
+  "executor": "internal",
+  "params": {
+    "source": "/sys/class/thermal/thermal_zone0/temp",
+    "unit": "millicelsius"
+  },
+  "lifecycleState": "designed"
+}

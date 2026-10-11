@@ -1,0 +1,17 @@
+{
+  "name": "cpu-temp-target",
+  "description": "Keep CPU package temperature at or below 80C.",
+  "target": {
+    "metric": "cpu_temp_c",
+    "value": 80,
+    "unit": "celsius",
+    "direction": "AT_MOST"
+  },
+  "scope": "CLOSED_LOOP",
+  "scopeRef": "55555555-5555-5555-5555-555555555555",
+  "currentValue": 72.0,
+  "timeframe": {
+    "start": "2026-10-01T00:00:00Z",
+    "end": "2026-12-31T23:59:59Z"
+  }
+}
