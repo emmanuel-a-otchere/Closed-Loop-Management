@@ -2086,20 +2086,94 @@ class Store:
                 (entity_kind, str(entity_id)),
             ) as cur:
                 rows = await cur.fetchall()
-        return [
-            AuditEntry(
-                id=UUID(r["id"]),
-                ts=datetime.fromisoformat(r["ts"]),
-                actor=AuditActor(r["actor"]),
-                action=AuditAction(r["action"]),
-                entityKind=r["entity_kind"],
-                entityId=UUID(r["entity_id"]),
-                before=r["before_payload"],
-                after=r["after_payload"],
-                correlationId=r["correlation_id"],
-            )
-            for r in rows
-        ]
+        return [_row_to_audit_entry(r) for r in rows]
+
+    async def get_audit(self, audit_id: UUID) -> AuditEntry:
+        """Return a single audit row by id (PR3)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, ts, actor, action, entity_kind, entity_id, "
+                "before_payload, after_payload, correlation_id "
+                "FROM audit_log WHERE id = ?",
+                (str(audit_id),),
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"Audit {audit_id} not found")
+        return _row_to_audit_entry(row)
+
+    async def list_audit(
+        self,
+        *,
+        entity_kind: str | None = None,
+        entity_id: UUID | None = None,
+        actor: AuditActor | None = None,
+        action: AuditAction | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int = 100,
+        before_id: UUID | None = None,
+    ) -> tuple[list[AuditEntry], UUID | None]:
+        """Return audit rows matching filters (PR3).
+
+        Ordering: ts DESC, id DESC tie-break. Pagination cursor
+        (before_id) is resolved to its row's ts and rows with
+        strictly-older ts are returned (UUID4 is not monotonic).
+
+        All filters are optional; combined via AND.
+        """
+        limit = max(1, min(int(limit), 1000))
+        where_clauses: list[str] = []
+        params: list[object] = []
+        if entity_kind is not None:
+            where_clauses.append("entity_kind = ?")
+            params.append(entity_kind)
+        if entity_id is not None:
+            where_clauses.append("entity_id = ?")
+            params.append(str(entity_id))
+        if actor is not None:
+            where_clauses.append("actor = ?")
+            params.append(actor.value)
+        if action is not None:
+            where_clauses.append("action = ?")
+            params.append(action.value)
+        if since is not None:
+            where_clauses.append("ts >= ?")
+            params.append(since.isoformat())
+        if until is not None:
+            where_clauses.append("ts <= ?")
+            params.append(until.isoformat())
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor_ts: str | None = None
+            if before_id is not None:
+                async with db.execute(
+                    "SELECT ts FROM audit_log WHERE id = ?",
+                    (str(before_id),),
+                ) as cur:
+                    row = await cur.fetchone()
+                if row is None:
+                    cursor_ts = "9999-12-31T23:59:59.999999+00:00"
+                else:
+                    cursor_ts = row["ts"]
+            extra = []
+            if cursor_ts is not None:
+                extra.append("ts < ?")
+                params.append(cursor_ts)
+            extra_sql = (" AND " + " AND ".join(extra)) if extra else ""
+            async with db.execute(
+                "SELECT id, ts, actor, action, entity_kind, entity_id, "
+                "before_payload, after_payload, correlation_id "
+                f"FROM audit_log{where_sql}{extra_sql} "
+                "ORDER BY ts DESC, id DESC LIMIT ?",
+                [*params, limit],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [_row_to_audit_entry(r) for r in rows]
+        next_cursor = items[-1].id if len(items) == limit else None
+        return items, next_cursor
 
     # --- DecisionModel ------------------------------------------------------
 
@@ -2183,6 +2257,21 @@ def _deserialize_decision_model(payload: str) -> DecisionModel:
     if kind == "CUSTOM":
         return CustomDecisionModel.model_validate(raw)
     raise ValueError(f"Unknown decision model kind: {kind!r}")
+
+
+def _row_to_audit_entry(row: aiosqlite.Row) -> AuditEntry:
+    """Map a sqlite row from audit_log to the AuditEntry model (PR3)."""
+    return AuditEntry(
+        id=UUID(row["id"]),
+        ts=datetime.fromisoformat(row["ts"]),
+        actor=AuditActor(row["actor"]),
+        action=AuditAction(row["action"]),
+        entityKind=row["entity_kind"],
+        entityId=UUID(row["entity_id"]),
+        before=row["before_payload"],
+        after=row["after_payload"],
+        correlationId=row["correlation_id"],
+    )
 
 
 __all__ = [

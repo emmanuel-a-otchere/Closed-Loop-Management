@@ -376,6 +376,138 @@
         "title": "ActivityUpdate",
         "type": "object"
       },
+      "AuditAction": {
+        "description": "Closed vocabulary of audited operations (PR2).",
+        "enum": [
+          "closed_loop.state_transition",
+          "workflow.state_transition",
+          "activity.state_transition",
+          "goal.update",
+          "closed_loop_link.create",
+          "closed_loop_link.delete",
+          "auth.token.issue",
+          "auth.token.revoke"
+        ],
+        "title": "AuditAction",
+        "type": "string"
+      },
+      "AuditActor": {
+        "description": "Source of an audit row (PR2).",
+        "enum": [
+          "USER",
+          "SYSTEM"
+        ],
+        "title": "AuditActor",
+        "type": "string"
+      },
+      "AuditEntry": {
+        "additionalProperties": false,
+        "description": "A single audit row (PR2).\n\nbefore / after payloads are stored as opaque JSON strings.\nThe middleware-driven correlation_id is the same id echoed\non the response's X-Correlation-Id header (see PR1).",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActor"
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "correlationId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlationid"
+          },
+          "entityId": {
+            "format": "uuid",
+            "title": "Entityid",
+            "type": "string"
+          },
+          "entityKind": {
+            "title": "Entitykind",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "title": "Ts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "actor",
+          "action",
+          "entityKind",
+          "entityId"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
+      "AuditPage": {
+        "additionalProperties": false,
+        "description": "Cursor-paginated audit rows (PR3).",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "limit"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
       "AuthTokenCreate": {
         "additionalProperties": false,
         "description": "Request body for issuing a new auth token (Slice 3 PR1).",
@@ -2377,6 +2509,227 @@
         "summary": "Transition an activity to a new lifecycle state",
         "tags": [
           "activity"
+        ]
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "description": "Return audit rows matching the filters, newest first.",
+        "operationId": "list_audit_api_v1_audit_get",
+        "parameters": [
+          {
+            "description": "Filter by entity kind (ClosedLoop, Activity, ...)",
+            "in": "query",
+            "name": "entityKind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by entity kind (ClosedLoop, Activity, ...)",
+              "title": "Entitykind"
+            }
+          },
+          {
+            "description": "Filter by entity id (UUID)",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by entity id (UUID)",
+              "title": "Entityid"
+            }
+          },
+          {
+            "description": "Filter by actor (USER / SYSTEM)",
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AuditActor"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by actor (USER / SYSTEM)",
+              "title": "Actor"
+            }
+          },
+          {
+            "description": "Filter by action (closed_loop.state_transition, ...)",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AuditAction"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by action (closed_loop.state_transition, ...)",
+              "title": "Action"
+            }
+          },
+          {
+            "description": "Rows with ts >= since (RFC3339)",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Rows with ts >= since (RFC3339)",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Rows with ts <= until (RFC3339)",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Rows with ts <= until (RFC3339)",
+              "title": "Until"
+            }
+          },
+          {
+            "description": "Page size (1..1000, default 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Page size (1..1000, default 100)",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor (the previous page's nextCursor)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque cursor (the previous page's nextCursor)",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List audit rows (filterable, cursor-paginated, ts DESC)",
+        "tags": [
+          "observability"
+        ]
+      }
+    },
+    "/api/v1/audit/{auditId}": {
+      "get": {
+        "description": "Return a single audit row, or 404.",
+        "operationId": "get_audit_api_v1_audit__auditId__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "auditId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Auditid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch a single audit row by id",
+        "tags": [
+          "observability"
         ]
       }
     },

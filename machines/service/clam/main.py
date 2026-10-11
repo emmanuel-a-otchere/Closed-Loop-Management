@@ -23,6 +23,7 @@ from .errors import (
 from .models import ErrorEnvelope
 from .routers import (
     activity,
+    audit,
     auth,
     closed_loop,
     closed_loop_link,
@@ -242,6 +243,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     app.include_router(goal.router)
     app.include_router(closed_loop_link.router)
     app.include_router(request_log.router)
+    app.include_router(audit.router)
 
     @app.get(
         "/",

@@ -721,3 +721,13 @@ class AuditEntry(BaseModel):
     before: str | None = None
     after: str | None = None
     correlationId: str | None = None
+
+
+class AuditPage(BaseModel):
+    """Cursor-paginated audit rows (PR3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[AuditEntry]
+    limit: int
+    nextCursor: str | None = None
