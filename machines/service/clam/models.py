@@ -14,6 +14,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
+# --- Enums -------------------------------------------------------------------
+
 
 class ClosedLoopState(StrEnum):
     """Lifecycle state of a closed loop.
@@ -50,15 +52,59 @@ class WorkflowPath(StrEnum):
 
 
 class LinkKind(StrEnum):
+    """Topology of a relationship between two closed loops.
+
+    - ``DAISY_CHAIN``: source.target feeds source.source (linear topology).
+    - ``HIERARCHICAL``: source is parent of target (parent supervises child).
+    - ``FEEDBACK``: target feeds back into source (closes the outer loop).
+    - ``SHADOW``: target is a shadow / replica used for failover.
+    """
+
     DAISY_CHAIN = "DAISY_CHAIN"
     HIERARCHICAL = "HIERARCHICAL"
     FEEDBACK = "FEEDBACK"
+    SHADOW = "SHADOW"
+
+
+class LinkDirection(StrEnum):
+    FORWARD = "FORWARD"
+    BIDIRECTIONAL = "BIDIRECTIONAL"
 
 
 class DecisionModelKind(StrEnum):
     OODA = "OODA"
     MAPE = "MAPE"
     CUSTOM = "CUSTOM"
+
+
+class ActivityType(StrEnum):
+    """Role of an activity in the closed loop."""
+
+    SENSE = "sense"
+    ANALYSE = "analyse"
+    DECIDE = "decide"
+    ACT = "act"
+    FEEDBACK = "feedback"
+    FEEDFORWARD = "feedforward"
+
+
+class ActivityLifecycleState(StrEnum):
+    DESIGNED = "designed"
+    VALIDATED = "validated"
+    PUBLISHED = "published"
+    DEPRECATED = "deprecated"
+    RETIRED = "retired"
+
+
+class ActivityExecutor(StrEnum):
+    """Where an activity is executed."""
+
+    INTERNAL = "internal"
+    EXTERNAL = "external"
+    HUMAN = "human"
+
+
+# --- Lightweight references --------------------------------------------------
 
 
 class ActivityRef(BaseModel):
@@ -68,6 +114,7 @@ class ActivityRef(BaseModel):
 
     id: UUID
     name: str | None = None
+    activityType: ActivityType | None = None
 
 
 class DecisionModelRef(BaseModel):
@@ -79,22 +126,17 @@ class DecisionModelRef(BaseModel):
     kind: DecisionModelKind
 
 
-class GoalTarget(BaseModel):
-    metric: str = Field(..., description="The metric being targeted (e.g. 'cpu_temp_c').")
-    value: float = Field(..., description="The numeric value of the target.")
-    unit: str | None = None
-    direction: GoalDirection = GoalDirection.AT_LEAST
+class ClosedLoopRef(BaseModel):
+    """Lightweight reference to a ClosedLoop.
 
+    Used inside ``ClosedLoopLink`` and other cross-loop structures so the
+    link topology stays decoupled from the full loop payload.
+    """
 
-class Goal(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: UUID = Field(default_factory=uuid4)
-    name: str
-    description: str | None = None
-    target: GoalTarget
-    scope: GoalScope = GoalScope.CLOSED_LOOP
-    scopeRef: UUID | None = None
+    id: UUID
+    name: str | None = None
 
 
 class WorkflowRef(BaseModel):
@@ -102,36 +144,215 @@ class WorkflowRef(BaseModel):
 
     id: UUID
     name: str
+    path: WorkflowPath | None = None
 
 
-class Activity(BaseModel):
+class GoalRef(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID
     name: str
+
+
+# --- Goals -------------------------------------------------------------------
+
+
+class GoalTarget(BaseModel):
+    metric: str = Field(..., description="The metric being targeted (e.g. 'cpu_temp_c').")
+    value: float = Field(..., description="The numeric value of the target.")
+    unit: str | None = None
+    direction: GoalDirection = GoalDirection.AT_LEAST
+
+
+class GoalTimeframe(BaseModel):
+    """Optional time window during which the goal is measured."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    startsAt: datetime | None = None
+    endsAt: datetime | None = None
+
+
+class GoalBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=120)
     description: str | None = None
-    action: str = Field(..., description="Underlying implementation reference.")
+    target: GoalTarget
+    scope: GoalScope = GoalScope.CLOSED_LOOP
+    scopeRef: UUID | None = Field(
+        default=None,
+        description="ID of the entity this goal is scoped to (a ClosedLoop, Workflow, or Activity).",
+    )
+    timeframe: GoalTimeframe | None = None
+    currentValue: float | None = Field(
+        default=None,
+        description="Latest observed value for the metric. Used for KPI calculations.",
+    )
+    metricSource: str | None = Field(
+        default=None,
+        description="Where the metric is sourced from (e.g. 'sensor:cpu.temp', 'http:api/metrics').",
+    )
+
+
+class GoalCreate(GoalBase):
+    pass
+
+
+class GoalUpdate(BaseModel):
+    """Partial-update payload for PATCH on /goal/{id}."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = None
+    target: GoalTarget | None = None
+    scope: GoalScope | None = None
+    scopeRef: UUID | None = None
+    timeframe: GoalTimeframe | None = None
+    currentValue: float | None = None
+    metricSource: str | None = None
+
+
+class Goal(GoalBase):
+    id: UUID = Field(default_factory=uuid4)
+    achieved: bool | None = None
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+# --- Activities --------------------------------------------------------------
+
+
+class ActivityBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=120)
+    description: str | None = None
+    activityType: ActivityType = ActivityType.SENSE
+    action: str = Field(
+        ...,
+        description=(
+            "Underlying implementation reference. Free-form string. Examples: "
+            "'script:sense_cpu_temp', 'http:POST /api/cooling/start', "
+            "'agent:thermostat-orchestrator', 'human:oncall-rotation'."
+        ),
+    )
     inputs: list[str] = Field(default_factory=list)
     outputs: list[str] = Field(default_factory=list)
+    params: dict[str, object] = Field(
+        default_factory=dict,
+        description="Activity-specific configuration. Free-form key/value map.",
+    )
+    executor: ActivityExecutor = ActivityExecutor.INTERNAL
+    expectedDurationMs: int | None = Field(
+        default=None, ge=0, description="Expected execution time in milliseconds (for SLA)."
+    )
 
 
-class Workflow(BaseModel):
+class ActivityCreate(ActivityBase):
+    pass
+
+
+class ActivityUpdate(BaseModel):
+    """Partial-update payload for PATCH on /activity/{id}."""
+
     model_config = ConfigDict(extra="forbid")
 
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = None
+    activityType: ActivityType | None = None
+    action: str | None = None
+    inputs: list[str] | None = None
+    outputs: list[str] | None = None
+    params: dict[str, object] | None = None
+    executor: ActivityExecutor | None = None
+    expectedDurationMs: int | None = None
+    lifecycleState: ActivityLifecycleState | None = None
+
+
+class Activity(ActivityBase):
     id: UUID = Field(default_factory=uuid4)
-    name: str
+    lifecycleState: ActivityLifecycleState = ActivityLifecycleState.DESIGNED
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class ActivityStateTransitionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    targetState: ActivityLifecycleState
+
+
+# --- Workflows ---------------------------------------------------------------
+
+
+class WorkflowBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=120)
+    description: str | None = None
     path: WorkflowPath
     activities: list[ActivityRef] = Field(default_factory=list)
+    goals: list[GoalRef] = Field(default_factory=list)
+    targetCycleTimeMs: int | None = Field(
+        default=None, ge=0, description="Target time to run all activities once, in milliseconds."
+    )
+
+
+class WorkflowCreate(WorkflowBase):
+    pass
+
+
+class WorkflowUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = None
+    path: WorkflowPath | None = None
+    activities: list[ActivityRef] | None = None
+    goals: list[GoalRef] | None = None
+    targetCycleTimeMs: int | None = None
+    lifecycleState: ActivityLifecycleState | None = None
+
+
+class Workflow(WorkflowBase):
+    id: UUID = Field(default_factory=uuid4)
+    lifecycleState: ActivityLifecycleState = ActivityLifecycleState.DESIGNED
+    createdAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updatedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class WorkflowStateTransitionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    targetState: ActivityLifecycleState
+
+
+# --- ClosedLoopLink ---------------------------------------------------------
 
 
 class ClosedLoopLink(BaseModel):
+    """Daisy-chain / hierarchical interlink between two closed loops.
+
+    PR1 wires the data model; PR3 adds cycle detection + bulk operations.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     id: UUID = Field(default_factory=uuid4)
-    source: DecisionModelRef  # reuse as a placeholder; full ClosedLoopRef lands in Slice 3
-    target: DecisionModelRef
-    kind: LinkKind
-    condition: str | None = None
+    source: ClosedLoopRef
+    target: ClosedLoopRef
+    kind: LinkKind = LinkKind.DAISY_CHAIN
+    direction: LinkDirection = LinkDirection.FORWARD
+    condition: str | None = Field(
+        default=None,
+        description="Optional boolean condition expression. Empty/null means always-on.",
+    )
+    weight: float | None = Field(
+        default=None,
+        description="Optional relative weight for fan-in / fan-out aggregations.",
+    )
 
 
 # --- Decision models ---------------------------------------------------------
@@ -258,10 +479,17 @@ class Page(BaseModel):
 
 __all__ = [
     "Activity",
+    "ActivityCreate",
+    "ActivityExecutor",
+    "ActivityLifecycleState",
     "ActivityRef",
+    "ActivityStateTransitionRequest",
+    "ActivityType",
+    "ActivityUpdate",
     "ClosedLoop",
     "ClosedLoopCreate",
     "ClosedLoopLink",
+    "ClosedLoopRef",
     "ClosedLoopState",
     "ClosedLoopUpdate",
     "CustomDecisionModel",
@@ -271,9 +499,14 @@ __all__ = [
     "DecisionModelRef",
     "ErrorEnvelope",
     "Goal",
+    "GoalCreate",
     "GoalDirection",
+    "GoalRef",
     "GoalScope",
     "GoalTarget",
+    "GoalTimeframe",
+    "GoalUpdate",
+    "LinkDirection",
     "LinkKind",
     "MapeDecisionModel",
     "OodaDecisionModel",
@@ -282,8 +515,11 @@ __all__ = [
     "StateResponse",
     "StateTransitionRequest",
     "Workflow",
+    "WorkflowCreate",
     "WorkflowPath",
     "WorkflowRef",
+    "WorkflowStateTransitionRequest",
+    "WorkflowUpdate",
 ]
 
 

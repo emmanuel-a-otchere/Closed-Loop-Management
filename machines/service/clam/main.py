@@ -17,7 +17,15 @@ from .errors import (
     error_response,
 )
 from .models import ErrorEnvelope
-from .routers import closed_loop, decision_model, health
+from .routers import (
+    activity,
+    closed_loop,
+    closed_loop_link,
+    decision_model,
+    goal,
+    health,
+    workflow,
+)
 from .store import Store
 
 
@@ -65,6 +73,10 @@ def create_app(db_path: Path | None = None) -> FastAPI:
             {"name": "health", "description": "Liveness and metadata."},
             {"name": "closedLoop", "description": "Closed-loop CRUD + state."},
             {"name": "decisionModel", "description": "Decision-model CRUD."},
+            {"name": "activity", "description": "Atomic step CRUD + lifecycle."},
+            {"name": "workflow", "description": "Feedback / feedforward workflow CRUD + lifecycle."},
+            {"name": "goal", "description": "Measurable goal CRUD."},
+            {"name": "closedLoopLink", "description": "Daisy-chain / hierarchical interlinks between loops."},
         ],
         lifespan=lifespan,
     )
@@ -105,6 +117,10 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(closed_loop.router)
     app.include_router(decision_model.router)
+    app.include_router(activity.router)
+    app.include_router(workflow.router)
+    app.include_router(goal.router)
+    app.include_router(closed_loop_link.router)
 
     @app.get(
         "/",

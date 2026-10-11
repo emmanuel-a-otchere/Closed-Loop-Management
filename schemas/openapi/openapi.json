@@ -1,10 +1,208 @@
 {
   "components": {
     "schemas": {
+      "Activity": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Underlying implementation reference. Free-form string. Examples: 'script:sense_cpu_temp', 'http:POST /api/cooling/start', 'agent:thermostat-orchestrator', 'human:oncall-rotation'.",
+            "title": "Action",
+            "type": "string"
+          },
+          "activityType": {
+            "$ref": "#/components/schemas/ActivityType",
+            "default": "sense"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "executor": {
+            "$ref": "#/components/schemas/ActivityExecutor",
+            "default": "internal"
+          },
+          "expectedDurationMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expected execution time in milliseconds (for SLA).",
+            "title": "Expecteddurationms"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "lifecycleState": {
+            "$ref": "#/components/schemas/ActivityLifecycleState",
+            "default": "designed"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "Activity-specific configuration. Free-form key/value map.",
+            "title": "Params",
+            "type": "object"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "action"
+        ],
+        "title": "Activity",
+        "type": "object"
+      },
+      "ActivityCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Underlying implementation reference. Free-form string. Examples: 'script:sense_cpu_temp', 'http:POST /api/cooling/start', 'agent:thermostat-orchestrator', 'human:oncall-rotation'.",
+            "title": "Action",
+            "type": "string"
+          },
+          "activityType": {
+            "$ref": "#/components/schemas/ActivityType",
+            "default": "sense"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "executor": {
+            "$ref": "#/components/schemas/ActivityExecutor",
+            "default": "internal"
+          },
+          "expectedDurationMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expected execution time in milliseconds (for SLA).",
+            "title": "Expecteddurationms"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "Activity-specific configuration. Free-form key/value map.",
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "action"
+        ],
+        "title": "ActivityCreate",
+        "type": "object"
+      },
+      "ActivityExecutor": {
+        "description": "Where an activity is executed.",
+        "enum": [
+          "internal",
+          "external",
+          "human"
+        ],
+        "title": "ActivityExecutor",
+        "type": "string"
+      },
+      "ActivityLifecycleState": {
+        "enum": [
+          "designed",
+          "validated",
+          "published",
+          "deprecated",
+          "retired"
+        ],
+        "title": "ActivityLifecycleState",
+        "type": "string"
+      },
       "ActivityRef": {
         "additionalProperties": false,
         "description": "Lightweight projection of an Activity used inside other entities.",
         "properties": {
+          "activityType": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -26,6 +224,156 @@
           "id"
         ],
         "title": "ActivityRef",
+        "type": "object"
+      },
+      "ActivityStateTransitionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "targetState": {
+            "$ref": "#/components/schemas/ActivityLifecycleState"
+          }
+        },
+        "required": [
+          "targetState"
+        ],
+        "title": "ActivityStateTransitionRequest",
+        "type": "object"
+      },
+      "ActivityType": {
+        "description": "Role of an activity in the closed loop.",
+        "enum": [
+          "sense",
+          "analyse",
+          "decide",
+          "act",
+          "feedback",
+          "feedforward"
+        ],
+        "title": "ActivityType",
+        "type": "string"
+      },
+      "ActivityUpdate": {
+        "additionalProperties": false,
+        "description": "Partial-update payload for PATCH on /activity/{id}.",
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "activityType": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "executor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityExecutor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expectedDurationMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expecteddurationms"
+          },
+          "inputs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputs"
+          },
+          "lifecycleState": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityLifecycleState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "outputs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputs"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          }
+        },
+        "title": "ActivityUpdate",
         "type": "object"
       },
       "ClosedLoop": {
@@ -132,6 +480,7 @@
       },
       "ClosedLoopLink": {
         "additionalProperties": false,
+        "description": "Daisy-chain / hierarchical interlink between two closed loops.\n\nPR1 wires the data model; PR3 adds cycle detection + bulk operations.",
         "properties": {
           "condition": {
             "anyOf": [
@@ -142,7 +491,12 @@
                 "type": "null"
               }
             ],
+            "description": "Optional boolean condition expression. Empty/null means always-on.",
             "title": "Condition"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/LinkDirection",
+            "default": "FORWARD"
           },
           "id": {
             "format": "uuid",
@@ -150,21 +504,60 @@
             "type": "string"
           },
           "kind": {
-            "$ref": "#/components/schemas/LinkKind"
+            "$ref": "#/components/schemas/LinkKind",
+            "default": "DAISY_CHAIN"
           },
           "source": {
-            "$ref": "#/components/schemas/DecisionModelRef"
+            "$ref": "#/components/schemas/ClosedLoopRef"
           },
           "target": {
-            "$ref": "#/components/schemas/DecisionModelRef"
+            "$ref": "#/components/schemas/ClosedLoopRef"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional relative weight for fan-in / fan-out aggregations.",
+            "title": "Weight"
           }
         },
         "required": [
           "source",
-          "target",
-          "kind"
+          "target"
         ],
         "title": "ClosedLoopLink",
+        "type": "object"
+      },
+      "ClosedLoopRef": {
+        "additionalProperties": false,
+        "description": "Lightweight reference to a ClosedLoop.\n\nUsed inside ``ClosedLoopLink`` and other cross-loop structures so the\nlink topology stays decoupled from the full loop payload.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "ClosedLoopRef",
         "type": "object"
       },
       "ClosedLoopState": {
@@ -339,6 +732,34 @@
       "Goal": {
         "additionalProperties": false,
         "properties": {
+          "achieved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Achieved"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "currentValue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Latest observed value for the metric. Used for KPI calculations.",
+            "title": "Currentvalue"
+          },
           "description": {
             "anyOf": [
               {
@@ -355,7 +776,21 @@
             "title": "Id",
             "type": "string"
           },
+          "metricSource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the metric is sourced from (e.g. 'sensor:cpu.temp', 'http:api/metrics').",
+            "title": "Metricsource"
+          },
           "name": {
+            "maxLength": 120,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           },
@@ -373,10 +808,26 @@
                 "type": "null"
               }
             ],
+            "description": "ID of the entity this goal is scoped to (a ClosedLoop, Workflow, or Activity).",
             "title": "Scoperef"
           },
           "target": {
             "$ref": "#/components/schemas/GoalTarget"
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalTimeframe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
           }
         },
         "required": [
@@ -384,6 +835,88 @@
           "target"
         ],
         "title": "Goal",
+        "type": "object"
+      },
+      "GoalCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "currentValue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Latest observed value for the metric. Used for KPI calculations.",
+            "title": "Currentvalue"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metricSource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the metric is sourced from (e.g. 'sensor:cpu.temp', 'http:api/metrics').",
+            "title": "Metricsource"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/GoalScope",
+            "default": "CLOSED_LOOP"
+          },
+          "scopeRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ID of the entity this goal is scoped to (a ClosedLoop, Workflow, or Activity).",
+            "title": "Scoperef"
+          },
+          "target": {
+            "$ref": "#/components/schemas/GoalTarget"
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalTimeframe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "target"
+        ],
+        "title": "GoalCreate",
         "type": "object"
       },
       "GoalDirection": {
@@ -394,6 +927,26 @@
         ],
         "title": "GoalDirection",
         "type": "string"
+      },
+      "GoalRef": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "GoalRef",
+        "type": "object"
       },
       "GoalScope": {
         "enum": [
@@ -439,6 +992,134 @@
         "title": "GoalTarget",
         "type": "object"
       },
+      "GoalTimeframe": {
+        "additionalProperties": false,
+        "description": "Optional time window during which the goal is measured.",
+        "properties": {
+          "endsAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endsat"
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startsat"
+          }
+        },
+        "title": "GoalTimeframe",
+        "type": "object"
+      },
+      "GoalUpdate": {
+        "additionalProperties": false,
+        "description": "Partial-update payload for PATCH on /goal/{id}.",
+        "properties": {
+          "currentValue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currentvalue"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metricSource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metricsource"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scopeRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoperef"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalTarget"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GoalTimeframe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "GoalUpdate",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -452,11 +1133,21 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "LinkDirection": {
+        "enum": [
+          "FORWARD",
+          "BIDIRECTIONAL"
+        ],
+        "title": "LinkDirection",
+        "type": "string"
+      },
       "LinkKind": {
+        "description": "Topology of a relationship between two closed loops.\n\n- ``DAISY_CHAIN``: source.target feeds source.source (linear topology).\n- ``HIERARCHICAL``: source is parent of target (parent supervises child).\n- ``FEEDBACK``: target feeds back into source (closes the outer loop).\n- ``SHADOW``: target is a shadow / replica used for failover.",
         "enum": [
           "DAISY_CHAIN",
           "HIERARCHICAL",
-          "FEEDBACK"
+          "FEEDBACK",
+          "SHADOW"
         ],
         "title": "LinkKind",
         "type": "string"
@@ -640,6 +1331,149 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "Workflow": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityRef"
+            },
+            "title": "Activities",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalRef"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lifecycleState": {
+            "$ref": "#/components/schemas/ActivityLifecycleState",
+            "default": "designed"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "$ref": "#/components/schemas/WorkflowPath"
+          },
+          "targetCycleTimeMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Target time to run all activities once, in milliseconds.",
+            "title": "Targetcycletimems"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "path"
+        ],
+        "title": "Workflow",
+        "type": "object"
+      },
+      "WorkflowCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityRef"
+            },
+            "title": "Activities",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalRef"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "$ref": "#/components/schemas/WorkflowPath"
+          },
+          "targetCycleTimeMs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Target time to run all activities once, in milliseconds.",
+            "title": "Targetcycletimems"
+          }
+        },
+        "required": [
+          "name",
+          "path"
+        ],
+        "title": "WorkflowCreate",
+        "type": "object"
+      },
+      "WorkflowPath": {
+        "enum": [
+          "FEEDFORWARD",
+          "FEEDBACK"
+        ],
+        "title": "WorkflowPath",
+        "type": "string"
+      },
       "WorkflowRef": {
         "additionalProperties": false,
         "properties": {
@@ -651,6 +1485,16 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -658,6 +1502,109 @@
           "name"
         ],
         "title": "WorkflowRef",
+        "type": "object"
+      },
+      "WorkflowStateTransitionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "targetState": {
+            "$ref": "#/components/schemas/ActivityLifecycleState"
+          }
+        },
+        "required": [
+          "targetState"
+        ],
+        "title": "WorkflowStateTransitionRequest",
+        "type": "object"
+      },
+      "WorkflowUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ActivityRef"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activities"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "goals": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GoalRef"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goals"
+          },
+          "lifecycleState": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityLifecycleState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetCycleTimeMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targetcycletimems"
+          }
+        },
+        "title": "WorkflowUpdate",
         "type": "object"
       }
     }
@@ -697,6 +1644,322 @@
         "summary": "API root",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/activity": {
+      "get": {
+        "operationId": "list_activities_api_v1_activity_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lifecycleState",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ActivityLifecycleState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lifecyclestate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "activityType",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ActivityType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Activitytype"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List activities",
+        "tags": [
+          "activity"
+        ]
+      },
+      "post": {
+        "operationId": "create_activity_api_v1_activity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create an activity",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/v1/activity/{activityId}": {
+      "delete": {
+        "operationId": "delete_activity_api_v1_activity__activityId__delete",
+        "parameters": [
+          {
+            "description": "Activity ID",
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "description": "Activity ID",
+              "format": "uuid",
+              "title": "Activityid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete an activity",
+        "tags": [
+          "activity"
+        ]
+      },
+      "get": {
+        "operationId": "get_activity_api_v1_activity__activityId__get",
+        "parameters": [
+          {
+            "description": "Activity ID",
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "description": "Activity ID",
+              "format": "uuid",
+              "title": "Activityid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get an activity",
+        "tags": [
+          "activity"
+        ]
+      },
+      "patch": {
+        "operationId": "update_activity_api_v1_activity__activityId__patch",
+        "parameters": [
+          {
+            "description": "Activity ID",
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "description": "Activity ID",
+              "format": "uuid",
+              "title": "Activityid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update an activity (partial)",
+        "tags": [
+          "activity"
+        ]
+      }
+    },
+    "/api/v1/activity/{activityId}/state": {
+      "post": {
+        "operationId": "transition_activity_state_api_v1_activity__activityId__state_post",
+        "parameters": [
+          {
+            "description": "Activity ID",
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "description": "Activity ID",
+              "format": "uuid",
+              "title": "Activityid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityStateTransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition an activity to a new lifecycle state",
+        "tags": [
+          "activity"
         ]
       }
     },
@@ -1021,6 +2284,248 @@
         ]
       }
     },
+    "/api/v1/closedLoopLink": {
+      "get": {
+        "operationId": "list_closed_loop_links_api_v1_closedLoopLink_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sourceId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sourceid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Targetid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LinkKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LinkDirection"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List closed loop links",
+        "tags": [
+          "closedLoopLink"
+        ]
+      },
+      "post": {
+        "operationId": "create_closed_loop_link_api_v1_closedLoopLink_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosedLoopLink"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoopLink"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a closed loop link (daisy-chain, hierarchical, feedback, shadow)",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
+    "/api/v1/closedLoopLink/{linkId}": {
+      "delete": {
+        "operationId": "delete_closed_loop_link_api_v1_closedLoopLink__linkId__delete",
+        "parameters": [
+          {
+            "description": "ClosedLoopLink ID",
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "description": "ClosedLoopLink ID",
+              "format": "uuid",
+              "title": "Linkid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a closed loop link",
+        "tags": [
+          "closedLoopLink"
+        ]
+      },
+      "get": {
+        "operationId": "get_closed_loop_link_api_v1_closedLoopLink__linkId__get",
+        "parameters": [
+          {
+            "description": "ClosedLoopLink ID",
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "description": "ClosedLoopLink ID",
+              "format": "uuid",
+              "title": "Linkid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoopLink"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a closed loop link",
+        "tags": [
+          "closedLoopLink"
+        ]
+      }
+    },
     "/api/v1/decisionModel": {
       "get": {
         "operationId": "list_decision_models_api_v1_decisionModel_get",
@@ -1250,6 +2755,584 @@
         ]
       }
     },
+    "/api/v1/goal": {
+      "get": {
+        "operationId": "list_goals_api_v1_goal_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/GoalScope"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scopeRef",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scoperef"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List goals",
+        "tags": [
+          "goal"
+        ]
+      },
+      "post": {
+        "operationId": "create_goal_api_v1_goal_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a goal",
+        "tags": [
+          "goal"
+        ]
+      }
+    },
+    "/api/v1/goal/{goalId}": {
+      "delete": {
+        "operationId": "delete_goal_api_v1_goal__goalId__delete",
+        "parameters": [
+          {
+            "description": "Goal ID",
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "description": "Goal ID",
+              "format": "uuid",
+              "title": "Goalid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a goal",
+        "tags": [
+          "goal"
+        ]
+      },
+      "get": {
+        "operationId": "get_goal_api_v1_goal__goalId__get",
+        "parameters": [
+          {
+            "description": "Goal ID",
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "description": "Goal ID",
+              "format": "uuid",
+              "title": "Goalid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a goal",
+        "tags": [
+          "goal"
+        ]
+      },
+      "patch": {
+        "operationId": "update_goal_api_v1_goal__goalId__patch",
+        "parameters": [
+          {
+            "description": "Goal ID",
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "description": "Goal ID",
+              "format": "uuid",
+              "title": "Goalid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update a goal (partial)",
+        "tags": [
+          "goal"
+        ]
+      }
+    },
+    "/api/v1/workflow": {
+      "get": {
+        "operationId": "list_workflows_api_v1_workflow_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lifecycleState",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ActivityLifecycleState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lifecyclestate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WorkflowPath"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List workflows",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "post": {
+        "operationId": "create_workflow_api_v1_workflow_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a workflow",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/api/v1/workflow/{workflowId}": {
+      "delete": {
+        "operationId": "delete_workflow_api_v1_workflow__workflowId__delete",
+        "parameters": [
+          {
+            "description": "Workflow ID",
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "description": "Workflow ID",
+              "format": "uuid",
+              "title": "Workflowid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a workflow",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "get": {
+        "operationId": "get_workflow_api_v1_workflow__workflowId__get",
+        "parameters": [
+          {
+            "description": "Workflow ID",
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "description": "Workflow ID",
+              "format": "uuid",
+              "title": "Workflowid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a workflow",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "patch": {
+        "operationId": "update_workflow_api_v1_workflow__workflowId__patch",
+        "parameters": [
+          {
+            "description": "Workflow ID",
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "description": "Workflow ID",
+              "format": "uuid",
+              "title": "Workflowid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update a workflow (partial)",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/api/v1/workflow/{workflowId}/state": {
+      "post": {
+        "operationId": "transition_workflow_state_api_v1_workflow__workflowId__state_post",
+        "parameters": [
+          {
+            "description": "Workflow ID",
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "description": "Workflow ID",
+              "format": "uuid",
+              "title": "Workflowid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowStateTransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workflow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition a workflow to a new lifecycle state",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -1288,6 +3371,22 @@
     {
       "description": "Decision-model CRUD.",
       "name": "decisionModel"
+    },
+    {
+      "description": "Atomic step CRUD + lifecycle.",
+      "name": "activity"
+    },
+    {
+      "description": "Feedback / feedforward workflow CRUD + lifecycle.",
+      "name": "workflow"
+    },
+    {
+      "description": "Measurable goal CRUD.",
+      "name": "goal"
+    },
+    {
+      "description": "Daisy-chain / hierarchical interlinks between loops.",
+      "name": "closedLoopLink"
     }
   ]
 }

@@ -16,15 +16,29 @@ from uuid import UUID
 import aiosqlite
 
 from .models import (
+    Activity,
+    ActivityCreate,
+    ActivityLifecycleState,
+    ActivityStateTransitionRequest,
+    ActivityType,
+    ActivityUpdate,
     ClosedLoop,
     ClosedLoopCreate,
+    ClosedLoopLink,
     ClosedLoopState,
     ClosedLoopUpdate,
     CustomDecisionModel,
     DecisionModel,
+    Goal,
+    GoalCreate,
+    GoalUpdate,
     MapeDecisionModel,
     OodaDecisionModel,
     StateTransitionRequest,
+    Workflow,
+    WorkflowCreate,
+    WorkflowStateTransitionRequest,
+    WorkflowUpdate,
 )
 
 SCHEMA = """
@@ -44,8 +58,50 @@ CREATE TABLE IF NOT EXISTS decision_model (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS activity (
+    id TEXT PRIMARY KEY,
+    payload TEXT NOT NULL,
+    lifecycle_state TEXT NOT NULL,
+    activity_type TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workflow (
+    id TEXT PRIMARY KEY,
+    payload TEXT NOT NULL,
+    lifecycle_state TEXT NOT NULL,
+    path TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS goal (
+    id TEXT PRIMARY KEY,
+    payload TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS closed_loop_link (
+    id TEXT PRIMARY KEY,
+    payload TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_closed_loop_state ON closed_loop(state);
 CREATE INDEX IF NOT EXISTS idx_decision_model_kind ON decision_model(kind);
+CREATE INDEX IF NOT EXISTS idx_activity_lifecycle ON activity(lifecycle_state);
+CREATE INDEX IF NOT EXISTS idx_activity_type ON activity(activity_type);
+CREATE INDEX IF NOT EXISTS idx_workflow_lifecycle ON workflow(lifecycle_state);
+CREATE INDEX IF NOT EXISTS idx_workflow_path ON workflow(path);
+CREATE INDEX IF NOT EXISTS idx_goal_scope ON goal(scope);
+CREATE INDEX IF NOT EXISTS idx_link_source ON closed_loop_link(source_id);
+CREATE INDEX IF NOT EXISTS idx_link_target ON closed_loop_link(target_id);
 """
 
 
@@ -60,15 +116,43 @@ _VALID_TRANSITIONS: dict[ClosedLoopState, set[ClosedLoopState]] = {
 }
 
 
+_VALID_ACTIVITY_TRANSITIONS: dict[ActivityLifecycleState, set[ActivityLifecycleState]] = {
+    ActivityLifecycleState.DESIGNED: {
+        ActivityLifecycleState.VALIDATED,
+        ActivityLifecycleState.RETIRED,
+    },
+    ActivityLifecycleState.VALIDATED: {
+        ActivityLifecycleState.PUBLISHED,
+        ActivityLifecycleState.RETIRED,
+    },
+    ActivityLifecycleState.PUBLISHED: {
+        ActivityLifecycleState.DEPRECATED,
+        ActivityLifecycleState.RETIRED,
+    },
+    ActivityLifecycleState.DEPRECATED: {
+        ActivityLifecycleState.PUBLISHED,
+        ActivityLifecycleState.RETIRED,
+    },
+    ActivityLifecycleState.RETIRED: set(),
+}
+
+
 class StateTransitionError(Exception):
     """Raised when a state transition is not allowed from the current state."""
 
-    def __init__(self, current: ClosedLoopState, target: ClosedLoopState) -> None:
+    def __init__(self, current: Any, target: Any, *, kind: str = "closed_loop") -> None:
         self.current = current
         self.target = target
-        super().__init__(
-            f"Cannot transition closed loop from {current.value} to {target.value}"
-        )
+        self.kind = kind
+        if hasattr(current, "value"):
+            current_v = current.value
+        else:
+            current_v = str(current)
+        if hasattr(target, "value"):
+            target_v = target.value
+        else:
+            target_v = str(target)
+        super().__init__(f"Cannot transition {kind} from {current_v} to {target_v}")
 
 
 class NotFoundError(Exception):
@@ -182,7 +266,7 @@ class Store:
         loop = await self.get_closed_loop(loop_id)
         allowed = _VALID_TRANSITIONS.get(loop.state, set())
         if request.targetState not in allowed:
-            raise StateTransitionError(loop.state, request.targetState)
+            raise StateTransitionError(loop.state, request.targetState, kind="closed_loop")
         loop.state = request.targetState
         loop.updatedAt = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
@@ -197,6 +281,514 @@ class Store:
             )
             await db.commit()
         return loop
+
+    # --- Activity -----------------------------------------------------------
+
+    async def create_activity(self, payload: ActivityCreate) -> Activity:
+        now = datetime.now(UTC)
+        activity = Activity(
+            name=payload.name,
+            description=payload.description,
+            activityType=payload.activityType,
+            action=payload.action,
+            inputs=payload.inputs,
+            outputs=payload.outputs,
+            params=payload.params,
+            executor=payload.executor,
+            expectedDurationMs=payload.expectedDurationMs,
+            createdAt=now,
+            updatedAt=now,
+        )
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO activity (id, payload, lifecycle_state, activity_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    str(activity.id),
+                    activity.model_dump_json(),
+                    activity.lifecycleState.value,
+                    activity.activityType.value,
+                    now.isoformat(),
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return activity
+
+    async def get_activity(self, activity_id: UUID) -> Activity:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM activity WHERE id = ?", (str(activity_id),)
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"Activity {activity_id} not found")
+        return Activity.model_validate_json(row["payload"])
+
+    async def list_activities(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        lifecycle_state: ActivityLifecycleState | None = None,
+        activity_type: ActivityType | None = None,
+    ) -> tuple[list[Activity], int]:
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 1
+        if page_size > 100:
+            page_size = 100
+        offset = (page - 1) * page_size
+        where_clauses: list[str] = []
+        params: list[Any] = []
+        if lifecycle_state is not None:
+            where_clauses.append("lifecycle_state = ?")
+            params.append(lifecycle_state.value)
+        if activity_type is not None:
+            where_clauses.append("activity_type = ?")
+            params.append(activity_type.value)
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                f"SELECT COUNT(*) AS c FROM activity{where_sql}", params
+            ) as cur:
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
+            async with db.execute(
+                f"SELECT payload FROM activity{where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                [*params, page_size, offset],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [Activity.model_validate_json(r["payload"]) for r in rows]
+        return items, total
+
+    async def update_activity(
+        self, activity_id: UUID, patch: ActivityUpdate
+    ) -> Activity:
+        activity = await self.get_activity(activity_id)
+        data = activity.model_dump()
+        for field in (
+            "name",
+            "description",
+            "activityType",
+            "action",
+            "inputs",
+            "outputs",
+            "params",
+            "executor",
+            "expectedDurationMs",
+        ):
+            value = getattr(patch, field)
+            if value is not None:
+                data[field] = value
+        if patch.lifecycleState is not None:
+            data["lifecycleState"] = patch.lifecycleState.value
+        data["updatedAt"] = datetime.now(UTC)
+        updated = Activity.model_validate(data)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE activity SET payload = ?, lifecycle_state = ?, activity_type = ?, updated_at = ? WHERE id = ?",
+                (
+                    updated.model_dump_json(),
+                    updated.lifecycleState.value,
+                    updated.activityType.value,
+                    updated.updatedAt.isoformat(),
+                    str(activity_id),
+                ),
+            )
+            await db.commit()
+        return updated
+
+    async def delete_activity(self, activity_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "DELETE FROM activity WHERE id = ?", (str(activity_id),)
+            )
+            await db.commit()
+            if cur.rowcount == 0:
+                raise NotFoundError(f"Activity {activity_id} not found")
+
+    async def transition_activity_state(
+        self, activity_id: UUID, request: ActivityStateTransitionRequest
+    ) -> Activity:
+        activity = await self.get_activity(activity_id)
+        allowed = _VALID_ACTIVITY_TRANSITIONS.get(activity.lifecycleState, set())
+        if request.targetState not in allowed:
+            raise StateTransitionError(
+                activity.lifecycleState,
+                request.targetState,
+                kind="activity",
+            )
+        activity.lifecycleState = request.targetState
+        activity.updatedAt = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE activity SET payload = ?, lifecycle_state = ?, updated_at = ? WHERE id = ?",
+                (
+                    activity.model_dump_json(),
+                    activity.lifecycleState.value,
+                    activity.updatedAt.isoformat(),
+                    str(activity_id),
+                ),
+            )
+            await db.commit()
+        return activity
+
+    # --- Workflow -----------------------------------------------------------
+
+    async def create_workflow(self, payload: WorkflowCreate) -> Workflow:
+        now = datetime.now(UTC)
+        workflow = Workflow(
+            name=payload.name,
+            description=payload.description,
+            path=payload.path,
+            activities=payload.activities,
+            goals=payload.goals,
+            targetCycleTimeMs=payload.targetCycleTimeMs,
+            createdAt=now,
+            updatedAt=now,
+        )
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO workflow (id, payload, lifecycle_state, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    str(workflow.id),
+                    workflow.model_dump_json(),
+                    workflow.lifecycleState.value,
+                    workflow.path.value,
+                    now.isoformat(),
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return workflow
+
+    async def get_workflow(self, workflow_id: UUID) -> Workflow:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM workflow WHERE id = ?", (str(workflow_id),)
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"Workflow {workflow_id} not found")
+        return Workflow.model_validate_json(row["payload"])
+
+    async def list_workflows(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        lifecycle_state: ActivityLifecycleState | None = None,
+        path: str | None = None,
+    ) -> tuple[list[Workflow], int]:
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 1
+        if page_size > 100:
+            page_size = 100
+        offset = (page - 1) * page_size
+        where_clauses: list[str] = []
+        params: list[Any] = []
+        if lifecycle_state is not None:
+            where_clauses.append("lifecycle_state = ?")
+            params.append(lifecycle_state.value)
+        if path is not None:
+            where_clauses.append("path = ?")
+            params.append(path)
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                f"SELECT COUNT(*) AS c FROM workflow{where_sql}", params
+            ) as cur:
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
+            async with db.execute(
+                f"SELECT payload FROM workflow{where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                [*params, page_size, offset],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [Workflow.model_validate_json(r["payload"]) for r in rows]
+        return items, total
+
+    async def update_workflow(
+        self, workflow_id: UUID, patch: WorkflowUpdate
+    ) -> Workflow:
+        workflow = await self.get_workflow(workflow_id)
+        data = workflow.model_dump()
+        for field in (
+            "name",
+            "description",
+            "path",
+            "activities",
+            "goals",
+            "targetCycleTimeMs",
+        ):
+            value = getattr(patch, field)
+            if value is not None:
+                data[field] = value
+        if patch.lifecycleState is not None:
+            data["lifecycleState"] = patch.lifecycleState.value
+        data["updatedAt"] = datetime.now(UTC)
+        updated = Workflow.model_validate(data)
+        # Determine the path column value (matches whatever the payload now says).
+        path_value = updated.path.value
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE workflow SET payload = ?, lifecycle_state = ?, path = ?, updated_at = ? WHERE id = ?",
+                (
+                    updated.model_dump_json(),
+                    updated.lifecycleState.value,
+                    path_value,
+                    updated.updatedAt.isoformat(),
+                    str(workflow_id),
+                ),
+            )
+            await db.commit()
+        return updated
+
+    async def delete_workflow(self, workflow_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "DELETE FROM workflow WHERE id = ?", (str(workflow_id),)
+            )
+            await db.commit()
+            if cur.rowcount == 0:
+                raise NotFoundError(f"Workflow {workflow_id} not found")
+
+    async def transition_workflow_state(
+        self, workflow_id: UUID, request: WorkflowStateTransitionRequest
+    ) -> Workflow:
+        workflow = await self.get_workflow(workflow_id)
+        allowed = _VALID_ACTIVITY_TRANSITIONS.get(workflow.lifecycleState, set())
+        if request.targetState not in allowed:
+            raise StateTransitionError(
+                workflow.lifecycleState,
+                request.targetState,
+                kind="workflow",
+            )
+        workflow.lifecycleState = request.targetState
+        workflow.updatedAt = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE workflow SET payload = ?, lifecycle_state = ?, updated_at = ? WHERE id = ?",
+                (
+                    workflow.model_dump_json(),
+                    workflow.lifecycleState.value,
+                    workflow.updatedAt.isoformat(),
+                    str(workflow_id),
+                ),
+            )
+            await db.commit()
+        return workflow
+
+    # --- Goal ---------------------------------------------------------------
+
+    async def create_goal(self, payload: GoalCreate) -> Goal:
+        now = datetime.now(UTC)
+        goal = Goal(
+            name=payload.name,
+            description=payload.description,
+            target=payload.target,
+            scope=payload.scope,
+            scopeRef=payload.scopeRef,
+            timeframe=payload.timeframe,
+            currentValue=payload.currentValue,
+            metricSource=payload.metricSource,
+            createdAt=now,
+            updatedAt=now,
+        )
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO goal (id, payload, scope, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                (
+                    str(goal.id),
+                    goal.model_dump_json(),
+                    goal.scope.value,
+                    now.isoformat(),
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return goal
+
+    async def get_goal(self, goal_id: UUID) -> Goal:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM goal WHERE id = ?", (str(goal_id),)
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"Goal {goal_id} not found")
+        return Goal.model_validate_json(row["payload"])
+
+    async def list_goals(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        scope: str | None = None,
+        scope_ref: UUID | None = None,
+    ) -> tuple[list[Goal], int]:
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 1
+        if page_size > 100:
+            page_size = 100
+        offset = (page - 1) * page_size
+        where_clauses: list[str] = []
+        params: list[Any] = []
+        if scope is not None:
+            where_clauses.append("scope = ?")
+            params.append(scope)
+        if scope_ref is not None:
+            # scopeRef is in the payload; we have to filter via JSON extraction.
+            where_clauses.append("json_extract(payload, '$.scopeRef') = ?")
+            params.append(str(scope_ref))
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                f"SELECT COUNT(*) AS c FROM goal{where_sql}", params
+            ) as cur:
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
+            async with db.execute(
+                f"SELECT payload FROM goal{where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                [*params, page_size, offset],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [Goal.model_validate_json(r["payload"]) for r in rows]
+        return items, total
+
+    async def update_goal(self, goal_id: UUID, patch: GoalUpdate) -> Goal:
+        goal = await self.get_goal(goal_id)
+        data = goal.model_dump()
+        if patch.name is not None:
+            data["name"] = patch.name
+        if patch.description is not None:
+            data["description"] = patch.description
+        if patch.target is not None:
+            data["target"] = patch.target.model_dump()
+        if patch.scope is not None:
+            data["scope"] = patch.scope.value
+        if patch.scopeRef is not None:
+            data["scopeRef"] = str(patch.scopeRef)
+        if patch.timeframe is not None:
+            data["timeframe"] = patch.timeframe.model_dump()
+        if patch.currentValue is not None:
+            data["currentValue"] = patch.currentValue
+        if patch.metricSource is not None:
+            data["metricSource"] = patch.metricSource
+        data["updatedAt"] = datetime.now(UTC)
+        updated = Goal.model_validate(data)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE goal SET payload = ?, scope = ?, updated_at = ? WHERE id = ?",
+                (
+                    updated.model_dump_json(),
+                    updated.scope.value,
+                    updated.updatedAt.isoformat(),
+                    str(goal_id),
+                ),
+            )
+            await db.commit()
+        return updated
+
+    async def delete_goal(self, goal_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute("DELETE FROM goal WHERE id = ?", (str(goal_id),))
+            await db.commit()
+            if cur.rowcount == 0:
+                raise NotFoundError(f"Goal {goal_id} not found")
+
+    # --- ClosedLoopLink -----------------------------------------------------
+
+    async def create_closed_loop_link(self, link: ClosedLoopLink) -> ClosedLoopLink:
+        now = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO closed_loop_link (id, payload, source_id, target_id, kind, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    str(link.id),
+                    link.model_dump_json(),
+                    str(link.source.id),
+                    str(link.target.id),
+                    link.kind.value,
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return link
+
+    async def get_closed_loop_link(self, link_id: UUID) -> ClosedLoopLink:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT payload FROM closed_loop_link WHERE id = ?", (str(link_id),)
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"ClosedLoopLink {link_id} not found")
+        return ClosedLoopLink.model_validate_json(row["payload"])
+
+    async def list_closed_loop_links(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        source_id: UUID | None = None,
+        target_id: UUID | None = None,
+        kind: str | None = None,
+    ) -> tuple[list[ClosedLoopLink], int]:
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 1
+        if page_size > 100:
+            page_size = 100
+        offset = (page - 1) * page_size
+        where_clauses: list[str] = []
+        params: list[Any] = []
+        if source_id is not None:
+            where_clauses.append("source_id = ?")
+            params.append(str(source_id))
+        if target_id is not None:
+            where_clauses.append("target_id = ?")
+            params.append(str(target_id))
+        if kind is not None:
+            where_clauses.append("kind = ?")
+            params.append(kind)
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                f"SELECT COUNT(*) AS c FROM closed_loop_link{where_sql}", params
+            ) as cur:
+                total_row = await cur.fetchone()
+                total = int(total_row["c"]) if total_row else 0
+            async with db.execute(
+                f"SELECT payload FROM closed_loop_link{where_sql} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                [*params, page_size, offset],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [ClosedLoopLink.model_validate_json(r["payload"]) for r in rows]
+        return items, total
+
+    async def delete_closed_loop_link(self, link_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "DELETE FROM closed_loop_link WHERE id = ?", (str(link_id),)
+            )
+            await db.commit()
+            if cur.rowcount == 0:
+                raise NotFoundError(f"ClosedLoopLink {link_id} not found")
 
     # --- DecisionModel ------------------------------------------------------
 
