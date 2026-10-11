@@ -175,3 +175,45 @@ Slice 3 deferred (kept on the books):
   the O(1) index for constraint checks.
 - Reverse-direction covering indexes on the junction tables may be
   added once query patterns are clearer.
+## Slice 4 close-out (2026-10-11)
+
+Slice 4 was split into 4 PRs, all merged into `main`:
+
+- **Slice 4 PR1** -- structured request log + correlation id middleware.
+  Every request writes a row to `request_log` (id, ts, method, path,
+  status, latency_ms, request_id, principal_id, source_ip, user_agent)
+  with index on ts DESC. The X-Correlation-Id header propagates from
+  client to server; when absent the middleware generates a fresh
+  UUID4 and echoes it back on the response. New endpoint
+  `GET /api/v1/_log/recent` returns the most recent rows
+  (limit 1..1000, default 100, cursor-paginated). Cursor resolved to
+  its row's ts (UUID4 is not monotonic).
+- **Slice 4 PR2** -- audit log table + write hooks on ClosedLoop /
+  Activity / Workflow state transitions, Goal updates, ClosedLoopLink
+  create + delete, Auth token issue + revoke. Correlation id
+  propagates via a per-request `ContextVar` set by the PR1 middleware;
+  audit hooks read it without per-method plumbing. Audit rows are
+  written only on **successful** operations; cycle + topology
+  errors do not write audit rows (the request log is the diagnostic).
+  Token entity_id is a stable `uuid5(NAMESPACE_URL, 'token:'+token_id)`
+  because token ids are URL-safe tokens, not UUIDs.
+- **Slice 4 PR3** -- GET /api/v1/audit (paginated, filterable by
+  entityKind / entityId / actor / action / since / until) +
+  GET /api/v1/audit/{auditId}. All filters optional, AND-combined.
+- **Slice 4 PR4** -- split `/health` into `/health/live` and
+  `/health/ready` (DB + token store readiness checks), plus a
+  Prometheus text-format `/metrics` exporter exposing
+  `clam_request_total{path,method,status}`,
+  `clam_request_duration_ms_{sum,count}{path,method}`,
+  `clam_audit_total{action,entity_kind}`, `clam_token_total`.
+  Counters are in-process and reset on restart. Docs
+  (`docs/api/OVERVIEW.md`) gain an observability section; two new
+  dataset examples ship in `datasets/examples/`.
+
+### Deferred to a later slice
+
+- Persistent DB-backed metrics (in-process only; restart resets
+  counters).
+- Per-route SLA / histogram buckets (only sum + count are emitted).
+- Anomaly alerting on `/metrics` (consumer-side concern).
+- Audit log retention / pruning policy.
