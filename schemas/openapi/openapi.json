@@ -478,6 +478,50 @@
         "title": "ClosedLoopCreate",
         "type": "object"
       },
+      "ClosedLoopGoalRollup": {
+        "additionalProperties": false,
+        "description": "Aggregated goal achievement for a closed loop (PR2).\n\nThe rollup computes:\n- ``goalCount``: total goals scoped to the loop (direct + indirect).\n- ``achievedCount``: goals whose latest ``currentValue`` satisfies the\n  target direction.\n- ``achievementPercent``: ``achievedCount / goalCount`` (0..100), or 0\n  when ``goalCount`` is 0.\n- ``goals``: the per-goal evaluation rows (latest value vs target).\n- ``computedAt``: server-side timestamp.",
+        "properties": {
+          "achievedCount": {
+            "title": "Achievedcount",
+            "type": "integer"
+          },
+          "achievementPercent": {
+            "title": "Achievementpercent",
+            "type": "number"
+          },
+          "closedLoopId": {
+            "format": "uuid",
+            "title": "Closedloopid",
+            "type": "string"
+          },
+          "computedAt": {
+            "format": "date-time",
+            "title": "Computedat",
+            "type": "string"
+          },
+          "goalCount": {
+            "title": "Goalcount",
+            "type": "integer"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "title": "Goals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "closedLoopId",
+          "goalCount",
+          "achievedCount",
+          "achievementPercent",
+          "goals"
+        ],
+        "title": "ClosedLoopGoalRollup",
+        "type": "object"
+      },
       "ClosedLoopLink": {
         "additionalProperties": false,
         "description": "Daisy-chain / hierarchical interlink between two closed loops.\n\nPR1 wires the data model; PR3 adds cycle detection + bulk operations.",
@@ -2181,6 +2225,52 @@
           }
         },
         "summary": "Patch a closed loop",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/closedLoop/{loopId}/goalRollup": {
+      "get": {
+        "description": "Compute a goal achievement rollup for the closed loop.\n\nAggregates goals from:\n- the closed loop's own ``goals`` array (CLOSED_LOOP scope with scopeRef matching the loop id)\n- any workflow the loop references (WORKFLOW scope)\n- any activity those workflows reference (ACTIVITY scope)\n\nEach goal is evaluated against its target direction. The endpoint\nreturns 404 if the closed loop does not exist.",
+        "operationId": "goal_rollup_api_v1_closedLoop__loopId__goalRollup_get",
+        "parameters": [
+          {
+            "description": "Closed loop ID",
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "description": "Closed loop ID",
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoopGoalRollup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Aggregate goal achievement across a closed loop and all of its child resources",
         "tags": [
           "closedLoop"
         ]

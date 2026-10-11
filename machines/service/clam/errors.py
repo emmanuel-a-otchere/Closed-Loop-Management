@@ -18,6 +18,7 @@ class ErrorCode(StrEnum):
     VALIDATION_ERROR = "request.validation_error"
     NOT_FOUND = "resource.not_found"
     STATE_TRANSITION_INVALID = "closed_loop.state_transition_invalid"
+    LIFECYCLE_CONSTRAINT = "lifecycle.constraint_violated"
     INTERNAL_ERROR = "server.internal_error"
     DUPLICATE = "resource.duplicate"
 

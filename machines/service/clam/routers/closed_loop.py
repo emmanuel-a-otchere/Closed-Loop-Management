@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request, status
+from fastapi import HTTPException, Path, Query, Request, status
+from fastapi.routing import APIRouter
 
 from ..errors import ErrorCode, error_response
 from ..models import (
     ClosedLoop,
     ClosedLoopCreate,
+    ClosedLoopGoalRollup,
     ClosedLoopUpdate,
     Page,
     StateResponse,
@@ -159,6 +161,32 @@ async def transition_state(
             },
         )
     return StateResponse(state=loop.state)
+
+
+@router.get(
+    "/{loopId}/goalRollup",
+    response_model=ClosedLoopGoalRollup,
+    summary="Aggregate goal achievement across a closed loop and all of its child resources",
+)
+async def goal_rollup(
+    request: Request,
+    loopId: UUID = Path(..., description="Closed loop ID"),
+) -> ClosedLoopGoalRollup:
+    """Compute a goal achievement rollup for the closed loop.
+
+    Aggregates goals from:
+    - the closed loop's own ``goals`` array (CLOSED_LOOP scope with scopeRef matching the loop id)
+    - any workflow the loop references (WORKFLOW scope)
+    - any activity those workflows reference (ACTIVITY scope)
+
+    Each goal is evaluated against its target direction. The endpoint
+    returns 404 if the closed loop does not exist.
+    """
+    try:
+        rollup = await _store(request).aggregate_closed_loop_goals(loopId)
+    except NotFoundError as exc:
+        return _not_found_response(exc)
+    return ClosedLoopGoalRollup.model_validate(rollup)
 
 
 __all__ = ["router"]

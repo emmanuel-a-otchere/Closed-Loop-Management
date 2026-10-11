@@ -31,6 +31,7 @@ from .models import (
     DecisionModel,
     Goal,
     GoalCreate,
+    GoalDirection,
     GoalUpdate,
     MapeDecisionModel,
     OodaDecisionModel,
@@ -153,6 +154,42 @@ class StateTransitionError(Exception):
         else:
             target_v = str(target)
         super().__init__(f"Cannot transition {kind} from {current_v} to {target_v}")
+
+
+# Lifecycle states that mean "this entity is in production use".
+# Used by cross-resource lifecycle constraints (PR2).
+_PUBLISHED_OR_HIGHER = {
+    ActivityLifecycleState.PUBLISHED,
+    ActivityLifecycleState.DEPRECATED,
+}
+
+
+class LifecycleConstraintError(Exception):
+    """Raised when a lifecycle transition / delete would violate a
+    cross-resource constraint.
+
+    Examples:
+
+    - Cannot publish a workflow that still references an activity that
+      has not itself been published (designed/validated).
+    - Cannot retire an activity that is still referenced by a published
+      workflow.
+    - Cannot delete an activity that is referenced by any workflow, or a
+      workflow that is referenced by any published closed loop.
+
+    The exception carries a ``conflicts`` list of dicts, each describing
+    one offending entity, so the API can surface a structured error
+    envelope to the caller.
+    """
+
+    def __init__(
+        self,
+        *,
+        message: str,
+        conflicts: list[dict[str, object]],
+    ) -> None:
+        self.conflicts = conflicts
+        super().__init__(message)
 
 
 class NotFoundError(Exception):
@@ -402,6 +439,8 @@ class Store:
         return updated
 
     async def delete_activity(self, activity_id: UUID) -> None:
+        # Cross-resource check (PR2): cannot delete if any workflow references the activity.
+        await self.assert_activity_can_be_deleted(activity_id)
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
                 "DELETE FROM activity WHERE id = ?", (str(activity_id),)
@@ -421,6 +460,9 @@ class Store:
                 request.targetState,
                 kind="activity",
             )
+        # Cross-resource check (PR2): cannot retire if a published workflow still references this activity.
+        if request.targetState == ActivityLifecycleState.RETIRED:
+            await self.assert_activity_can_be_retired(activity_id)
         activity.lifecycleState = request.targetState
         activity.updatedAt = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
@@ -552,6 +594,8 @@ class Store:
         return updated
 
     async def delete_workflow(self, workflow_id: UUID) -> None:
+        # Cross-resource check (PR2): cannot delete if any closed loop references the workflow.
+        await self.assert_workflow_can_be_deleted(workflow_id)
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
                 "DELETE FROM workflow WHERE id = ?", (str(workflow_id),)
@@ -571,6 +615,10 @@ class Store:
                 request.targetState,
                 kind="workflow",
             )
+        # Cross-resource check (PR2): cannot publish a workflow whose referenced
+        # activities are not yet published.
+        if request.targetState == ActivityLifecycleState.PUBLISHED:
+            await self.assert_workflow_can_be_published(workflow_id)
         workflow.lifecycleState = request.targetState
         workflow.updatedAt = datetime.now(UTC)
         async with aiosqlite.connect(self.db_path) as db:
@@ -790,6 +838,247 @@ class Store:
             if cur.rowcount == 0:
                 raise NotFoundError(f"ClosedLoopLink {link_id} not found")
 
+    # --- Cross-resource lifecycle constraints (PR2) ---------------------------
+
+    async def _activities_referenced_by_workflows(
+        self, activity_ids: list[UUID]
+    ) -> dict[UUID, list[dict[str, object]]]:
+        """For each activity id, return the workflows (id + name + path) that reference it.
+
+        Scans the ``workflow`` table's payload blobs for ``activities[].id``
+        matches; the cost is fine for the MVP SQLite store and avoids
+        maintaining a separate junction table.
+        """
+        if not activity_ids:
+            return {}
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute("SELECT id, payload FROM workflow") as cur:
+                rows = await cur.fetchall()
+        found: dict[UUID, list[dict[str, object]]] = {a: [] for a in activity_ids}
+        targets = {str(a) for a in activity_ids}
+        for row in rows:
+            workflow = Workflow.model_validate_json(row["payload"])
+            for ref in workflow.activities:
+                if str(ref.id) in targets:
+                    found[UUID(str(ref.id))].append(
+                        {
+                            "id": row["id"],
+                            "name": workflow.name,
+                            "lifecycleState": workflow.lifecycleState.value,
+                            "path": workflow.path.value,
+                        }
+                    )
+        return found
+
+    async def _workflows_referenced_by_closed_loops(
+        self, workflow_ids: list[UUID]
+    ) -> dict[UUID, list[dict[str, object]]]:
+        """For each workflow id, return the closed loops (id + name + state) that reference it."""
+        if not workflow_ids:
+            return {}
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute("SELECT id, payload FROM closed_loop") as cur:
+                rows = await cur.fetchall()
+        found: dict[UUID, list[dict[str, object]]] = {w: [] for w in workflow_ids}
+        targets = {str(w) for w in workflow_ids}
+        for row in rows:
+            loop = ClosedLoop.model_validate_json(row["payload"])
+            for ref in loop.workflows:
+                if str(ref.id) in targets:
+                    found[UUID(str(ref.id))].append(
+                        {
+                            "id": row["id"],
+                            "name": loop.name,
+                            "state": loop.state.value,
+                        }
+                    )
+        return found
+
+    async def assert_workflow_can_be_published(self, workflow_id: UUID) -> None:
+        """raise LifecycleConstraintError if any referenced activity is not yet published."""
+        workflow = await self.get_workflow(workflow_id)
+        if not workflow.activities:
+            return
+        ids = [ref.id for ref in workflow.activities]
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            placeholders = ",".join("?" for _ in ids)
+            async with db.execute(
+                f"SELECT id, payload FROM activity WHERE id IN ({placeholders})",
+                [str(i) for i in ids],
+            ) as cur:
+                rows = await cur.fetchall()
+        conflicts: list[dict[str, object]] = []
+        for row in rows:
+            activity = Activity.model_validate_json(row["payload"])
+            if activity.lifecycleState not in _PUBLISHED_OR_HIGHER:
+                conflicts.append(
+                    {
+                        "id": row["id"],
+                        "name": activity.name,
+                        "activityType": activity.activityType.value,
+                        "lifecycleState": activity.lifecycleState.value,
+                    }
+                )
+        if conflicts:
+            raise LifecycleConstraintError(
+                message=(
+                    f"Cannot publish workflow {workflow_id}: "
+                    f"{len(conflicts)} referenced activit"
+                    f"{'y' if len(conflicts) == 1 else 'ies'} not yet published."
+                ),
+                conflicts=conflicts,
+            )
+
+    async def assert_activity_can_be_retired(self, activity_id: UUID) -> None:
+        """raise LifecycleConstraintError if any published workflow still references the activity."""
+        references = await self._activities_referenced_by_workflows([activity_id])
+        # Filter to published-or-higher workflows only.
+        published_refs = [
+            ref for ref in references.get(activity_id, []) if ref["lifecycleState"] in (
+                ActivityLifecycleState.PUBLISHED.value,
+                ActivityLifecycleState.DEPRECATED.value,
+            )
+        ]
+        if published_refs:
+            raise LifecycleConstraintError(
+                message=(
+                    f"Cannot retire activity {activity_id}: still referenced by "
+                    f"{len(published_refs)} published workflow"
+                    f"{'s' if len(published_refs) != 1 else ''}."
+                ),
+                conflicts=published_refs,
+            )
+
+    async def assert_activity_can_be_deleted(self, activity_id: UUID) -> None:
+        """raise LifecycleConstraintError if any workflow references the activity."""
+        references = await self._activities_referenced_by_workflows([activity_id])
+        all_refs = references.get(activity_id, [])
+        if all_refs:
+            raise LifecycleConstraintError(
+                message=(
+                    f"Cannot delete activity {activity_id}: still referenced by "
+                    f"{len(all_refs)} workflow"
+                    f"{'s' if len(all_refs) != 1 else ''}."
+                ),
+                conflicts=all_refs,
+            )
+
+    async def assert_workflow_can_be_deleted(self, workflow_id: UUID) -> None:
+        """raise LifecycleConstraintError if any closed loop references the workflow."""
+        references = await self._workflows_referenced_by_closed_loops([workflow_id])
+        all_refs = references.get(workflow_id, [])
+        if all_refs:
+            raise LifecycleConstraintError(
+                message=(
+                    f"Cannot delete workflow {workflow_id}: still referenced by "
+                    f"{len(all_refs)} closed loop"
+                    f"{'s' if len(all_refs) != 1 else ''}."
+                ),
+                conflicts=all_refs,
+            )
+
+    async def aggregate_closed_loop_goals(
+        self, loop_id: UUID
+    ) -> dict[str, object]:
+        """Aggregate all goals scoped to the closed loop (PR2).
+
+        Includes goals with:
+        - ``scope=CLOSED_LOOP`` and ``scopeRef=loop_id``
+        - ``scope=WORKFLOW`` and ``scopeRef`` in any of the loop's workflow refs
+        - ``scope=ACTIVITY`` and ``scopeRef`` in any of those workflows' activity refs
+        - the goal blobs nested inside the ``ClosedLoop.goals`` field
+
+        For each goal, evaluate whether the latest ``currentValue`` satisfies
+        the target direction (``AT_LEAST``, ``AT_MOST``, ``EXACTLY``).
+        """
+        loop = await self.get_closed_loop(loop_id)
+        direct_goals: list[Goal] = list(loop.goals)
+
+        # Workflow / activity scopes that contribute to this loop's rollup.
+        workflow_ids: set[UUID] = {ref.id for ref in loop.workflows}
+        activity_ids: set[UUID] = set()
+        for workflow_id in workflow_ids:
+            try:
+                workflow = await self.get_workflow(workflow_id)
+            except NotFoundError:
+                continue
+            activity_ids.update(ref.id for ref in workflow.activities)
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            # CLOSED_LOOP scoped
+            async with db.execute(
+                "SELECT payload FROM goal WHERE scope = 'CLOSED_LOOP' "
+                "AND json_extract(payload, '$.scopeRef') = ?",
+                (str(loop_id),),
+            ) as cur:
+                closed_loop_goals = [
+                    Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                ]
+            # WORKFLOW scoped
+            workflow_scoped_rows: list[Goal] = []
+            if workflow_ids:
+                placeholders = ",".join("?" for _ in workflow_ids)
+                async with db.execute(
+                    f"SELECT payload FROM goal WHERE scope = 'WORKFLOW' "
+                    f"AND json_extract(payload, '$.scopeRef') IN ({placeholders})",
+                    [str(w) for w in workflow_ids],
+                ) as cur:
+                    workflow_scoped_rows = [
+                        Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                    ]
+            # ACTIVITY scoped
+            activity_scoped_rows: list[Goal] = []
+            if activity_ids:
+                placeholders = ",".join("?" for _ in activity_ids)
+                async with db.execute(
+                    f"SELECT payload FROM goal WHERE scope = 'ACTIVITY' "
+                    f"AND json_extract(payload, '$.scopeRef') IN ({placeholders})",
+                    [str(a) for a in activity_ids],
+                ) as cur:
+                    activity_scoped_rows = [
+                        Goal.model_validate_json(r["payload"]) for r in await cur.fetchall()
+                    ]
+
+        # Deduplicate by goal id, keeping the row from the deepest scope.
+        by_id: dict[UUID, Goal] = {}
+        for goal in (
+            *direct_goals,
+            *closed_loop_goals,
+            *workflow_scoped_rows,
+            *activity_scoped_rows,
+        ):
+            by_id[goal.id] = goal
+
+        # Achievement evaluation.
+        achieved_count = 0
+        for goal in by_id.values():
+            if goal.currentValue is None:
+                continue
+            target_value = goal.target.value
+            direction = goal.target.direction
+            if direction == GoalDirection.AT_LEAST:
+                satisfied = goal.currentValue >= target_value
+            elif direction == GoalDirection.AT_MOST:
+                satisfied = goal.currentValue <= target_value
+            else:  # EXACTLY
+                satisfied = goal.currentValue == target_value
+            if satisfied:
+                achieved_count += 1
+
+        total = len(by_id)
+        percent = (achieved_count / total * 100.0) if total else 0.0
+        return {
+            "closedLoopId": loop_id,
+            "goalCount": total,
+            "achievedCount": achieved_count,
+            "achievementPercent": round(percent, 2),
+            "goals": list(by_id.values()),
+        }
+
     # --- DecisionModel ------------------------------------------------------
 
     async def create_decision_model(self, payload: DecisionModel) -> DecisionModel:
@@ -875,6 +1164,7 @@ def _deserialize_decision_model(payload: str) -> DecisionModel:
 
 
 __all__ = [
+    "LifecycleConstraintError",
     "NotFoundError",
     "StateTransitionError",
     "Store",

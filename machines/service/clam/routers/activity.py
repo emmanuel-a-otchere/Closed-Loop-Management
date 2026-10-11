@@ -16,7 +16,7 @@ from ..models import (
     ActivityUpdate,
     Page,
 )
-from ..store import NotFoundError, StateTransitionError
+from ..store import LifecycleConstraintError, NotFoundError, StateTransitionError
 
 router = APIRouter(
     prefix="/api/v1/activity",
@@ -52,6 +52,15 @@ def _invalid_transition_response(exc: StateTransitionError):
             "targetState": target_v,
             "kind": exc.kind,
         },
+    )
+
+
+def _lifecycle_constraint_response(exc: LifecycleConstraintError):
+    return error_response(
+        status_code=409,
+        code=ErrorCode.LIFECYCLE_CONSTRAINT,
+        message=str(exc),
+        details={"conflicts": exc.conflicts},
     )
 
 
@@ -132,6 +141,8 @@ async def delete_activity(
         await _store(request).delete_activity(activityId)
     except NotFoundError as exc:
         return _not_found_response(exc)
+    except LifecycleConstraintError as exc:
+        return _lifecycle_constraint_response(exc)
 
 
 @router.post(
@@ -150,3 +161,5 @@ async def transition_activity_state(
         return _not_found_response(exc)
     except StateTransitionError as exc:
         return _invalid_transition_response(exc)
+    except LifecycleConstraintError as exc:
+        return _lifecycle_constraint_response(exc)
