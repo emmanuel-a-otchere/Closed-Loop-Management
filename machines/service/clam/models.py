@@ -466,6 +466,29 @@ class ErrorEnvelope(BaseModel):
     details: dict[str, object] | None = None
 
 
+class ClosedLoopGoalRollup(BaseModel):
+    """Aggregated goal achievement for a closed loop (PR2).
+
+    The rollup computes:
+    - ``goalCount``: total goals scoped to the loop (direct + indirect).
+    - ``achievedCount``: goals whose latest ``currentValue`` satisfies the
+      target direction.
+    - ``achievementPercent``: ``achievedCount / goalCount`` (0..100), or 0
+      when ``goalCount`` is 0.
+    - ``goals``: the per-goal evaluation rows (latest value vs target).
+    - ``computedAt``: server-side timestamp.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    closedLoopId: UUID
+    goalCount: int
+    achievedCount: int
+    achievementPercent: float
+    goals: list[Goal]
+    computedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class Page(BaseModel):
     """Generic pagination envelope."""
 
@@ -488,6 +511,7 @@ __all__ = [
     "ActivityUpdate",
     "ClosedLoop",
     "ClosedLoopCreate",
+    "ClosedLoopGoalRollup",
     "ClosedLoopLink",
     "ClosedLoopRef",
     "ClosedLoopState",
