@@ -17,9 +17,10 @@ kanban / project-board discipline structural rather than aspirational.
    GB921, TAM, ODF, OSS/BSS in this repo. Substitutes are ITU-T M.3050.x,
    ETSI TS, ISO/IEC, NIST, or SDO-neutral standardization.
 5. **OAS-first**: the OAS 3.1 document served at `/openapi.json` is the
-   contract. Source-of-truth is the Pydantic models in `api/clam/models.py`.
-   Do not hand-edit `openapi/openapi.json`; regenerate via
-   `scripts/export_openapi.py`.
+   contract. Source-of-truth is the Pydantic models in
+   `machines/service/clam/models.py`. Do not hand-edit
+   `schemas/openapi/openapi.json`; regenerate via
+   `machines/scripts/export_openapi.py`.
 6. **Surgical changes**: every changed line traces to a stated user request
    or an explicit acceptance criterion. Do not "improve" adjacent code as
    a side effect.
@@ -95,6 +96,36 @@ dated siblings; the diff between snapshots is the audit trail.
 ## Related
 
 - `docs/data-model/clam-data-model-1.0.md` -- the binding data model
-- `docs/api/OVERVIEW.md` -- API tour
+- `docs/api/OVERVIEW.md` -- API tour (single-source integration guide)
+- `docs/diagrams/` -- Mermaid / PlantUML source for the system diagrams
+- `docs/conceptual/paradigm.md` -- position paper
 - `.github/epics/` -- WBS epic specs
 - `CHANGELOG.md` -- release log
+
+## Slice 2 close-out (2026-10-11)
+
+Slice 2 was split into 3 PRs, all merged into `main`:
+
+- **Slice 2 PR1** -- Activity / Workflow / Goal / ClosedLoopLink first-class
+  CRUD with their own IDs and lifecycles. Denormalised columns on the
+  SQLite tables for filtered listing.
+- **Slice 2 PR2** -- Cross-resource lifecycle constraints
+  (publish-workflow-with-unpublished-activities, retire-activity-still-in-use,
+  delete-blocked-by-reference) + GET /closedLoop/{id}/goalRollup
+  aggregating achievement across CLOSED_LOOP / WORKFLOW / ACTIVITY scopes.
+- **Slice 2 PR3** -- ClosedLoopLink cycle detection (single + bulk),
+  topology view, BFS path query, downstream/upstream neighbour endpoints.
+
+Slice 2 deferred (kept on the books):
+
+- Authentication layer (planned for Slice 4).
+- Per-kind topology semantics on top of cycle detection (DAISY_CHAIN
+  linear-only enforcement, HIERARCHICAL parent/child acyclic tree,
+  FEEDBACK peer rules, SHADOW read-only mirrors). The `kind` field is
+  carried on the model; rules are a layer above cycle detection.
+- Junction tables for activity/workflow references -- the slice-2
+  constraint checks walk the relevant table payloads (O(N) per check).
+  Fine for the MVP SQLite store; a junction table is the proper fix at
+  scale.
+- Cross-loop goal rollups (an outer loop's achievement stats summing
+  weighted rollups of its child links).

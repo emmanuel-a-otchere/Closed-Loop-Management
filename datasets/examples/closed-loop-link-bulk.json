@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "source": {"id": "55555555-5555-5555-5555-555555555555"},
+      "target": {"id": "66666666-6666-6666-6666-666666666666"},
+      "kind": "DAISY_CHAIN",
+      "direction": "FORWARD"
+    },
+    {
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "source": {"id": "66666666-6666-6666-6666-666666666666"},
+      "target": {"id": "77777777-7777-7777-7777-777777777777"},
+      "kind": "HIERARCHICAL",
+      "direction": "FORWARD"
+    },
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "source": {"id": "55555555-5555-5555-5555-555555555555"},
+      "target": {"id": "77777777-7777-7777-7777-777777777777"},
+      "kind": "FEEDBACK",
+      "direction": "BIDIRECTIONAL"
+    }
+  ]
+}
