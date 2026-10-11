@@ -780,3 +780,213 @@ async def test_goal_rollup_404_when_loop_missing(client: AsyncClient) -> None:
     assert r.status_code == 404
     body = r.json()
     assert body["code"] == "resource.not_found"
+
+
+# --- Slice 2 PR3 tests --------------------------------------------------------
+
+
+async def _make_closed_loop(client: AsyncClient) -> str:
+    """Helper: create a single closed loop with a fresh OODA decision model."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    return await _create_closed_loop(client, dm_id=dm_id)
+
+
+def _link_payload(
+    source: str,
+    target: str,
+    kind: str = "DAISY_CHAIN",
+    direction: str = "FORWARD",
+) -> dict[str, object]:
+    return {
+        "id": str(uuid4()),
+        "source": {"id": source},
+        "target": {"id": target},
+        "kind": kind,
+        "direction": direction,
+    }
+
+
+async def test_link_self_loop_is_rejected(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink", json=_link_payload(a, a)
+    )
+    assert r.status_code == 409, r.text
+    body = r.json()
+    assert body["code"] == "topology.cycle_detected"
+    assert body["details"]["cycle"] == [a]
+
+
+async def test_link_two_node_cycle_is_rejected(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    # a -> b is fine.
+    r = await client.post(
+        "/api/v1/closedLoopLink", json=_link_payload(a, b)
+    )
+    assert r.status_code == 201, r.text
+    # b -> a would close a 2-node cycle.
+    r = await client.post(
+        "/api/v1/closedLoopLink", json=_link_payload(b, a)
+    )
+    assert r.status_code == 409, r.text
+    body = r.json()
+    assert body["code"] == "topology.cycle_detected"
+    # Cycle chain: a, b, a (target, ..., source)
+    assert body["details"]["cycle"][-1] == a
+    assert body["details"]["cycle"][0] == a
+
+
+async def test_link_three_node_cycle_is_rejected(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    # Build a -> b -> c, then try c -> a.
+    for src, tgt in ((a, b), (b, c)):
+        r = await client.post(
+            "/api/v1/closedLoopLink", json=_link_payload(src, tgt)
+        )
+        assert r.status_code == 201, r.text
+    r = await client.post(
+        "/api/v1/closedLoopLink", json=_link_payload(c, a)
+    )
+    assert r.status_code == 409, r.text
+    body = r.json()
+    assert body["code"] == "topology.cycle_detected"
+    assert a in body["details"]["cycle"]
+    assert c in body["details"]["cycle"]
+
+
+async def test_link_diamond_topology_is_accepted(client: AsyncClient) -> None:
+    """A diamond (a->b, a->c, b->d, c->d) is a DAG, no cycle."""
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    d = await _make_closed_loop(client)
+    for src, tgt in ((a, b), (a, c), (b, d), (c, d)):
+        r = await client.post(
+            "/api/v1/closedLoopLink", json=_link_payload(src, tgt)
+        )
+        assert r.status_code == 201, r.text
+
+
+async def test_bulk_create_accepts_dag(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    d = await _make_closed_loop(client)
+    payload = {"items": [
+        _link_payload(a, b),
+        _link_payload(a, c),
+        _link_payload(b, d),
+        _link_payload(c, d),
+    ]}
+    r = await client.post("/api/v1/closedLoopLink/bulk", json=payload)
+    assert r.status_code == 201, r.text
+    assert len(r.json()) == 4
+
+
+async def test_bulk_create_rejects_if_any_link_closes_cycle(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    # Pre-existing: a -> b
+    r = await client.post(
+        "/api/v1/closedLoopLink", json=_link_payload(a, b)
+    )
+    assert r.status_code == 201
+    # Batch: b -> c (ok) and c -> a (closes 3-node cycle).
+    payload = {"items": [
+        _link_payload(b, c),
+        _link_payload(c, a),
+    ]}
+    r = await client.post("/api/v1/closedLoopLink/bulk", json=payload)
+    assert r.status_code == 409
+    body = r.json()
+    assert body["code"] == "topology.cycle_detected"
+    # No new links should have been persisted.
+    r = await client.get(f"/api/v1/closedLoopLink?sourceId={b}")
+    items = r.json()["items"]
+    assert all(item["source"]["id"] != b for item in items)
+
+
+async def test_topology_view_returns_all_links(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    for src, tgt in ((a, b), (a, c)):
+        r = await client.post(
+            "/api/v1/closedLoopLink", json=_link_payload(src, tgt)
+        )
+        assert r.status_code == 201
+    r = await client.get("/api/v1/closedLoopLink/topology")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["linkCount"] == 2
+    assert body["nodeCount"] == 3
+    assert {link["source"]["id"] for link in body["links"]} == {a}
+
+
+async def test_path_finds_shortest_chain(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    d = await _make_closed_loop(client)
+    for src, tgt in ((a, b), (a, c), (b, d), (c, d)):
+        r = await client.post(
+            "/api/v1/closedLoopLink", json=_link_payload(src, tgt)
+        )
+        assert r.status_code == 201
+    r = await client.get(
+        f"/api/v1/closedLoopLink/path?sourceId={a}&targetId={d}"
+    )
+    assert r.status_code == 200
+    chain = r.json()
+    assert chain[0] == a
+    assert chain[-1] == d
+    assert len(chain) == 3  # a -> b -> d (or a -> c -> d)
+
+
+async def test_path_returns_empty_when_disconnected(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    r = await client.get(
+        f"/api/v1/closedLoopLink/path?sourceId={a}&targetId={b}"
+    )
+    assert r.status_code == 200
+    assert r.json() == []
+
+
+async def test_links_from_and_to(client: AsyncClient) -> None:
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    c = await _make_closed_loop(client)
+    for src, tgt in ((a, b), (a, c)):
+        r = await client.post(
+            "/api/v1/closedLoopLink", json=_link_payload(src, tgt)
+        )
+        assert r.status_code == 201
+    r = await client.get(f"/api/v1/closedLoopLink/from/{a}")
+    assert r.status_code == 200
+    downstream = r.json()
+    assert len(downstream) == 2
+    r = await client.get(f"/api/v1/closedLoopLink/to/{b}")
+    assert r.status_code == 200
+    upstream = r.json()
+    assert len(upstream) == 1
+    assert upstream[0]["source"]["id"] == a
+
+
+async def test_link_oas_3_1_topology_paths_present(client: AsyncClient) -> None:
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/closedLoopLink" in paths
+    assert "/api/v1/closedLoopLink/bulk" in paths
+    assert "/api/v1/closedLoopLink/topology" in paths
+    assert "/api/v1/closedLoopLink/path" in paths
+    assert "/api/v1/closedLoopLink/from/{loopId}" in paths
+    assert "/api/v1/closedLoopLink/to/{loopId}" in paths
+    schemas = spec["components"]["schemas"]
+    assert "ClosedLoopLinkCreateBatch" in schemas
+    assert "ClosedLoopTopology" in schemas

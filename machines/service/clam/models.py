@@ -489,6 +489,29 @@ class ClosedLoopGoalRollup(BaseModel):
     computedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class ClosedLoopLinkCreateBatch(BaseModel):
+    """Batch payload for bulk link creation (PR3).
+
+    The body is a JSON object containing a ``items`` array of links.
+    The endpoint validates cycle-freedom across the whole batch plus
+    the existing graph; on failure the entire batch is rejected.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ClosedLoopLink]
+
+
+class ClosedLoopTopology(BaseModel):
+    """Topology snapshot of the closed-loop link graph (PR3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    linkCount: int
+    nodeCount: int
+    links: list[ClosedLoopLink]
+
+
 class Page(BaseModel):
     """Generic pagination envelope."""
 
@@ -513,8 +536,10 @@ __all__ = [
     "ClosedLoopCreate",
     "ClosedLoopGoalRollup",
     "ClosedLoopLink",
+    "ClosedLoopLinkCreateBatch",
     "ClosedLoopRef",
     "ClosedLoopState",
+    "ClosedLoopTopology",
     "ClosedLoopUpdate",
     "CustomDecisionModel",
     "CustomDecisionModelStep",
