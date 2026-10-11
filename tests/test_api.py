@@ -1986,3 +1986,121 @@ async def test_audit_token_issue_and_revoke(
             actions = [r.action.value for r in rows]
             assert "auth.token.issue" in actions
             assert "auth.token.revoke" in actions
+
+
+# --- Slice 4 PR3 tests --------------------------------------------------------
+
+
+async def test_audit_list_returns_recent_rows(
+    client: AsyncClient,
+) -> None:
+    """GET /api/v1/audit returns recent audit rows."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get("/api/v1/audit")
+    assert r.status_code == 200
+    body = r.json()
+    assert "items" in body
+    assert body["limit"] == 100
+    assert len(body["items"]) >= 1
+
+
+async def test_audit_list_filter_by_entity_kind(
+    client: AsyncClient,
+) -> None:
+    """GET /api/v1/audit?entityKind=ClosedLoop filters rows."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get("/api/v1/audit?entityKind=ClosedLoop")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) >= 1
+    for item in body["items"]:
+        assert item["entityKind"] == "ClosedLoop"
+
+
+async def test_audit_list_filter_by_action(
+    client: AsyncClient,
+) -> None:
+    """GET /api/v1/audit?action=closed_loop.state_transition filters rows."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get(
+        "/api/v1/audit?action=closed_loop.state_transition"
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) >= 1
+    for item in body["items"]:
+        assert item["action"] == "closed_loop.state_transition"
+
+
+async def test_audit_list_combined_filters(client: AsyncClient) -> None:
+    """Combined entityKind + entityId filters return one entity's history."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get(
+        f"/api/v1/audit?entityKind=ClosedLoop&entityId={loop}"
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) == 1
+    assert body["items"][0]["entityId"] == loop
+
+
+async def test_audit_get_by_id(client: AsyncClient) -> None:
+    """GET /api/v1/audit/{auditId} returns a single audit row."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get("/api/v1/audit?entityKind=ClosedLoop&entityId=" + loop)
+    audit_id = r.json()["items"][0]["id"]
+    r = await client.get(f"/api/v1/audit/{audit_id}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["id"] == audit_id
+    assert body["entityKind"] == "ClosedLoop"
+
+
+async def test_audit_get_404_when_missing(client: AsyncClient) -> None:
+    """GET /api/v1/audit/{auditId} with unknown id returns 404."""
+    from uuid import uuid4
+
+    r = await client.get(f"/api/v1/audit/{uuid4()}")
+    assert r.status_code == 404
+    body = r.json()
+    assert body["code"] == "resource.not_found"
+
+
+async def test_audit_invalid_cursor_422(client: AsyncClient) -> None:
+    """GET /api/v1/audit?cursor=not-a-uuid returns 422."""
+    r = await client.get("/api/v1/audit?cursor=not-a-uuid")
+    assert r.status_code == 422
+
+
+async def test_oas_3_1_audit_paths_present(client: AsyncClient) -> None:
+    """Both /audit paths are exposed in the OAS 3.1 spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/audit" in paths
+    assert "/api/v1/audit/{auditId}" in paths
