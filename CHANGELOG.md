@@ -7,6 +7,34 @@ adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Slice 4 PR1 -- structured request log + correlation id middleware.
+  Every request writes a row to `request_log` (id, ts, method, path,
+  status, latency_ms, request_id, principal_id, source_ip, user_agent)
+  with an index on `ts DESC`. The `X-Correlation-Id` header propagates
+  from client to server; when absent the middleware generates a fresh
+  UUID4 and echoes it on the response. New endpoint
+  `GET /api/v1/_log/recent` returns the most recent rows (limit 1..1000,
+  default 100, cursor-paginated).
+- Slice 4 PR2 -- audit log + write hooks on ClosedLoop / Activity /
+  Workflow state transitions, Goal updates, ClosedLoopLink create +
+  delete, Auth token issue + revoke. Audit rows are written only on
+  successful operations; cycle + topology errors do not write audit
+  rows (the request log is the diagnostic). Correlation id propagates
+  via a per-request ContextVar set by the PR1 middleware. New audit
+  columns: id, ts, actor (USER / SYSTEM), action, entity_kind,
+  entity_id, before_payload, after_payload, correlation_id. Token
+  entity_id is a stable uuid5 of the token id (token ids are URL-safe
+  tokens, not UUIDs).
+- Slice 4 PR3 -- GET /api/v1/audit (paginated, filterable by
+  entityKind / entityId / actor / action / since / until) +
+  GET /api/v1/audit/{auditId}. All filters optional, AND-combined.
+- Slice 4 PR4 -- split /health into /health/live (trivial 200) and
+  /health/ready (200 when DB + token store are up; 503 otherwise).
+  New /metrics endpoint exposing Prometheus text-format counters
+  (clam_request_total, clam_request_duration_ms_{sum,count},
+  clam_audit_total, clam_token_total). New dataset examples
+  audit-snapshot.json + request-log-tail.json. Updated
+  docs/api/OVERVIEW.md with an observability section.
 - Slice 3 PR1 -- opt-in bearer-token authentication. CLAM_AUTH_ENABLED env
   var defaults to false; production deployments flip it to true. Scope levels
   READ < WRITE < ADMIN (higher implicitly grants lower). New endpoints

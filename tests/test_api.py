@@ -2104,3 +2104,93 @@ async def test_oas_3_1_audit_paths_present(client: AsyncClient) -> None:
     paths = set(spec["paths"].keys())
     assert "/api/v1/audit" in paths
     assert "/api/v1/audit/{auditId}" in paths
+
+
+# --- Slice 4 PR4 tests --------------------------------------------------------
+
+
+async def test_health_live_returns_ok(client: AsyncClient) -> None:
+    """/health/live is a trivial 200."""
+    r = await client.get("/health/live")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
+
+
+async def test_health_ready_returns_ready(client: AsyncClient) -> None:
+    """/health/ready returns 200 when DB + token store are up."""
+    r = await client.get("/health/ready")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ready"}
+
+
+async def test_health_ready_503_when_token_store_missing(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """/health/ready returns 503 when token store is None."""
+    from httpx import ASGITransport, AsyncClient
+
+    from machines.service.clam.main import create_app
+
+    monkeypatch.setenv("CLAM_AUTH_ENABLED", "true")
+    app = create_app(str(tmp_path / "no_tok.db"))
+    # Simulate a broken init by clearing token_store.
+    if hasattr(app.state, "token_store"):
+        app.state.token_store = None
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as c:
+            r = await c.get("/health/ready")
+            assert r.status_code == 503
+            body = r.json()
+            assert body["status"] == "not_ready"
+            assert body["tokenStore"] is False
+
+
+async def test_metrics_returns_prometheus_format(
+    client: AsyncClient,
+) -> None:
+    """/metrics returns Prometheus text format."""
+    await client.get("/health")
+    await client.get("/health/live")
+    r = await client.get("/metrics")
+    assert r.status_code == 200
+    body = r.text
+    # Header lines.
+    assert "# HELP clam_request_total" in body
+    assert "# TYPE clam_request_total counter" in body
+    # At least one sample for the /health endpoint.
+    assert 'clam_request_total{path="/health"' in body
+    assert "clam_token_total" in body
+
+
+async def test_metrics_records_audit_writes(
+    client: AsyncClient,
+) -> None:
+    """/metrics exposes clam_audit_total after a state transition."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    r = await client.get("/metrics")
+    body = r.text
+    assert (
+        'clam_audit_total{action="closed_loop.state_transition",entity_kind="ClosedLoop"} 1'
+        in body
+    )
+
+
+async def test_oas_3_1_health_paths_present(
+    client: AsyncClient,
+) -> None:
+    """Health endpoints surface in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/health" in paths
+    assert "/health/live" in paths
+    assert "/health/ready" in paths
+    assert "/metrics" in paths

@@ -300,9 +300,41 @@ Postman collection is regenerated into `schemas/openapi/postman/`.
 
 ## Authentication
 
-Slice 1-3 ship without authentication. The HTTP server is local-only by
-default. Production deployments MUST add an authentication layer
-(planned for Slice 4).
+Slice 3 added an opt-in bearer-token authentication layer
+(`CLAM_AUTH_ENABLED` env var, defaults to false). When enabled, scope
+levels READ < WRITE < ADMIN are enforced by middleware. See Slice 3
+close-out notes for details.
+
+## Observability (Slice 4)
+
+Slice 4 ships three observability surfaces:
+
+- `GET /health/live` -- trivial 200. The process is up.
+- `GET /health/ready` -- 200 when the database is reachable AND the
+  auth token store is initialised. 503 otherwise.
+- `GET /metrics` -- Prometheus text-format exporter with:
+  - `clam_request_total{path, method, status}`
+  - `clam_request_duration_ms_{sum, count}{path, method}`
+  - `clam_audit_total{action, entity_kind}`
+  - `clam_token_total` (gauge)
+
+Plus two log surfaces that persist rows to SQLite:
+
+- `GET /api/v1/_log/recent` -- most recent structured request-log rows
+  (limit 1..1000, default 100, cursor-paginated). Each row carries
+  method / path / status / latency_ms / correlation id / principal
+  id / source ip / user agent.
+- `GET /api/v1/audit` -- audit-log entries, filterable by entity kind,
+  entity id, actor, action, since, until. Cursor-paginated.
+  `GET /api/v1/audit/{auditId}` returns a single row.
+
+The `X-Correlation-Id` header propagates from client to server; when
+absent the middleware generates a fresh UUID4 and echoes it on the
+response. The same id is stamped on both the request log and the
+audit row for the operation.
+
+Metrics counters are in-process and reset on restart. Persistent
+metric scraping is the consumer-side concern (Prometheus, etc.).
 
 ## OAS validation
 

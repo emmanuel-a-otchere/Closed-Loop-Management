@@ -319,6 +319,12 @@ class Store:
 
     def __init__(self, db_path: Path | str) -> None:
         self.db_path = Path(db_path)
+        # PR4: in-process metrics counters (reset on restart).
+        self._request_total: dict[tuple[str, str, int], int] = {}
+        self._request_latency_ms_sum: dict[tuple[str, str], float] = {}
+        self._request_latency_ms_count: dict[tuple[str, str], int] = {}
+        self._audit_total: dict[tuple[str, str], int] = {}
+        self._token_total: int = 0
 
     async def init(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2057,6 +2063,8 @@ class Store:
                 ),
             )
             await db.commit()
+        # PR4: bump audit metrics counter.
+        self.record_audit_metrics(action=action, entity_kind=entity_kind)
         return AuditEntry(
             id=row_id,
             ts=now,
@@ -2174,6 +2182,84 @@ class Store:
         items = [_row_to_audit_entry(r) for r in rows]
         next_cursor = items[-1].id if len(items) == limit else None
         return items, next_cursor
+
+    # --- Metrics (PR4) -----------------------------------------------------
+
+    def record_request_metrics(
+        self, *, method: str, path: str, status: int, latency_ms: float
+    ) -> None:
+        """Bump request counters (PR4). Called by the request-log
+        middleware."""
+        key_total = (path, method, status)
+        self._request_total[key_total] = self._request_total.get(key_total, 0) + 1
+        key_lat = (path, method)
+        self._request_latency_ms_sum[key_lat] = (
+            self._request_latency_ms_sum.get(key_lat, 0.0) + latency_ms
+        )
+        self._request_latency_ms_count[key_lat] = (
+            self._request_latency_ms_count.get(key_lat, 0) + 1
+        )
+
+    def record_audit_metrics(
+        self, *, action: AuditAction, entity_kind: str
+    ) -> None:
+        """Bump audit counters (PR4). Called from record_audit."""
+        key = (action.value, entity_kind)
+        self._audit_total[key] = self._audit_total.get(key, 0) + 1
+
+    def set_token_total(self, total: int) -> None:
+        """Set the current token count (PR4)."""
+        self._token_total = total
+
+    def format_prometheus(self) -> str:
+        """Render counters as Prometheus text format (PR4).
+
+        Returns a text body suitable for /metrics.
+        """
+        lines: list[str] = []
+        # clam_request_total
+        lines.append(
+            "# HELP clam_request_total Total HTTP requests by path / method / status."
+        )
+        lines.append("# TYPE clam_request_total counter")
+        for (path, method, status), count in sorted(self._request_total.items()):
+            # Quote labels (path may contain slashes; use escaped quotes).
+            lines.append(
+                f'clam_request_total{{path="{path}",method="{method}",status="{status}"}} {count}'
+            )
+        # clam_request_duration_ms (sum + count for manual avg computation)
+        lines.append(
+            "# HELP clam_request_duration_ms_sum Cumulative request latency (ms)."
+        )
+        lines.append("# TYPE clam_request_duration_ms_sum counter")
+        for (path, m), total in sorted(self._request_latency_ms_sum.items()):
+            lines.append(
+                f'clam_request_duration_ms_sum{{path="{path}",method="{m}"}} {total:.6f}'
+            )
+        lines.append(
+            "# HELP clam_request_duration_ms_count Number of requests measured."
+        )
+        lines.append("# TYPE clam_request_duration_ms_count counter")
+        for (path, m), count in sorted(self._request_latency_ms_count.items()):
+            lines.append(
+                f'clam_request_duration_ms_count{{path="{path}",method="{m}"}} {count}'
+            )
+        # clam_audit_total
+        lines.append(
+            "# HELP clam_audit_total Total audit rows by action and entity kind."
+        )
+        lines.append("# TYPE clam_audit_total counter")
+        for (action, kind), count in sorted(self._audit_total.items()):
+            lines.append(
+                f'clam_audit_total{{action="{action}",entity_kind="{kind}"}} {count}'
+            )
+        # clam_token_total (gauge)
+        lines.append(
+            "# HELP clam_token_total Active token count (gauge)."
+        )
+        lines.append("# TYPE clam_token_total gauge")
+        lines.append(f"clam_token_total {self._token_total}")
+        return "\n".join(lines) + "\n"
 
     # --- DecisionModel ------------------------------------------------------
 

@@ -119,6 +119,8 @@ async def issue_token(
                 issuedAt=issued.issued_at,
             ),
         )
+        # PR4: update the active token count.
+        clam_store.set_token_total(len(store.list_tokens()))
     return AuthTokenIssued(
         tokenId=issued.token_id,
         plaintext=issued.plaintext,
@@ -180,6 +182,8 @@ async def revoke_token(
             entity_kind="AuthToken",
             entity_id=audit_id,
         )
+        # PR4: update the active token count.
+        clam_store.set_token_total(len(store.list_tokens()))
 
 
 @router.get(

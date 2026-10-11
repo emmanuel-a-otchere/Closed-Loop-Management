@@ -196,6 +196,13 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                 source_ip=source_ip,
                 user_agent=user_agent,
             )
+            # PR4: increment in-process metrics counters.
+            store.record_request_metrics(
+                method=request.method,
+                path=request.url.path,
+                status=response.status_code,
+                latency_ms=latency_ms,
+            )
         except Exception:  # pragma: no cover - log failures are silent
             pass
         response.headers["x-correlation-id"] = request_id

@@ -4577,7 +4577,68 @@
             "description": "Successful Response"
           }
         },
+        "summary": "Liveness probe (backward compatible)",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "description": "Process is up; always 200.",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Live Health Live Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
         "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "description": "200 when DB is reachable + token store initialised, 503 otherwise.",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "description": "Render the in-process metrics counters as Prometheus text format.",
+        "operationId": "metrics_endpoint_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Prometheus text-format metrics exporter",
         "tags": [
           "health"
         ]
