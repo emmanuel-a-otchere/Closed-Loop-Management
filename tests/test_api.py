@@ -1773,3 +1773,216 @@ async def test_oas_3_1_request_log_path_present(client: AsyncClient) -> None:
     spec = r.json()
     paths = set(spec["paths"].keys())
     assert "/api/v1/_log/recent" in paths
+
+
+# --- Slice 4 PR2 tests --------------------------------------------------------
+
+
+async def _audit_rows_for(client: AsyncClient, entity_kind: str, entity_id: str):
+    """PR2 helper: list audit rows directly from the in-process store."""
+    store = client._transport.app.state.store  # type: ignore[attr-defined]
+    from uuid import UUID
+    return await store.list_audit_for_entity(
+        entity_kind=entity_kind, entity_id=UUID(entity_id)
+    )
+
+
+async def test_audit_closed_loop_state_transition(
+    client: AsyncClient,
+) -> None:
+    """ClosedLoop state transitions write an audit row."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    assert r.status_code == 200, r.text
+    cid = r.headers["x-correlation-id"]
+    rows = await _audit_rows_for(client, "ClosedLoop", loop)
+    assert len(rows) == 1
+    assert rows[0].action.value == "closed_loop.state_transition"
+    from uuid import UUID
+    assert rows[0].entityId == UUID(loop)
+    assert rows[0].correlationId == cid
+    assert rows[0].before is not None
+    assert rows[0].after is not None
+
+
+async def test_audit_activity_state_transition(client: AsyncClient) -> None:
+    """Activity state transitions write an audit row."""
+    r = await client.post(
+        "/api/v1/activity",
+        json={"name": "a", "activityType": "sense", "action": "noop"},
+    )
+    activity_id = r.json()["id"]
+    r = await client.post(
+        f"/api/v1/activity/{activity_id}/state",
+        json={"targetState": "validated"},
+    )
+    assert r.status_code == 200
+    rows = await _audit_rows_for(client, "Activity", activity_id)
+    assert len(rows) == 1
+    assert rows[0].action.value == "activity.state_transition"
+
+
+async def test_audit_workflow_state_transition(client: AsyncClient) -> None:
+    """Workflow state transitions write an audit row."""
+    r = await client.post(
+        "/api/v1/workflow",
+        json={"name": "wf", "path": "FEEDBACK", "activities": []},
+    )
+    workflow_id = r.json()["id"]
+    r = await client.post(
+        f"/api/v1/workflow/{workflow_id}/state",
+        json={"targetState": "validated"},
+    )
+    assert r.status_code == 200
+    rows = await _audit_rows_for(client, "Workflow", workflow_id)
+    assert len(rows) == 1
+    assert rows[0].action.value == "workflow.state_transition"
+
+
+async def test_audit_goal_update(client: AsyncClient) -> None:
+    """Goal updates write an audit row with before/after."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(
+        "/api/v1/goal",
+        json={
+            "name": "g",
+            "target": {"metric": "x", "value": 1.0, "unit": "", "direction": "AT_LEAST"},
+            "scope": "CLOSED_LOOP",
+            "scopeRef": loop,
+            "currentValue": 1.0,
+            "metricSource": "src",
+        },
+    )
+    goal_id = r.json()["id"]
+    r = await client.patch(
+        f"/api/v1/goal/{goal_id}",
+        json={"currentValue": 5.0},
+    )
+    assert r.status_code == 200, r.text
+    rows = await _audit_rows_for(client, "Goal", goal_id)
+    assert len(rows) == 1
+    assert rows[0].action.value == "goal.update"
+
+
+async def test_audit_link_create_and_delete(client: AsyncClient) -> None:
+    """ClosedLoopLink create + delete both write audit rows."""
+    _dm_id = await _create_decision_model(client, kind="OODA")  # noqa: F841
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 201
+    link_id = r.json()["id"]
+    r = await client.delete(f"/api/v1/closedLoopLink/{link_id}")
+    assert r.status_code == 204
+    rows = await _audit_rows_for(client, "ClosedLoopLink", link_id)
+    actions = [r.action.value for r in rows]
+    assert "closed_loop_link.create" in actions
+    assert "closed_loop_link.delete" in actions
+
+
+async def test_audit_cycle_rejected_writes_no_audit(
+    client: AsyncClient,
+) -> None:
+    """A failed link creation (cycle) does NOT write an audit row."""
+    _dm_id = await _create_decision_model(client, kind="OODA")  # noqa: F841
+    a = await _make_closed_loop(client)
+    b = await _make_closed_loop(client)
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, b, kind="DAISY_CHAIN"),
+    )
+    link_id = r.json()["id"]
+    # Now try a->a; should be rejected as a cycle.
+    r = await client.post(
+        "/api/v1/closedLoopLink",
+        json=_link_payload(a, a, kind="DAISY_CHAIN"),
+    )
+    assert r.status_code == 409
+    # The original link still has only its create row.
+    rows = await _audit_rows_for(client, "ClosedLoopLink", link_id)
+    assert len(rows) == 1
+    assert rows[0].action.value == "closed_loop_link.create"
+
+
+async def test_audit_correlation_id_propagates_through_patch(
+    client: AsyncClient,
+) -> None:
+    """Custom X-Correlation-Id propagates to the audit row."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    cid = "test-correlation-abc-123"
+    r = await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+        headers={"X-Correlation-Id": cid},
+    )
+    assert r.status_code == 200
+    rows = await _audit_rows_for(client, "ClosedLoop", loop)
+    assert len(rows) == 1
+    assert rows[0].correlationId == cid
+
+
+async def test_audit_token_issue_and_revoke(
+    tmp_path,
+    monkeypatch,
+    client: AsyncClient,
+) -> None:
+    """Token issue + revoke write audit rows."""
+    # Reuse the client fixture's app for the auth-enable test.
+    from httpx import ASGITransport, AsyncClient
+
+    from machines.service.clam.main import create_app
+
+    monkeypatch.setenv("CLAM_AUTH_ENABLED", "true")
+    # The shared client was built without auth; build a fresh client
+    # with auth enabled so we can exercise the audit path.
+    app = create_app(str(tmp_path / "auth_audit.db"))
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as c:
+            r = await c.post(
+                "/api/v1/auth/tokens",
+                json={"name": "bootstrap", "scopes": ["admin", "read", "write"]},
+            )
+            assert r.status_code == 201
+            token_id = r.json()["tokenId"]
+            plaintext = r.json()["plaintext"]
+            # Find the audit row for this token.
+            from uuid import UUID
+
+            audit_entity_id = UUID(
+                # uuid5 namespace match (re-derive; stable).
+                # Same as routers/auth.py: uuid5(NAMESPACE_URL, 'token:'+id).
+                __import__("uuid").uuid5(
+                    __import__("uuid").NAMESPACE_URL, f"token:{token_id}"
+                ).hex
+            )
+            store = app.state.store
+            rows = await store.list_audit_for_entity(
+                entity_kind="AuthToken", entity_id=audit_entity_id
+            )
+            actions = [r.action.value for r in rows]
+            assert "auth.token.issue" in actions
+            # Revoke (requires admin token now). Bearer uses the plaintext,
+            # not the tokenId; the tokenId is the public id returned to the
+            # caller.
+            headers = {"Authorization": f"Bearer {plaintext}"}
+            r = await c.delete(
+                f"/api/v1/auth/tokens/{token_id}", headers=headers
+            )
+            assert r.status_code == 204
+            rows = await store.list_audit_for_entity(
+                entity_kind="AuthToken", entity_id=audit_entity_id
+            )
+            actions = [r.action.value for r in rows]
+            assert "auth.token.issue" in actions
+            assert "auth.token.revoke" in actions

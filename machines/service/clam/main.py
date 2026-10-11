@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from .audit_context import _correlation_id_var  # noqa: F401 - re-exported for middleware
 from .auth import TokenStore, _AuthChallenge, auth_enabled, resolve_principal
 from .errors import (
     ErrorCode,
@@ -158,6 +159,9 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         request_id = (
             request.headers.get("x-correlation-id") or str(uuid.uuid4())
         )
+        # Slice 4 PR2: stash on a contextvar so audit hooks downstream
+        # can read it without threading it through every call.
+        _correlation_id_var.set(request_id)
         request.state.correlation_id = request_id
         # Echo the id back to the caller for client-side correlation.
         try:

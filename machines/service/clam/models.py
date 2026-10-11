@@ -677,3 +677,47 @@ class RequestLogPage(BaseModel):
     items: list[RequestLogEntry]
     limit: int
     nextCursor: str | None = None
+
+
+# --- Slice 4 PR2: audit log ---------------------------------------------------
+
+
+class AuditActor(StrEnum):
+    """Source of an audit row (PR2)."""
+
+    USER = "USER"
+    SYSTEM = "SYSTEM"
+
+
+class AuditAction(StrEnum):
+    """Closed vocabulary of audited operations (PR2)."""
+
+    CLOSED_LOOP_STATE_TRANSITION = "closed_loop.state_transition"
+    WORKFLOW_STATE_TRANSITION = "workflow.state_transition"
+    ACTIVITY_STATE_TRANSITION = "activity.state_transition"
+    GOAL_UPDATE = "goal.update"
+    CLOSED_LOOP_LINK_CREATE = "closed_loop_link.create"
+    CLOSED_LOOP_LINK_DELETE = "closed_loop_link.delete"
+    AUTH_TOKEN_ISSUE = "auth.token.issue"
+    AUTH_TOKEN_REVOKE = "auth.token.revoke"
+
+
+class AuditEntry(BaseModel):
+    """A single audit row (PR2).
+
+    before / after payloads are stored as opaque JSON strings.
+    The middleware-driven correlation_id is the same id echoed
+    on the response's X-Correlation-Id header (see PR1).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    ts: datetime
+    actor: AuditActor
+    action: AuditAction
+    entityKind: str
+    entityId: UUID
+    before: str | None = None
+    after: str | None = None
+    correlationId: str | None = None
