@@ -39,6 +39,7 @@ from .models import (
     StateTransitionRequest,
     Workflow,
     WorkflowCreate,
+    WorkflowRef,
     WorkflowStateTransitionRequest,
     WorkflowUpdate,
 )
@@ -104,6 +105,27 @@ CREATE INDEX IF NOT EXISTS idx_workflow_path ON workflow(path);
 CREATE INDEX IF NOT EXISTS idx_goal_scope ON goal(scope);
 CREATE INDEX IF NOT EXISTS idx_link_source ON closed_loop_link(source_id);
 CREATE INDEX IF NOT EXISTS idx_link_target ON closed_loop_link(target_id);
+
+-- Junction table: workflow references activity (PR3).
+-- Populated when a workflow is created or updated; kept consistent
+-- with the workflow payload's activities[] field by the store layer.
+CREATE TABLE IF NOT EXISTS workflow_activity (
+    workflow_id TEXT NOT NULL,
+    activity_id TEXT NOT NULL,
+    PRIMARY KEY (workflow_id, activity_id)
+);
+
+-- Junction table: closed loop references workflow (PR3).
+CREATE TABLE IF NOT EXISTS closed_loop_workflow (
+    closed_loop_id TEXT NOT NULL,
+    workflow_id TEXT NOT NULL,
+    PRIMARY KEY (closed_loop_id, workflow_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_activity_activity
+    ON workflow_activity(activity_id);
+CREATE INDEX IF NOT EXISTS idx_closed_loop_workflow_workflow
+    ON closed_loop_workflow(workflow_id);
 """
 
 
@@ -343,12 +365,54 @@ class Store:
 
     async def delete_closed_loop(self, loop_id: UUID) -> None:
         async with aiosqlite.connect(self.db_path) as db:
+            # Junction table cleanup (PR3).
+            await db.execute(
+                "DELETE FROM closed_loop_workflow WHERE closed_loop_id = ?",
+                (str(loop_id),),
+            )
             cur = await db.execute(
                 "DELETE FROM closed_loop WHERE id = ?", (str(loop_id),)
             )
             await db.commit()
             if cur.rowcount == 0:
                 raise NotFoundError(f"ClosedLoop {loop_id} not found")
+
+    async def link_workflow_to_closed_loop(
+        self, loop_id: UUID, workflow_id: UUID
+    ) -> ClosedLoop:
+        """Associate a workflow with a closed loop (PR3).
+
+        Both entities must already exist. The association is recorded
+        in the closed_loop_workflow junction table; the ClosedLoop
+        payload's workflows[] list is also updated so the existing
+        ``ClosedLoop.workflows`` API contract is unchanged.
+        """
+        loop = await self.get_closed_loop(loop_id)
+        workflow = await self.get_workflow(workflow_id)
+        # Idempotent insert into junction table.
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR IGNORE INTO closed_loop_workflow "
+                "(closed_loop_id, workflow_id) VALUES (?, ?)",
+                (str(loop_id), str(workflow_id)),
+            )
+            # Mirror to the payload's workflows[] list.
+            existing = {ref.id for ref in loop.workflows}
+            if workflow_id not in existing:
+                loop.workflows.append(
+                    WorkflowRef(id=workflow.id, name=workflow.name)
+                )
+                loop.updatedAt = datetime.now(UTC)
+                await db.execute(
+                    "UPDATE closed_loop SET payload = ?, updated_at = ? WHERE id = ?",
+                    (
+                        loop.model_dump_json(),
+                        loop.updatedAt.isoformat(),
+                        str(loop_id),
+                    ),
+                )
+            await db.commit()
+        return loop
 
     async def transition_state(
         self, loop_id: UUID, request: StateTransitionRequest
@@ -557,6 +621,13 @@ class Store:
                     now.isoformat(),
                 ),
             )
+            # Junction table: workflow -> activities (PR3).
+            for ref in workflow.activities:
+                await db.execute(
+                    "INSERT OR IGNORE INTO workflow_activity "
+                    "(workflow_id, activity_id) VALUES (?, ?)",
+                    (str(workflow.id), str(ref.id)),
+                )
             await db.commit()
         return workflow
 
@@ -643,6 +714,18 @@ class Store:
                     str(workflow_id),
                 ),
             )
+            # Sync junction table: workflow -> activities (PR3).
+            if patch.activities is not None:
+                await db.execute(
+                    "DELETE FROM workflow_activity WHERE workflow_id = ?",
+                    (str(workflow_id),),
+                )
+                for ref in updated.activities:
+                    await db.execute(
+                        "INSERT OR IGNORE INTO workflow_activity "
+                        "(workflow_id, activity_id) VALUES (?, ?)",
+                        (str(workflow_id), str(ref.id)),
+                    )
             await db.commit()
         return updated
 
@@ -650,6 +733,11 @@ class Store:
         # Cross-resource check (PR2): cannot delete if any closed loop references the workflow.
         await self.assert_workflow_can_be_deleted(workflow_id)
         async with aiosqlite.connect(self.db_path) as db:
+            # Junction table cleanup (PR3): drop workflow_activity rows first.
+            await db.execute(
+                "DELETE FROM workflow_activity WHERE workflow_id = ?",
+                (str(workflow_id),),
+            )
             cur = await db.execute(
                 "DELETE FROM workflow WHERE id = ?", (str(workflow_id),)
             )
@@ -1287,57 +1375,70 @@ class Store:
     async def _activities_referenced_by_workflows(
         self, activity_ids: list[UUID]
     ) -> dict[UUID, list[dict[str, object]]]:
-        """For each activity id, return the workflows (id + name + path) that reference it.
+        """For each activity id, return the workflows (id + name + path + state) that reference it.
 
-        Scans the ``workflow`` table's payload blobs for ``activities[].id``
-        matches; the cost is fine for the MVP SQLite store and avoids
-        maintaining a separate junction table.
+        PR3 uses the workflow_activity junction table for an O(1) lookup
+        per activity (replaces the prior O(W*A) payload scan).
         """
         if not activity_ids:
             return {}
+        placeholders = ",".join("?" for _ in activity_ids)
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            async with db.execute("SELECT id, payload FROM workflow") as cur:
+            async with db.execute(
+                f"SELECT wa.activity_id AS activity_id, "
+                f"w.id AS workflow_id, w.payload AS payload "
+                f"FROM workflow_activity wa "
+                f"JOIN workflow w ON w.id = wa.workflow_id "
+                f"WHERE wa.activity_id IN ({placeholders})",
+                [str(a) for a in activity_ids],
+            ) as cur:
                 rows = await cur.fetchall()
         found: dict[UUID, list[dict[str, object]]] = {a: [] for a in activity_ids}
-        targets = {str(a) for a in activity_ids}
         for row in rows:
             workflow = Workflow.model_validate_json(row["payload"])
-            for ref in workflow.activities:
-                if str(ref.id) in targets:
-                    found[UUID(str(ref.id))].append(
-                        {
-                            "id": row["id"],
-                            "name": workflow.name,
-                            "lifecycleState": workflow.lifecycleState.value,
-                            "path": workflow.path.value,
-                        }
-                    )
+            found[UUID(row["activity_id"])].append(
+                {
+                    "id": row["workflow_id"],
+                    "name": workflow.name,
+                    "lifecycleState": workflow.lifecycleState.value,
+                    "path": workflow.path.value,
+                }
+            )
         return found
 
     async def _workflows_referenced_by_closed_loops(
         self, workflow_ids: list[UUID]
     ) -> dict[UUID, list[dict[str, object]]]:
-        """For each workflow id, return the closed loops (id + name + state) that reference it."""
+        """For each workflow id, return the closed loops (id + name + state) that reference it.
+
+        PR3 uses the closed_loop_workflow junction table for an O(1)
+        lookup per workflow (replaces the prior O(L*W) payload scan).
+        """
         if not workflow_ids:
             return {}
+        placeholders = ",".join("?" for _ in workflow_ids)
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            async with db.execute("SELECT id, payload FROM closed_loop") as cur:
+            async with db.execute(
+                f"SELECT clw.workflow_id AS workflow_id, "
+                f"c.id AS closed_loop_id, c.payload AS payload "
+                f"FROM closed_loop_workflow clw "
+                f"JOIN closed_loop c ON c.id = clw.closed_loop_id "
+                f"WHERE clw.workflow_id IN ({placeholders})",
+                [str(w) for w in workflow_ids],
+            ) as cur:
                 rows = await cur.fetchall()
         found: dict[UUID, list[dict[str, object]]] = {w: [] for w in workflow_ids}
-        targets = {str(w) for w in workflow_ids}
         for row in rows:
             loop = ClosedLoop.model_validate_json(row["payload"])
-            for ref in loop.workflows:
-                if str(ref.id) in targets:
-                    found[UUID(str(ref.id))].append(
-                        {
-                            "id": row["id"],
-                            "name": loop.name,
-                            "state": loop.state.value,
-                        }
-                    )
+            found[UUID(row["workflow_id"])].append(
+                {
+                    "id": row["closed_loop_id"],
+                    "name": loop.name,
+                    "state": loop.state.value,
+                }
+            )
         return found
 
     async def assert_workflow_can_be_published(self, workflow_id: UUID) -> None:
