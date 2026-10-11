@@ -2643,6 +2643,59 @@
         ]
       }
     },
+    "/api/v1/closedLoop/{loopId}/workflow/{workflowId}": {
+      "post": {
+        "operationId": "link_workflow_to_loop_api_v1_closedLoop__loopId__workflow__workflowId__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflowid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedLoop"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link an existing workflow to a closed loop (populates closed_loop_workflow junction)",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
     "/api/v1/closedLoopLink": {
       "get": {
         "operationId": "list_closed_loop_links_api_v1_closedLoopLink_get",

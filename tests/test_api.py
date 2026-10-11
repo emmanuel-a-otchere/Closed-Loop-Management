@@ -1376,3 +1376,131 @@ async def test_auth_oas_3_1_paths_present(client: AsyncClient) -> None:
     assert "AuthTokenCreate" in schemas
     assert "AuthTokenIssued" in schemas
     assert "AuthTokenInfo" in schemas
+
+
+# --- Slice 3 PR3 tests --------------------------------------------------------
+
+
+async def test_link_workflow_to_closed_loop(client: AsyncClient) -> None:
+    """POST /closedLoop/{id}/workflow/{wid} populates the junction table."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop_id = await _create_closed_loop(client, dm_id=dm_id)
+    # Create + publish + link 4 activities, then create + link workflow.
+    activity_ids: list[str] = []
+    for _ in range(4):
+        act_payload = {"name": f"a-{uuid4()}", "activityType": "sense", "action": "noop"}
+        r = await client.post("/api/v1/activity", json=act_payload)
+        assert r.status_code == 201, r.text
+        activity_ids.append(r.json()["id"])
+    wf_body = {
+        "name": f"wf-{uuid4()}",
+        "path": "FEEDBACK",
+        "activities": [{"id": aid} for aid in activity_ids],
+    }
+    r = await client.post("/api/v1/workflow", json=wf_body)
+    assert r.status_code == 201, r.text
+    workflow_id = r.json()["id"]
+    r = await client.post(f"/api/v1/closedLoop/{loop_id}/workflow/{workflow_id}")
+    assert r.status_code == 201, r.text
+    # The loop's payload now carries the workflow ref.
+    loop = r.json()
+    assert any(w["id"] == workflow_id for w in loop["workflows"])
+
+
+async def test_link_workflow_to_closed_loop_idempotent(client: AsyncClient) -> None:
+    """Re-linking a workflow to the same loop is a no-op."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop_id = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(
+        "/api/v1/workflow",
+        json={"name": "wf", "path": "FEEDBACK", "activities": []},
+    )
+    assert r.status_code == 201
+    workflow_id = r.json()["id"]
+    r1 = await client.post(f"/api/v1/closedLoop/{loop_id}/workflow/{workflow_id}")
+    r2 = await client.post(f"/api/v1/closedLoop/{loop_id}/workflow/{workflow_id}")
+    assert r1.status_code == 201
+    assert r2.status_code == 201
+    workflows = r2.json()["workflows"]
+    matches = [w for w in workflows if w["id"] == workflow_id]
+    assert len(matches) == 1
+
+
+async def test_link_workflow_404_when_loop_missing(client: AsyncClient) -> None:
+    r = await client.post("/api/v1/workflow", json={"name": "wf", "path": "FEEDBACK", "activities": []})
+    assert r.status_code == 201
+    workflow_id = r.json()["id"]
+    r = await client.post(f"/api/v1/closedLoop/{uuid4()}/workflow/{workflow_id}")
+    assert r.status_code == 404
+
+
+async def test_link_workflow_404_when_workflow_missing(client: AsyncClient) -> None:
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop_id = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(f"/api/v1/closedLoop/{loop_id}/workflow/{uuid4()}")
+    assert r.status_code == 404
+
+
+async def test_junction_table_used_for_workflow_publish_constraint(
+    client: AsyncClient,
+) -> None:
+    """Workflow cannot publish while junction-referenced activity is not published."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    _loop_id = await _create_closed_loop(client, dm_id=dm_id)  # noqa: F841
+    r = await client.post(
+        "/api/v1/activity",
+        json={"name": "a", "activityType": "sense", "action": "noop"},
+    )
+    activity_id = r.json()["id"]
+    r = await client.post(
+        "/api/v1/workflow",
+        json={
+            "name": "wf",
+            "path": "FEEDBACK",
+            "activities": [{"id": activity_id}],
+        },
+    )
+    workflow_id = r.json()["id"]
+    # Try to publish the workflow without publishing the activity.
+    await client.post(f"/api/v1/workflow/{workflow_id}/state", json={"targetState": "validated"})
+    r = await client.post(
+        f"/api/v1/workflow/{workflow_id}/state",
+        json={"targetState": "published"},
+    )
+    assert r.status_code == 409
+    body = r.json()
+    assert body["code"] == "lifecycle.constraint_violated"
+    # Now publish the activity and the workflow should succeed.
+    await client.post(f"/api/v1/activity/{activity_id}/state", json={"targetState": "validated"})
+    await client.post(f"/api/v1/activity/{activity_id}/state", json={"targetState": "published"})
+    r = await client.post(
+        f"/api/v1/workflow/{workflow_id}/state",
+        json={"targetState": "published"},
+    )
+    assert r.status_code == 200
+
+
+async def test_junction_table_used_for_delete_workflow_constraint(
+    client: AsyncClient,
+) -> None:
+    """A workflow linked to a closed loop (junction) cannot be deleted."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop_id = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(
+        "/api/v1/workflow",
+        json={"name": "wf", "path": "FEEDBACK", "activities": []},
+    )
+    workflow_id = r.json()["id"]
+    r = await client.post(f"/api/v1/closedLoop/{loop_id}/workflow/{workflow_id}")
+    assert r.status_code == 201
+    r = await client.delete(f"/api/v1/workflow/{workflow_id}")
+    assert r.status_code == 409
+    body = r.json()
+    assert body["code"] == "lifecycle.constraint_violated"
+
+
+async def test_oas_3_1_link_workflow_path_present(client: AsyncClient) -> None:
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/closedLoop/{loopId}/workflow/{workflowId}" in paths

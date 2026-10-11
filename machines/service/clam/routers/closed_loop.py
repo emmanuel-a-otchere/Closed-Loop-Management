@@ -87,6 +87,23 @@ async def get_closed_loop(
         ) from exc
 
 
+@router.post(
+    "/{loopId}/workflow/{workflowId}",
+    response_model=ClosedLoop,
+    status_code=status.HTTP_201_CREATED,
+    summary="Link an existing workflow to a closed loop (populates closed_loop_workflow junction)",
+)
+async def link_workflow_to_loop(
+    request: Request,
+    loopId: UUID,  # noqa: N803
+    workflowId: UUID,  # noqa: N803
+) -> ClosedLoop:
+    try:
+        return await _store(request).link_workflow_to_closed_loop(loopId, workflowId)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.patch(
     "/{loopId}",
     response_model=ClosedLoop,
