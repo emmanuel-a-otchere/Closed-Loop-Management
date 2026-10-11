@@ -2194,3 +2194,89 @@ async def test_oas_3_1_health_paths_present(
     assert "/health/live" in paths
     assert "/health/ready" in paths
     assert "/metrics" in paths
+
+
+# --- Slice 5 PR1 tests --------------------------------------------------------
+
+
+async def test_subscribe_audit_returns_queue(
+    tmp_path,
+) -> None:
+    """subscribe_audit returns a queue, unsubscribe_audit removes it."""
+    from machines.service.clam.store import Store
+
+    store = Store(tmp_path / "sub.db")
+    assert len(store._audit_subscribers) == 0
+    q1 = await store.subscribe_audit()
+    q2 = await store.subscribe_audit()
+    assert len(store._audit_subscribers) == 2
+    store.unsubscribe_audit(q1)
+    assert len(store._audit_subscribers) == 1
+    store.unsubscribe_audit(q2)
+    assert len(store._audit_subscribers) == 0
+
+
+async def test_audit_published_to_subscribers(
+    tmp_path,
+) -> None:
+    """record_audit fans out to every subscriber queue."""
+    from uuid import uuid4
+
+    from machines.service.clam.models import AuditAction, AuditActor
+    from machines.service.clam.store import Store
+
+    store = Store(tmp_path / "pub.db")
+    await store.init()
+    q1 = await store.subscribe_audit()
+    q2 = await store.subscribe_audit()
+    entry = await store.record_audit(
+        actor=AuditActor.USER,
+        action=AuditAction.WORKFLOW_STATE_TRANSITION,
+        entity_kind="Workflow",
+        entity_id=uuid4(),
+    )
+    # Both queues should have the entry; non-blocking so this
+    # cannot stall.
+    assert not q1.empty()
+    assert not q2.empty()
+    assert q1.get_nowait().id == entry.id
+    assert q2.get_nowait().id == entry.id
+
+
+async def test_slow_consumer_drops_messages(
+    tmp_path,
+) -> None:
+    """A full subscriber queue causes drop, not writer block."""
+    import asyncio
+    from uuid import uuid4
+
+    from machines.service.clam.models import AuditAction, AuditActor
+    from machines.service.clam.store import Store
+
+    store = Store(tmp_path / "slow.db")
+    await store.init()
+    q = await store.subscribe_audit()
+    # Saturate the queue manually.
+    for _ in range(store._audit_backpressure):
+        try:
+            q.put_nowait(object())  # type: ignore[arg-type]
+        except asyncio.QueueFull:
+            break
+    # Now an audit row write should not raise.
+    entry = await store.record_audit(
+        actor=AuditActor.USER,
+        action=AuditAction.CLOSED_LOOP_STATE_TRANSITION,
+        entity_kind="ClosedLoop",
+        entity_id=uuid4(),
+    )
+    assert entry.id is not None
+
+
+async def test_oas_3_1_stream_audit_path_present(
+    client: AsyncClient,
+) -> None:
+    """/api/v1/_stream/audit surfaces in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/_stream/audit" in paths

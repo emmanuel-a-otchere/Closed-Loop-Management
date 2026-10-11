@@ -31,6 +31,7 @@ from .routers import (
     goal,
     health,
     request_log,
+    stream,
     workflow,
 )
 from .store import Store
@@ -251,6 +252,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     app.include_router(closed_loop_link.router)
     app.include_router(request_log.router)
     app.include_router(audit.router)
+    app.include_router(stream.router)
 
     @app.get(
         "/",
