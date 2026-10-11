@@ -129,3 +129,49 @@ Slice 2 deferred (kept on the books):
   scale.
 - Cross-loop goal rollups (an outer loop's achievement stats summing
   weighted rollups of its child links).
+
+## Slice 3 close-out (2026-10-11)
+
+Slice 3 was split into 4 PRs, all merged into `main`:
+
+- **Slice 3 PR1** -- opt-in bearer-token authentication
+  (`CLAM_AUTH_ENABLED` defaults to false). Scope levels READ < WRITE <
+  ADMIN. New endpoints: POST /auth/tokens (issue), GET /auth/tokens
+  (list), DELETE /auth/tokens/{tokenId} (revoke), GET /auth/whoami
+  (current principal). Middleware enforces WRITE on POST/PUT/PATCH/DELETE
+  and ADMIN on /api/v1/auth/tokens with a bootstrap short-circuit on a
+  fresh install. Error codes: auth.unauthorized (401) and
+  auth.forbidden (403). In-memory TokenStore with the interface shaped
+  for a future DB-backed implementation.
+- **Slice 3 PR2** -- per-kind topology semantics: DAISY_CHAIN linear-only,
+  HIERARCHICAL single-parent, FEEDBACK peer-only, SHADOW read-only
+  mirror. All-or-nothing bulk semantics. New error code
+  topology.rule_violated (409) with details {rule, kind, offenders}.
+- **Slice 3 PR3** -- junction tables (`workflow_activity`,
+  `closed_loop_workflow`) replace the prior O(N*M) payload walks used
+  by the Slice 2 PR2 lifecycle constraint checks. Write paths keep the
+  junction tables consistent on create / update / delete of workflows
+  and closed loops. New endpoint POST
+  /closedLoop/{loopId}/workflow/{workflowId} (idempotent).
+- **Slice 3 PR4** -- cross-loop nested goal rollup. The GET
+  /closedLoop/{id}/goalRollup endpoint now traverses outgoing
+  HIERARCHICAL + DAISY_CHAIN edges (default; configurable via
+  `include_nested` / `nested_kinds` / `max_depth`). FEEDBACK peers and
+  SHADOW mirrors are excluded. New rollup response fields:
+  `nested[]` (per-child-loop snapshots) and `depth` (max nested depth).
+
+Slice 3 deferred (kept on the books):
+
+- Persistent (DB-backed) TokenStore. The in-memory store is fine for
+  the slice-3 default; production deployments should swap in a DB-backed
+  implementation. The interface is shaped for that.
+- Per-token expiry / rotation.
+- API-key auth (the bearer scheme covers the same use case).
+- Application-layer invariants (e.g., a FEEDBACK peer relationship must
+  be reciprocal). PR2 enforces structural rules only.
+- Full migration of the payload's `workflows[]` / `activities[]` lists
+  out of the payload column. PR3 keeps the payload-derived list as the
+  API response shape's source of truth and uses the junction tables as
+  the O(1) index for constraint checks.
+- Reverse-direction covering indexes on the junction tables may be
+  added once query patterns are clearer.

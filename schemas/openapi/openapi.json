@@ -579,7 +579,7 @@
       },
       "ClosedLoopGoalRollup": {
         "additionalProperties": false,
-        "description": "Aggregated goal achievement for a closed loop (PR2).\n\nThe rollup computes:\n- ``goalCount``: total goals scoped to the loop (direct + indirect).\n- ``achievedCount``: goals whose latest ``currentValue`` satisfies the\n  target direction.\n- ``achievementPercent``: ``achievedCount / goalCount`` (0..100), or 0\n  when ``goalCount`` is 0.\n- ``goals``: the per-goal evaluation rows (latest value vs target).\n- ``computedAt``: server-side timestamp.",
+        "description": "Aggregated goal achievement for a closed loop (PR2 + PR4 nested rollup).\n\nThe rollup computes:\n- ``goalCount``: total goals scoped to the loop (direct + indirect,\n  including nested loops reachable via HIERARCHICAL / DAISY_CHAIN\n  outgoing edges -- see PR4).\n- ``achievedCount``: goals whose latest ``currentValue`` satisfies the\n  target direction.\n- ``achievementPercent``: ``achievedCount / goalCount`` (0..100), or 0\n  when ``goalCount`` is 0.\n- ``goals``: the per-goal evaluation rows (latest value vs target).\n- ``nested``: per-child-loop rollup snapshots. Each entry is a\n  ``NestedClosedLoopRollup`` carrying the child loop id, depth, and\n  its own goalCount / achievedCount / achievementPercent.\n- ``depth``: maximum nested depth traversed (0 = no nested).\n- ``computedAt``: server-side timestamp.",
         "properties": {
           "achievedCount": {
             "title": "Achievedcount",
@@ -599,6 +599,11 @@
             "title": "Computedat",
             "type": "string"
           },
+          "depth": {
+            "default": 0,
+            "title": "Depth",
+            "type": "integer"
+          },
           "goalCount": {
             "title": "Goalcount",
             "type": "integer"
@@ -608,6 +613,13 @@
               "$ref": "#/components/schemas/Goal"
             },
             "title": "Goals",
+            "type": "array"
+          },
+          "nested": {
+            "items": {
+              "$ref": "#/components/schemas/NestedClosedLoopRollup"
+            },
+            "title": "Nested",
             "type": "array"
           }
         },
@@ -1380,6 +1392,42 @@
           "execute"
         ],
         "title": "MapeDecisionModel",
+        "type": "object"
+      },
+      "NestedClosedLoopRollup": {
+        "additionalProperties": false,
+        "description": "Per-child-loop rollup snapshot attached to a parent rollup (PR4).",
+        "properties": {
+          "achievedCount": {
+            "title": "Achievedcount",
+            "type": "integer"
+          },
+          "achievementPercent": {
+            "title": "Achievementpercent",
+            "type": "number"
+          },
+          "closedLoopId": {
+            "format": "uuid",
+            "title": "Closedloopid",
+            "type": "string"
+          },
+          "depth": {
+            "title": "Depth",
+            "type": "integer"
+          },
+          "goalCount": {
+            "title": "Goalcount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "closedLoopId",
+          "depth",
+          "goalCount",
+          "achievedCount",
+          "achievementPercent"
+        ],
+        "title": "NestedClosedLoopRollup",
         "type": "object"
       },
       "OodaDecisionModel": {
