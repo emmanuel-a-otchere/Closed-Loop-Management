@@ -641,3 +641,39 @@ __all__ = [
 # Re-export HttpUrl so callers depending on this module don't need to import
 # pydantic directly when constructing links in tests.
 __all__ += ["HttpUrl"]
+
+
+# --- Slice 4 PR1: structured request log ---------------------------------------
+
+
+class RequestLogEntry(BaseModel):
+    """A single request log row (PR1).
+
+    Surfaces the structured request telemetry captured by the
+    request-log middleware. The principal_id is the bearer token id
+    when auth is enabled, or null otherwise. The request_id is the
+    correlation id (header X-Correlation-Id or generated UUID4).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    ts: datetime
+    method: str
+    path: str
+    status: int
+    latencyMs: float
+    requestId: str
+    principalId: str | None = None
+    sourceIp: str | None = None
+    userAgent: str | None = None
+
+
+class RequestLogPage(BaseModel):
+    """Cursor-paginated recent request log entries (PR1)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[RequestLogEntry]
+    limit: int
+    nextCursor: str | None = None
