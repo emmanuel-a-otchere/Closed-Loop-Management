@@ -512,6 +512,49 @@ class ClosedLoopTopology(BaseModel):
     links: list[ClosedLoopLink]
 
 
+class AuthTokenCreate(BaseModel):
+    """Request body for issuing a new auth token (Slice 3 PR1)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=120)
+    scopes: list[str] = Field(
+        ...,
+        min_length=1,
+        description=(
+            "Scopes to grant. Must contain only valid scope strings "
+            "(read / write / admin)."
+        ),
+    )
+
+
+class AuthTokenIssued(BaseModel):
+    """Response body returned once when a token is issued.
+
+    The plaintext token is returned exactly once and never persisted;
+    the server only retains its SHA-256 fingerprint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tokenId: str
+    plaintext: str
+    name: str
+    scopes: list[str]
+    issuedAt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class AuthTokenInfo(BaseModel):
+    """Public view of an issued token (no plaintext)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tokenId: str
+    name: str
+    scopes: list[str]
+    issuedAt: datetime
+
+
 class Page(BaseModel):
     """Generic pagination envelope."""
 
@@ -532,6 +575,9 @@ __all__ = [
     "ActivityStateTransitionRequest",
     "ActivityType",
     "ActivityUpdate",
+    "AuthTokenCreate",
+    "AuthTokenInfo",
+    "AuthTokenIssued",
     "ClosedLoop",
     "ClosedLoopCreate",
     "ClosedLoopGoalRollup",
