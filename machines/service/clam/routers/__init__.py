@@ -1,5 +1,21 @@
 """Routers package for CLAM."""
 
-from . import closed_loop, decision_model, health
+from . import (
+    activity,
+    closed_loop,
+    closed_loop_link,
+    decision_model,
+    goal,
+    health,
+    workflow,
+)
 
-__all__ = ["closed_loop", "decision_model", "health"]
+__all__ = [
+    "activity",
+    "closed_loop",
+    "closed_loop_link",
+    "decision_model",
+    "goal",
+    "health",
+    "workflow",
+]

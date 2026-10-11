@@ -245,3 +245,251 @@ async def _create_closed_loop(
     )
     assert r.status_code == 201, r.text
     return r.json()["id"]
+
+
+# --- Slice 2 PR1 tests --------------------------------------------------------
+
+
+async def test_activity_crud(client: AsyncClient) -> None:
+    payload = {
+        "name": "sense-cpu-temp",
+        "description": "Reads CPU temperature",
+        "activityType": "sense",
+        "action": "script:sense_cpu_temp",
+        "inputs": ["cpu.temp.celsius"],
+        "outputs": ["metric:cpu_temp_c"],
+        "executor": "internal",
+        "expectedDurationMs": 50,
+    }
+    r = await client.post("/api/v1/activity", json=payload)
+    assert r.status_code == 201, r.text
+    activity = r.json()
+    activity_id = activity["id"]
+    assert activity["lifecycleState"] == "designed"
+    assert activity["activityType"] == "sense"
+
+    # GET
+    r = await client.get(f"/api/v1/activity/{activity_id}")
+    assert r.status_code == 200
+    assert r.json()["name"] == "sense-cpu-temp"
+
+    # PATCH
+    r = await client.patch(
+        f"/api/v1/activity/{activity_id}",
+        json={"description": "updated"},
+    )
+    assert r.status_code == 200
+    assert r.json()["description"] == "updated"
+
+    # LIST with filter
+    r = await client.get("/api/v1/activity?activityType=sense")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == 1
+    assert body["items"][0]["id"] == activity_id
+
+    # DELETE
+    r = await client.delete(f"/api/v1/activity/{activity_id}")
+    assert r.status_code == 204
+    r = await client.get(f"/api/v1/activity/{activity_id}")
+    assert r.status_code == 404
+
+
+async def test_activity_state_transitions(client: AsyncClient) -> None:
+    payload = {
+        "name": "act-1",
+        "activityType": "decide",
+        "action": "agent:decision",
+    }
+    r = await client.post("/api/v1/activity", json=payload)
+    activity_id = r.json()["id"]
+
+    # designed -> validated
+    r = await client.post(
+        f"/api/v1/activity/{activity_id}/state",
+        json={"targetState": "validated"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["lifecycleState"] == "validated"
+
+    # validated -> published
+    r = await client.post(
+        f"/api/v1/activity/{activity_id}/state",
+        json={"targetState": "published"},
+    )
+    assert r.status_code == 200
+
+    # published -> retired
+    r = await client.post(
+        f"/api/v1/activity/{activity_id}/state",
+        json={"targetState": "retired"},
+    )
+    assert r.status_code == 200
+
+    # retired is terminal
+    r = await client.post(
+        f"/api/v1/activity/{activity_id}/state",
+        json={"targetState": "validated"},
+    )
+    assert r.status_code == 409
+    assert r.json()["code"] == "closed_loop.state_transition_invalid"
+    assert r.json()["details"]["kind"] == "activity"
+
+
+async def test_workflow_crud(client: AsyncClient) -> None:
+    # Create two activities to reference
+    a1 = (await client.post("/api/v1/activity", json={"name": "a1", "activityType": "sense", "action": "x"})).json()
+    a2 = (await client.post("/api/v1/activity", json={"name": "a2", "activityType": "act", "action": "y"})).json()
+
+    payload = {
+        "name": "feedback-flow",
+        "description": "Standard feedback loop",
+        "path": "FEEDBACK",
+        "activities": [
+            {"id": a1["id"], "name": a1["name"], "activityType": "sense"},
+            {"id": a2["id"], "name": a2["name"], "activityType": "act"},
+        ],
+        "targetCycleTimeMs": 1000,
+    }
+    r = await client.post("/api/v1/workflow", json=payload)
+    assert r.status_code == 201, r.text
+    workflow = r.json()
+    workflow_id = workflow["id"]
+    assert workflow["path"] == "FEEDBACK"
+    assert workflow["lifecycleState"] == "designed"
+    assert len(workflow["activities"]) == 2
+
+    # GET
+    r = await client.get(f"/api/v1/workflow/{workflow_id}")
+    assert r.status_code == 200
+    assert r.json()["name"] == "feedback-flow"
+
+    # PATCH (change path)
+    r = await client.patch(
+        f"/api/v1/workflow/{workflow_id}",
+        json={"path": "FEEDFORWARD"},
+    )
+    assert r.status_code == 200
+    assert r.json()["path"] == "FEEDFORWARD"
+
+    # LIST with filter
+    r = await client.get("/api/v1/workflow?path=FEEDFORWARD")
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+
+    # DELETE
+    r = await client.delete(f"/api/v1/workflow/{workflow_id}")
+    assert r.status_code == 204
+
+
+async def test_workflow_state_invalid_transition(client: AsyncClient) -> None:
+    payload = {"name": "wf-1", "path": "FEEDBACK", "activities": []}
+    r = await client.post("/api/v1/workflow", json=payload)
+    workflow_id = r.json()["id"]
+
+    # designed -> published is not valid (must go through validated)
+    r = await client.post(
+        f"/api/v1/workflow/{workflow_id}/state",
+        json={"targetState": "published"},
+    )
+    assert r.status_code == 409
+    assert r.json()["details"]["kind"] == "workflow"
+
+
+async def test_goal_crud(client: AsyncClient) -> None:
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop_id = await _create_closed_loop(client, dm_id=dm_id)
+
+    payload = {
+        "name": "keep-temp-low",
+        "description": "Keep CPU temperature below 60C",
+        "target": {"metric": "cpu_temp_c", "value": 60.0, "unit": "C", "direction": "AT_MOST"},
+        "scope": "CLOSED_LOOP",
+        "scopeRef": loop_id,
+        "currentValue": 42.0,
+        "metricSource": "sensor:cpu.temp",
+    }
+    r = await client.post("/api/v1/goal", json=payload)
+    assert r.status_code == 201, r.text
+    goal = r.json()
+    goal_id = goal["id"]
+    assert goal["target"]["direction"] == "AT_MOST"
+    assert goal["currentValue"] == 42.0
+
+    # GET
+    r = await client.get(f"/api/v1/goal/{goal_id}")
+    assert r.status_code == 200
+    assert r.json()["name"] == "keep-temp-low"
+
+    # PATCH (update currentValue to reflect new measurement)
+    r = await client.patch(
+        f"/api/v1/goal/{goal_id}",
+        json={"currentValue": 55.0},
+    )
+    assert r.status_code == 200
+    assert r.json()["currentValue"] == 55.0
+
+    # LIST with scopeRef filter
+    r = await client.get(f"/api/v1/goal?scopeRef={loop_id}")
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+
+    # DELETE
+    r = await client.delete(f"/api/v1/goal/{goal_id}")
+    assert r.status_code == 204
+
+
+async def test_closed_loop_link_crud(client: AsyncClient) -> None:
+    dm_id = await _create_decision_model(client, kind="OODA")
+    a = await _create_closed_loop(client, dm_id=dm_id, name="outer")
+    b = await _create_closed_loop(client, dm_id=dm_id, name="inner")
+
+    payload = {
+        "source": {"id": a, "name": "outer"},
+        "target": {"id": b, "name": "inner"},
+        "kind": "HIERARCHICAL",
+        "direction": "BIDIRECTIONAL",
+        "condition": "cpu_temp > 70",
+    }
+    r = await client.post("/api/v1/closedLoopLink", json=payload)
+    assert r.status_code == 201, r.text
+    link = r.json()
+    link_id = link["id"]
+    assert link["kind"] == "HIERARCHICAL"
+
+    # GET
+    r = await client.get(f"/api/v1/closedLoopLink/{link_id}")
+    assert r.status_code == 200
+    assert r.json()["condition"] == "cpu_temp > 70"
+
+    # LIST with sourceId filter
+    r = await client.get(f"/api/v1/closedLoopLink?sourceId={a}")
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+
+    # DELETE
+    r = await client.delete(f"/api/v1/closedLoopLink/{link_id}")
+    assert r.status_code == 204
+
+
+async def test_oas_3_1_envelope_and_new_endpoints(client: AsyncClient) -> None:
+    """OAS document must include the new endpoints and ErrorEnvelope."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/activity" in paths
+    assert "/api/v1/activity/{activityId}" in paths
+    assert "/api/v1/activity/{activityId}/state" in paths
+    assert "/api/v1/workflow" in paths
+    assert "/api/v1/workflow/{workflowId}" in paths
+    assert "/api/v1/workflow/{workflowId}/state" in paths
+    assert "/api/v1/goal" in paths
+    assert "/api/v1/goal/{goalId}" in paths
+    assert "/api/v1/closedLoopLink" in paths
+    assert "/api/v1/closedLoopLink/{linkId}" in paths
+    schemas = spec["components"]["schemas"]
+    assert "Activity" in schemas
+    assert "Workflow" in schemas
+    assert "Goal" in schemas
+    assert "ClosedLoopLink" in schemas
+    assert "ErrorEnvelope" in schemas
