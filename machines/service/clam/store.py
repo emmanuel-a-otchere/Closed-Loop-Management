@@ -7,6 +7,7 @@ proper RDBMS via the same async interface.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -325,6 +326,12 @@ class Store:
         self._request_latency_ms_count: dict[tuple[str, str], int] = {}
         self._audit_total: dict[tuple[str, str], int] = {}
         self._token_total: int = 0
+        # Slice 5 PR1: per-process async fan-out for the SSE audit
+        # stream. A single bounded queue (per-process; multiple
+        # subscribers is implemented by each holding its own
+        # queue, populated by the same publisher).
+        self._audit_subscribers: list[asyncio.Queue[AuditEntry]] = []
+        self._audit_backpressure: int = 1024
 
     async def init(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2065,7 +2072,7 @@ class Store:
             await db.commit()
         # PR4: bump audit metrics counter.
         self.record_audit_metrics(action=action, entity_kind=entity_kind)
-        return AuditEntry(
+        entry = AuditEntry(
             id=row_id,
             ts=now,
             actor=actor,
@@ -2076,6 +2083,40 @@ class Store:
             after=after_blob,
             correlationId=correlation_id,
         )
+        # Slice 5 PR1: fan-out to SSE subscribers. Bounded queues
+        # with a cap; slow consumers drop messages rather than
+        # back up the writer.
+        self._publish_audit(entry)
+        return entry
+
+    def _publish_audit(self, entry: AuditEntry) -> None:
+        """Push an audit row to every subscriber queue (PR1).
+
+        Drops the message on a slow consumer's queue (no blocking
+        on a critical-path write).
+        """
+        for q in self._audit_subscribers:
+            try:
+                q.put_nowait(entry)
+            except asyncio.QueueFull:
+                # Slow consumer: drop. The audit log persists the
+                # row regardless; SSE is best-effort.
+                pass
+
+    async def subscribe_audit(self) -> asyncio.Queue[AuditEntry]:
+        """Register a new audit subscriber; return its queue (PR1)."""
+        q: asyncio.Queue[AuditEntry] = asyncio.Queue(
+            maxsize=self._audit_backpressure
+        )
+        self._audit_subscribers.append(q)
+        return q
+
+    def unsubscribe_audit(self, q: asyncio.Queue[AuditEntry]) -> None:
+        """Remove a subscriber queue (PR1)."""
+        try:
+            self._audit_subscribers.remove(q)
+        except ValueError:
+            pass
 
     async def list_audit_for_entity(
         self, *, entity_kind: str, entity_id: UUID

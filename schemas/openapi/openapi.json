@@ -2196,6 +2196,65 @@
         ]
       }
     },
+    "/api/v1/_stream/audit": {
+      "get": {
+        "description": "Stream new audit rows as Server-Sent Events.\n\nOptional query filters narrow the stream to a single entity kind\nand/or id. The underlying publisher emits every audit row; the\nfilter is applied per-subscriber (cheap, in-process).",
+        "operationId": "stream_audit_api_v1__stream_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entityKind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entitykind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Server-Sent Events stream of new audit rows",
+        "tags": [
+          "observability"
+        ]
+      }
+    },
     "/api/v1/activity": {
       "get": {
         "operationId": "list_activities_api_v1_activity_get",
