@@ -2637,3 +2637,94 @@ async def test_oas_3_1_audit_prune_paths_present(
     paths = set(spec["paths"].keys())
     assert "/api/v1/audit/prune" in paths
     assert "/api/v1/audit/pruneByDays" in paths
+
+
+# --- Slice 6 PR2 tests: persistent metrics counters -------------------------
+
+
+async def test_snapshot_metrics_round_trip(
+    client: AsyncClient,
+) -> None:
+    """Generating traffic -> snapshot -> /metrics/snapshot returns
+    counters that include the captured entries.
+    """
+    # Trigger some traffic.
+    r = await client.get("/health")
+    assert r.status_code == 200
+    r = await client.get("/api/v1/closedLoop")
+    assert r.status_code == 200
+    # Force a snapshot directly (the default fixture has no snapshot yet).
+    store = client._transport.app.state.store  # type: ignore[attr-defined]
+    sid = await store.snapshot_metrics()
+    assert sid > 0
+    r = await client.get("/metrics/snapshot")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["exists"] is True
+    assert "requestTotal" in body
+    assert "takenAt" in body
+    assert body["tokenTotal"] >= 0
+
+
+async def test_metrics_prometheus_body_includes_snapshot_label(
+    client: AsyncClient,
+) -> None:
+    """The /metrics body exposes the snapshot timestamp when present."""
+    store = client._transport.app.state.store  # type: ignore[attr-defined]
+    await store.snapshot_metrics()
+    r = await client.get("/metrics")
+    assert r.status_code == 200
+    text = r.text
+    assert "clam_metrics_snapshot_ts" in text
+
+
+async def test_restore_metrics_from_snapshot(
+    tmp_path,
+) -> None:
+    """Snapshots taken in process A are loaded in process B."""
+    from machines.service.clam.store import Store
+
+    db = tmp_path / "snap.db"
+    store_a = Store(db)
+    await store_a.init()
+    store_a._request_total[("/x", "GET", 200)] = 17
+    store_a._request_latency_ms_sum[("/x", "GET")] = 99.5
+    store_a._request_latency_ms_count[("/x", "GET")] = 7
+    store_a._audit_total[("Goal", "goal.update")] = 4
+    store_a._token_total = 3
+    sid = await store_a.snapshot_metrics()
+    assert sid > 0
+
+    # Process B: fresh store, restore from snapshot.
+    store_b = Store(db)
+    await store_b.init()
+    loaded = await store_b.restore_metrics_from_snapshot()
+    assert loaded is True
+    assert store_b._request_total[("/x", "GET", 200)] == 17
+    assert store_b._request_latency_ms_sum[("/x", "GET")] == 99.5
+    assert store_b._request_latency_ms_count[("/x", "GET")] == 7
+    assert store_b._audit_total[("Goal", "goal.update")] == 4
+    assert store_b._token_total == 3
+
+
+async def test_restore_metrics_no_snapshot_returns_false(
+    tmp_path,
+) -> None:
+    """Without a snapshot row, restore returns False and counters are empty."""
+    from machines.service.clam.store import Store
+
+    db = tmp_path / "empty-snap.db"
+    store = Store(db)
+    await store.init()
+    loaded = await store.restore_metrics_from_snapshot()
+    assert loaded is False
+
+
+async def test_oas_3_1_metrics_snapshot_path_present(
+    client: AsyncClient,
+) -> None:
+    """/metrics/snapshot surfaces in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/metrics/snapshot" in paths

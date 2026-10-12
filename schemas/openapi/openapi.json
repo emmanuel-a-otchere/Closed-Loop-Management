@@ -5517,6 +5517,26 @@
           "health"
         ]
       }
+    },
+    "/metrics/snapshot": {
+      "get": {
+        "description": "Return the latest persisted snapshot row as JSON.",
+        "operationId": "metrics_snapshot_endpoint_metrics_snapshot_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Latest persisted metrics snapshot (Slice 6 PR2)",
+        "tags": [
+          "health"
+        ]
+      }
     }
   },
   "tags": [

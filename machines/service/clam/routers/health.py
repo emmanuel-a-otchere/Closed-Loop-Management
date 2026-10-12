@@ -76,11 +76,61 @@ async def metrics_endpoint(request: Request) -> Response:
     if token_store is not None and hasattr(token_store, "list_tokens"):
         store.set_token_total(len(token_store.list_tokens()))
     body = store.format_prometheus()
+    # Slice 6 PR2: append the latest snapshot timestamp so operators
+    # can tell whether the counter is freshly accumulated or restored
+    # from a snapshot.
+    try:
+        snap = await store.latest_metrics_snapshot()
+        if snap is not None:
+            body += (
+                "\n# HELP clam_metrics_snapshot_ts "
+                "Timestamp of the latest persisted metrics snapshot.\n"
+            )
+            body += "# TYPE clam_metrics_snapshot_ts gauge\n"
+            body += f'clam_metrics_snapshot_ts "{snap["taken_at"]}"\n'
+    except Exception:
+        # Best-effort.
+        pass
     return Response(
         content=body,
         media_type="text/plain; version=0.0.4",
         status_code=200,
     )
+
+
+@router.get(
+    "/metrics/snapshot",
+    summary="Latest persisted metrics snapshot (Slice 6 PR2)",
+)
+async def metrics_snapshot_endpoint(request: Request):
+    """Return the latest persisted snapshot row as JSON."""
+    import json
+
+    from fastapi.responses import JSONResponse
+
+    store = getattr(request.app.state, "store", None)
+    if store is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "store not initialised"},
+        )
+    row = await store.latest_metrics_snapshot()
+    if row is None:
+        return {"exists": False, "takenAt": None, "tokenTotal": 0}
+    return {
+        "exists": True,
+        "id": row["id"],
+        "takenAt": row["taken_at"],
+        "tokenTotal": int(str(row["token_total"])),
+        "requestTotal": json.loads(str(row["request_total_json"])),
+        "requestLatencyMsSum": json.loads(
+            str(row["request_latency_ms_sum_json"])
+        ),
+        "requestLatencyMsCount": json.loads(
+            str(row["request_latency_ms_count_json"])
+        ),
+        "auditTotal": json.loads(str(row["audit_total_json"])),
+    }
 
 
 __all__ = ["router"]
