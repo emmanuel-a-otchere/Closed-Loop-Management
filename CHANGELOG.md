@@ -20,6 +20,41 @@ adheres to [Semantic Versioning](https://semver.org/).
   secret_hash; headers X-Clam-Signature (hex digest) and
   X-Clam-Event (action value). webhook_subscription +
   webhook_delivery tables; _fanout_webhooks fires per audit row.
+- Slice 6 PR1 -- audit log retention + prune. POST
+  /api/v1/audit/prune?before=<ISO-8601> (ADMIN; deletes
+  every audit row with ts < before). POST
+  /api/v1/audit/pruneByDays?days=<int 1..3650> (ADMIN;
+  convenience wrapper around `today - N days`). The audit
+  log is the durable record of state changes; pruning is
+  destructive. External archive before invoking in
+  production. New Store methods prune_audit_before +
+  count_audit.
+- Slice 6 PR2 -- persistent metrics counters (60s snapshot).
+  /metrics now survives process restarts. New
+  `metrics_snapshot` table; Store.snapshot_metrics /
+  latest_metrics_snapshot / restore_metrics_from_snapshot.
+  Lifespan restores from the latest snapshot on startup,
+  background task takes one every
+  CLAM_METRICS_SNAPSHOT_INTERVAL seconds (default 60),
+  one final snapshot on shutdown. New GET /metrics/snapshot
+  returns the latest row as JSON. Prometheus body appends
+  `clam_metrics_snapshot_ts` so operators can tell whether
+  the counter is freshly accumulated or restored from a
+  snapshot.
+- Slice 6 PR3 -- durable (DB-backed) token store + rotation.
+  Tokens issued at runtime are persisted to the new
+  `auth_token` table (token_id, secret_hash, name,
+  scopes_json, issued_at, expires_at, revoked_at + 2
+  indexes). They survive process restarts and remain
+  authenticable after a fresh process boots. TokenStore is
+  async-aware; constructed with a Store it delegates to the
+  durable path. New endpoints GET
+  /api/v1/auth/tokens/{tokenId} (single-token read with
+  expiresAt + revokedAt) and POST
+  /api/v1/auth/tokens/{tokenId}/rotate (201 with new
+  plaintext; old token retired; auth.token.rotate audit
+  row written). New model AuthTokenDetail; new audit
+  action AuditAction.AUTH_TOKEN_ROTATE.
 - Slice 5 PR3 -- one-shot /eval + async transitions via jobs.
   POST /api/v1/closedLoop/{loopId}/eval (synchronous decision +
   apply); POST /api/v1/closedLoop/{loopId}/eval/async

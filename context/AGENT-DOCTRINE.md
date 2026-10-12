@@ -281,3 +281,77 @@ queue order is Durability, then Composition).
 - Cross-process workers (in-process task only).
 - Webhook on job state changes (PR2 records job completion
   but does not publish a webhook event).
+
+
+## Slice 6 close-out (2026-10-12)
+
+PR1 -- Audit log retention + prune (PR #23).
+
+- POST /api/v1/audit/prune?before=<ISO-8601> (ADMIN scope;
+  deletes every row with ts < before).
+- POST /api/v1/audit/pruneByDays?days=<int 1..3650>
+  (ADMIN scope; convenience wrapper around today - N days).
+- Store.prune_audit_before + Store.count_audit.
+- 4 new tests + an `auth_client` fixture that enables
+  CLAM_AUTH_ENABLED so admin-scope enforcement is exercised.
+- Resolves card 288.
+
+PR2 -- Persistent metrics counters (PR #24).
+
+- New `metrics_snapshot` table; one row per snapshot.
+- Store.snapshot_metrics / latest_metrics_snapshot /
+  restore_metrics_from_snapshot.
+- Lifespan: on startup, restore from the latest snapshot;
+  background task takes one snapshot every
+  CLAM_METRICS_SNAPSHOT_INTERVAL seconds (default 60);
+  one final snapshot on shutdown.
+- GET /metrics/snapshot returns the latest row as JSON.
+- The Prometheus /metrics body appends
+  `clam_metrics_snapshot_ts` so operators can tell whether
+  the counter is freshly accumulated or restored from a
+  snapshot.
+- 5 new tests.
+- Resolves card 289.
+
+PR3 -- Durable (DB-backed) token store + rotation (PR #25).
+
+- New `auth_token` table (token_id, secret_hash, name,
+  scopes_json, issued_at, expires_at, revoked_at) + 2
+  indexes.
+- TokenStore is async-aware; constructed with a Store it
+  delegates to the durable path. Legacy in-memory fallback
+  is preserved for tests that opt out of CLAM_AUTH_ENABLED.
+- main.py wires the durable TokenStore; reads
+  CLAM_TOKEN_DEFAULT_EXPIRES_DAYS for optional default
+  expiry.
+- GET /api/v1/auth/tokens/{tokenId} -- single-token read
+  with expiresAt + revokedAt surfaced.
+- POST /api/v1/auth/tokens/{tokenId}/rotate -- 201 with
+  the new plaintext exactly once; old token retired; an
+  auth.token.rotate audit row is written.
+- AuthTokenDetail model; AuditAction.AUTH_TOKEN_ROTATE.
+- resolve_principal is async because authenticate is async.
+- 7 new tests; total 130 pytest pass.
+- Resolves card 290.
+
+Deferred (carried on the books):
+
+- Per-entity retention rules (a single before / days
+  cutoff applies to all audit rows).
+- Audit archival to cold storage (callers must archive
+  before invoking prune).
+- Scheduled background pruning (operator-driven only).
+- Per-route SLA / histogram buckets on /metrics (only sum
+  + count are emitted).
+- Multi-process leader election for the metrics
+  snapshotter (two processes both snapshot; the highest-id
+  row wins on next boot).
+- Rolling retention for metrics_snapshot rows (current
+  implementation appends indefinitely; the PR1 prune API
+  does not yet apply to metrics_snapshot rows).
+- Token rotation policy enforcement (e.g. require
+  rotation every N days; current implementation issues on
+  demand).
+- Audit reads across processes (the bearer path is per-
+  process; fine for now, but worth revisiting once the auth
+  token store moves to a shared DB).
