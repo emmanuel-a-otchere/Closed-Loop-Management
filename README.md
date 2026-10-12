@@ -259,6 +259,11 @@ manager, controller, with sub-functions for design, validation, publication,
 catalog, monitoring, orchestration, administration, and choreography.
 That conceptual model is the foundation.
 
+Related Standards
+> **IG1219A AI Closed Loop Automation Management** - https://www.tmforum.org/resources/introductory-guide/ig1219a-ai-closed-loop-automation-management-v2-0-0/
+> **TR284C AI Closed Loop Automation API** - https://www.tmforum.org/resources/standard/tr284c-ai-closed-loop-automation-apis-v1-2-0/
+
+
 ## License
 
 Apache 2.0.
