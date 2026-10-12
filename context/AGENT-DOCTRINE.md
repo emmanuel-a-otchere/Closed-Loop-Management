@@ -355,3 +355,64 @@ Deferred (carried on the books):
 - Audit reads across processes (the bearer path is per-
   process; fine for now, but worth revisiting once the auth
   token store moves to a shared DB).
+
+
+## Slice 7 close-out (2026-10-12)
+
+PR1 -- clam-goalsim toolkit (PR #27).
+
+- New toolkit machines/toolkits/goalsim/ (console script
+  clam-goalsim). Offline goal-achievement simulator:
+  GoalSimSpec + simulate(spec, ticks) -> list[TickResult]
+  + render_report.
+- Canonical state paths: OODA / MAPE oscillate active
+  <-> paused; CUSTOM one-shots designed -> ... -> retired.
+- CLI: --spec --loop-id --kind --ticks --trace
+  --format (table|json).
+- 16 tests. Resolves card 315.
+
+PR2 -- clam-compare-decisions toolkit (PR #28).
+
+- New toolkit machines/toolkits/compare_decisions/
+  (console script clam-compare-decisions).
+- compare(*, spec, kind_a, kind_b, ticks) -> two
+  CompareResult values (final_state, transition_count,
+  ticks_to_active, per-tick trajectory).
+- render_comparison emits a side-by-side markdown table.
+- CLI: --spec --loop-id --kind-a --kind-b --ticks
+  --format (table|json) --trace.
+- 12 tests. Resolves card 316.
+
+PR3 -- topology-as-script + audit-consumer toolkits (PR #29).
+
+- machines/toolkits/topology_script/ (console script
+  clam-topology-script): topology spec JSON -> runnable
+  Python reproduction script; POSTs in dependency order;
+  tolerates 200/201/409; empty-spec-safe.
+- machines/toolkits/audit_consumer/ (console script
+  clam-audit-consumer): walks GET /api/v1/audit cursor
+  pagination; dumps CSV or JSON Lines; all endpoint
+  filters as CLI flags; optional bearer token; pluggable
+  httpx transport for tests.
+- 21 tests. Resolves card 317.
+
+Deferred (carried on the books):
+
+- Live-API integration for clam-goalsim and
+  clam-compare-decisions (both simulate offline; the
+  existing clam-loop-simulator toolkit remains the live
+  driver).
+- Per-goal achievement (goals are a uniform integer
+  count).
+- Stochastic variance / failure injection (both
+  simulators are deterministic).
+- Real goal-spec DSL (specs are plain JSON).
+- Statistical comparison across N runs in
+  clam-compare-decisions.
+- Incremental resume for clam-audit-consumer (saved
+  cursor / ts watermark).
+- Topology script emitting PUT for idempotent upserts
+  instead of POST-tolerate-409.
+- Live-server integration test for audit_consumer
+  (MockTransport covers pagination/filters/auth; the
+  audit endpoint itself is covered in tests/test_api.py).

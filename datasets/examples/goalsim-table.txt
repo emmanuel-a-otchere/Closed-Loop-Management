@@ -1,0 +1,16 @@
+# Goal simulation: loop=latency-guardian kind=OODA goals=6
+
+| tick | state | achieved | pending | achievement% | event |
+| ---- | ----- | -------- | ------- | ------------- | ----- |
+| 0 | validated | 0 | 6 | 0.0 | advance |
+| 1 | published | 0 | 6 | 0.0 | advance |
+| 2 | active | 2 | 4 | 33.33 | advance |
+| 3 | paused | 2 | 4 | 33.33 | advance |
+| 4 | active | 4 | 2 | 66.67 | advance |
+| 5 | paused | 4 | 2 | 66.67 | advance |
+| 6 | active | 6 | 0 | 100.0 | advance |
+| 7 | paused | 6 | 0 | 100.0 | advance |
+| 8 | active | 6 | 0 | 100.0 | advance |
+| 9 | paused | 6 | 0 | 100.0 | advance |
+
+final state=paused achieved=6/6 (100.0%) over 10 tick(s)

@@ -1,0 +1,7 @@
+{
+  "loopId": "latency-guardian",
+  "decisionModelKind": "OODA",
+  "goals": 6,
+  "achievedPerTickActive": 2,
+  "startingState": "designed"
+}

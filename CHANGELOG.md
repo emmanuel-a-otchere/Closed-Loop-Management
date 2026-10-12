@@ -55,6 +55,28 @@ adheres to [Semantic Versioning](https://semver.org/).
   plaintext; old token retired; auth.token.rotate audit
   row written). New model AuthTokenDetail; new audit
   action AuditAction.AUTH_TOKEN_ROTATE.
+- Slice 7 PR1 -- clam-goalsim toolkit. New console script
+  drives a closed loop through its canonical state path
+  offline and projects goal achievement over N ticks.
+  OODA / MAPE oscillate active <-> paused; CUSTOM one-shots
+  to retired. GoalSimSpec + simulate + render_report; CLI
+  flags --spec / --loop-id / --kind / --ticks / --trace /
+  --format (table|json).
+- Slice 7 PR2 -- clam-compare-decisions toolkit. Runs the
+  same loop spec through two decision model kinds (default
+  OODA vs MAPE) and renders a side-by-side markdown
+  comparison (final state, transition count,
+  ticks-to-active, per-tick trajectories) or JSON. Reuses
+  goalsim.simulate so all kinds share one state machine.
+- Slice 7 PR3 -- topology-as-script + audit-consumer
+  toolkits. clam-topology-script converts a topology spec
+  (JSON) into a runnable Python reproduction script that
+  POSTs to a live CLAM API in dependency order
+  (tolerates 200/201/409 for re-runnability).
+  clam-audit-consumer walks GET /api/v1/audit with cursor
+  pagination and dumps to CSV or JSON Lines; all endpoint
+  filters are CLI flags; optional bearer token for
+  auth-enabled deployments.
 - Slice 5 PR3 -- one-shot /eval + async transitions via jobs.
   POST /api/v1/closedLoop/{loopId}/eval (synchronous decision +
   apply); POST /api/v1/closedLoop/{loopId}/eval/async

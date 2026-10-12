@@ -436,6 +436,48 @@ The default token expiry window is governed by
 `CLAM_TOKEN_DEFAULT_EXPIRES_DAYS` (unset => no expiry,
 matching the Slice 3 PR1 behaviour).
 
+## Composition (Slice 7)
+
+Slice 7 ships operator-facing toolkits that compose on top
+of the service without touching the API surface.
+
+### clam-goalsim
+
+Offline goal-achievement simulator. Loads a closed-loop
+spec (JSON), walks the canonical state path for the chosen
+decision model kind (OODA / MAPE oscillate `active <->
+paused`; CUSTOM one-shots to `retired`), and projects goal
+achievement over N ticks. Emits a markdown table or JSON;
+optional JSONL trace. Console script: `clam-goalsim`.
+
+### clam-compare-decisions
+
+Side-by-side decision model comparator. Runs the same spec
+through two kinds (default OODA vs MAPE) via the shared
+goalsim state machine and renders final state, transition
+count, ticks-to-active, and per-tick trajectories.
+Console script: `clam-compare-decisions`.
+
+### clam-topology-script
+
+Topology-as-script. Converts a topology spec (JSON with
+`decisionModels` / `activities` / `workflows` / `goals` /
+`closedLoops` / `closedLoopLinks` sections) into a runnable
+Python script that recreates the topology by POSTing to a
+live CLAM API in dependency order, tolerating
+`200/201/409` for re-runnability. Console script:
+`clam-topology-script`.
+
+### clam-audit-consumer
+
+Audit log exporter. Walks `GET /api/v1/audit` with cursor
+pagination (newest first) and dumps to CSV or JSON Lines.
+All endpoint filters are CLI flags (`--since`, `--until`,
+`--entity-kind`, `--entity-id`, `--actor`, `--action`,
+`--limit`); `--token` passes a bearer token when
+`CLAM_AUTH_ENABLED=true`. Console script:
+`clam-audit-consumer`.
+
 ## OAS validation
 
 The committed OAS document is validated by:
