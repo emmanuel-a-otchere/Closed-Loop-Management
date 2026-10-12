@@ -54,6 +54,9 @@ toolkit-kpi-calculator = [
     "pydantic>=2.9",
     "rich>=13.7",
 ]
+toolkit-goalsim = [
+    "rich>=13.7",
+]
 
 [project.scripts]
 machines-service = "machines.service.clam.cli:main"
@@ -62,6 +65,7 @@ clam-loop-simulator = "machines.toolkits.loop_simulator.cli:main"
 clam-erd-to-oas = "machines.toolkits.erd_to_oas.cli:main"
 clam-maturity-assessment = "machines.toolkits.maturity_assessment.cli:main"
 clam-kpi-calculator = "machines.toolkits.kpi_calculator.cli:main"
+clam-goalsim = "machines.toolkits.goalsim.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["machines"]
