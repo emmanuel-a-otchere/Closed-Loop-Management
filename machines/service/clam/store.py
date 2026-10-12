@@ -217,6 +217,19 @@ CREATE TABLE IF NOT EXISTS metrics_snapshot (
 );
 CREATE INDEX IF NOT EXISTS idx_metrics_snapshot_taken
     ON metrics_snapshot(taken_at DESC);
+CREATE TABLE IF NOT EXISTS auth_token (
+    token_id TEXT PRIMARY KEY,
+    secret_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    scopes_json TEXT NOT NULL,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT,
+    revoked_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_auth_token_hash
+    ON auth_token(secret_hash);
+CREATE INDEX IF NOT EXISTS idx_auth_token_revoked
+    ON auth_token(revoked_at);
 """
 
 
@@ -2466,6 +2479,286 @@ class Store:
 
         self._token_total = int(str(row["token_total"]))
         return True
+
+    # --- Slice 6 PR3: durable (DB-backed) token store -------------------------
+
+    async def create_auth_token(
+        self,
+        *,
+        token_id: str,
+        secret_hash: str,
+        name: str,
+        scopes: list[str],
+        issued_at: datetime,
+        expires_at: datetime | None = None,
+    ) -> dict[str, object]:
+        """Persist a freshly-issued auth token (PR3).
+
+        The plaintext secret is never stored; only ``secret_hash``.
+        Returns the row as a dict suitable for direct projection
+        into a response model.
+        """
+        import json
+
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO auth_token "
+                "(token_id, secret_hash, name, scopes_json, "
+                "issued_at, expires_at, revoked_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, NULL)",
+                (
+                    token_id,
+                    secret_hash,
+                    name,
+                    json.dumps(list(scopes)),
+                    issued_at.isoformat(),
+                    expires_at.isoformat() if expires_at else None,
+                ),
+            )
+            await db.commit()
+        return {
+            "tokenId": token_id,
+            "name": name,
+            "scopes": list(scopes),
+            "issuedAt": issued_at,
+            "expiresAt": expires_at,
+            "revokedAt": None,
+        }
+
+    async def get_auth_token(self, token_id: str) -> dict[str, object] | None:
+        """Return the row for ``token_id`` (or None).
+
+        Includes ``expiresAt`` and ``revokedAt`` (PR3 surfaces
+        these on the new read endpoint).
+        """
+        import json
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT token_id, name, scopes_json, issued_at, "
+                "expires_at, revoked_at FROM auth_token "
+                "WHERE token_id = ?",
+                (token_id,),
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            return None
+        return {
+            "tokenId": str(row["token_id"]),
+            "name": str(row["name"]),
+            "scopes": json.loads(str(row["scopes_json"])),
+            "issuedAt": datetime.fromisoformat(str(row["issued_at"])),
+            "expiresAt": (
+                datetime.fromisoformat(str(row["expires_at"]))
+                if row["expires_at"] is not None
+                else None
+            ),
+            "revokedAt": (
+                datetime.fromisoformat(str(row["revoked_at"]))
+                if row["revoked_at"] is not None
+                else None
+            ),
+        }
+
+    async def list_auth_tokens(self) -> list[dict[str, object]]:
+        """Return all auth token rows, including expired + revoked (PR3).
+
+        The router can filter as desired.
+        """
+        import json
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT token_id, name, scopes_json, issued_at, "
+                "expires_at, revoked_at FROM auth_token "
+                "ORDER BY issued_at DESC"
+            ) as cur:
+                rows = await cur.fetchall()
+        out: list[dict[str, object]] = []
+        for row in rows:
+            out.append(
+                {
+                    "tokenId": str(row["token_id"]),
+                    "name": str(row["name"]),
+                    "scopes": json.loads(str(row["scopes_json"])),
+                    "issuedAt": datetime.fromisoformat(
+                        str(row["issued_at"])
+                    ),
+                    "expiresAt": (
+                        datetime.fromisoformat(str(row["expires_at"]))
+                        if row["expires_at"] is not None
+                        else None
+                    ),
+                    "revokedAt": (
+                        datetime.fromisoformat(str(row["revoked_at"]))
+                        if row["revoked_at"] is not None
+                        else None
+                    ),
+                }
+            )
+        return out
+
+    async def authenticate_auth_token(
+        self, plaintext: str
+    ) -> dict[str, object] | None:
+        """Resolve a plaintext bearer to its row (PR3).
+
+        Returns the row when (a) the fingerprint matches,
+        (b) the row is not revoked, and (c) the row is not
+        expired. None otherwise.
+        """
+        import hashlib
+        import json
+
+        fingerprint = hashlib.sha256(
+            plaintext.encode("utf-8")
+        ).hexdigest()
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT token_id, name, scopes_json, issued_at, "
+                "expires_at, revoked_at FROM auth_token "
+                "WHERE secret_hash = ?",
+                (fingerprint,),
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            return None
+        if row["revoked_at"] is not None:
+            return None
+        if row["expires_at"] is not None:
+            expires = datetime.fromisoformat(str(row["expires_at"]))
+            if datetime.now(UTC) >= expires:
+                return None
+        return {
+            "tokenId": str(row["token_id"]),
+            "name": str(row["name"]),
+            "scopes": json.loads(str(row["scopes_json"])),
+            "issuedAt": datetime.fromisoformat(str(row["issued_at"])),
+            "expiresAt": (
+                datetime.fromisoformat(str(row["expires_at"]))
+                if row["expires_at"] is not None
+                else None
+            ),
+            "revokedAt": None,
+        }
+
+    async def revoke_auth_token(
+        self, token_id: str
+    ) -> bool:
+        """Revoke a token (PR3). Returns True on success."""
+        now_iso = datetime.now(UTC).isoformat()
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "UPDATE auth_token SET revoked_at = ? "
+                "WHERE token_id = ? AND revoked_at IS NULL",
+                (now_iso, token_id),
+            )
+            await db.commit()
+        return bool(cur.rowcount)
+
+    async def rotate_auth_token(
+        self,
+        *,
+        old_token_id: str,
+        new_token_id: str,
+        new_secret_hash: str,
+        issued_at: datetime,
+        expires_at: datetime | None,
+    ) -> dict[str, object] | None:
+        """Retire the old token and issue a fresh one (PR3).
+
+        Returns the new row on success, None when the old token
+        is missing or already revoked. The new row inherits the
+        old token's name + scopes.
+        """
+        import json
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT name, scopes_json, revoked_at FROM auth_token "
+                "WHERE token_id = ?",
+                (old_token_id,),
+            ) as cur:
+                old = await cur.fetchone()
+            if old is None or old["revoked_at"] is not None:
+                return None
+            name = str(old["name"])
+            scopes = json.loads(str(old["scopes_json"]))
+            now_iso = datetime.now(UTC).isoformat()
+            await db.execute(
+                "UPDATE auth_token SET revoked_at = ? "
+                "WHERE token_id = ? AND revoked_at IS NULL",
+                (now_iso, old_token_id),
+            )
+            await db.execute(
+                "INSERT INTO auth_token "
+                "(token_id, secret_hash, name, scopes_json, "
+                "issued_at, expires_at, revoked_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, NULL)",
+                (
+                    new_token_id,
+                    new_secret_hash,
+                    name,
+                    json.dumps(scopes),
+                    issued_at.isoformat(),
+                    expires_at.isoformat() if expires_at else None,
+                ),
+            )
+            await db.commit()
+        return {
+            "tokenId": new_token_id,
+            "name": name,
+            "scopes": scopes,
+            "issuedAt": issued_at,
+            "expiresAt": expires_at,
+            "revokedAt": None,
+        }
+
+    async def count_active_auth_tokens(self) -> int:
+        """Return the count of tokens that are not revoked + not expired (PR3)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                "SELECT COUNT(*) FROM auth_token "
+                "WHERE revoked_at IS NULL "
+                "AND (expires_at IS NULL OR expires_at > ?)",
+                (datetime.now(UTC).isoformat(),),
+            ) as cur:
+                row = await cur.fetchone()
+        return int(row[0]) if row else 0
+
+    async def seed_auth_tokens_from_memory(
+        self, tokens: list[tuple[str, str, str, list[str], datetime]]
+    ) -> None:
+        """One-shot bootstrap helper (PR3).
+
+        When the existing in-memory ``TokenStore`` has issued tokens
+        on a process restart, the durable store has no rows. This
+        helper seeds them at startup so a restarted process doesn't
+        wipe issued tokens. ``tokens`` is ``(token_id, secret_hash,
+        name, scopes, issued_at)``.
+        """
+        import json
+
+        async with aiosqlite.connect(self.db_path) as db:
+            for tid, fingerprint, name, scopes, issued_at in tokens:
+                await db.execute(
+                    "INSERT OR IGNORE INTO auth_token "
+                    "(token_id, secret_hash, name, scopes_json, "
+                    "issued_at, expires_at, revoked_at) "
+                    "VALUES (?, ?, ?, ?, ?, NULL, NULL)",
+                    (
+                        tid,
+                        fingerprint,
+                        name,
+                        json.dumps(list(scopes)),
+                        issued_at.isoformat(),
+                    ),
+                )
+            await db.commit()
 
     def format_prometheus(self) -> str:
         """Render counters as Prometheus text format (PR4).

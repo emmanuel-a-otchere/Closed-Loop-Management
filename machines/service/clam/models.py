@@ -575,6 +575,23 @@ class AuthTokenInfo(BaseModel):
     issuedAt: datetime
 
 
+class AuthTokenDetail(BaseModel):
+    """Full view of an issued token (PR3).
+
+    Carries ``expiresAt`` and ``revokedAt`` so callers can
+    reason about expiry and rotation status.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tokenId: str
+    name: str
+    scopes: list[str]
+    issuedAt: datetime
+    expiresAt: datetime | None = None
+    revokedAt: datetime | None = None
+
+
 class Page(BaseModel):
     """Generic pagination envelope."""
 
@@ -596,6 +613,7 @@ __all__ = [
     "ActivityType",
     "ActivityUpdate",
     "AuthTokenCreate",
+    "AuthTokenDetail",
     "AuthTokenInfo",
     "AuthTokenIssued",
     "ClosedLoop",
@@ -700,6 +718,7 @@ class AuditAction(StrEnum):
     CLOSED_LOOP_LINK_DELETE = "closed_loop_link.delete"
     AUTH_TOKEN_ISSUE = "auth.token.issue"
     AUTH_TOKEN_REVOKE = "auth.token.revoke"
+    AUTH_TOKEN_ROTATE = "auth.token.rotate"
 
 
 class AuditEntry(BaseModel):

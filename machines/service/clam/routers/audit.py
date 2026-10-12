@@ -121,7 +121,7 @@ async def prune_audit(
     """
     from ..auth import require_scope
 
-    principal = resolve_principal(request)
+    principal = await resolve_principal(request)
     denial = require_scope(principal, Scope.ADMIN)
     if denial is not None:
         return denial
@@ -142,7 +142,7 @@ async def prune_audit_by_days(
     """Convenience: delete audit rows older than ``days`` days."""
     from ..auth import require_scope
 
-    principal = resolve_principal(request)
+    principal = await resolve_principal(request)
     denial = require_scope(principal, Scope.ADMIN)
     if denial is not None:
         return denial
