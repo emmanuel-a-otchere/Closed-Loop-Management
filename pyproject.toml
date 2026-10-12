@@ -57,6 +57,9 @@ toolkit-kpi-calculator = [
 toolkit-goalsim = [
     "rich>=13.7",
 ]
+toolkit-compare-decisions = [
+    "rich>=13.7",
+]
 
 [project.scripts]
 machines-service = "machines.service.clam.cli:main"
@@ -66,6 +69,7 @@ clam-erd-to-oas = "machines.toolkits.erd_to_oas.cli:main"
 clam-maturity-assessment = "machines.toolkits.maturity_assessment.cli:main"
 clam-kpi-calculator = "machines.toolkits.kpi_calculator.cli:main"
 clam-goalsim = "machines.toolkits.goalsim.cli:main"
+clam-compare-decisions = "machines.toolkits.compare_decisions.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["machines"]
