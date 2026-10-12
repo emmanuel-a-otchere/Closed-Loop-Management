@@ -7,6 +7,26 @@ adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Slice 5 PR1 -- SSE audit stream endpoint. GET /api/v1/_stream/audit
+  exposes text/event-stream per-process fan-out from the audit log
+  writer; optional entityKind / entityId filters. A bounded
+  asyncio.Queue[AuditEntry] per subscriber keeps the writer off
+  the critical path on slow consumers (queue full => drop).
+- Slice 5 PR2 -- webhook subscriptions CRUD. POST
+  /api/v1/webhookSubscriptions (issue plaintext secret once),
+  GET /api/v1/webhookSubscriptions (list), DELETE
+  /{webhookId} (delete), GET /{webhookId}/deliveries (paginated).
+  HMAC-SHA256 over the JSON body using the subscription's
+  secret_hash; headers X-Clam-Signature (hex digest) and
+  X-Clam-Event (action value). webhook_subscription +
+  webhook_delivery tables; _fanout_webhooks fires per audit row.
+- Slice 5 PR3 -- one-shot /eval + async transitions via jobs.
+  POST /api/v1/closedLoop/{loopId}/eval (synchronous decision +
+  apply); POST /api/v1/closedLoop/{loopId}/eval/async
+  (enqueue + 202 with job id); GET /api/v1/closedLoop/{loopId}/
+  jobs/{jobId}. eval_job table; forward heuristic with OODA /
+  MAPE / CUSTOM surfaced on the rationale. Audit row fires from
+  transition_state so PR1 SSE and PR2 webhooks carry through.
 - Slice 4 PR1 -- structured request log + correlation id middleware.
   Every request writes a row to `request_log` (id, ts, method, path,
   status, latency_ms, request_id, principal_id, source_ip, user_agent)

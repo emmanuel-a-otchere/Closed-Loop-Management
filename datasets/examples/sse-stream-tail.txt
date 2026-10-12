@@ -1,0 +1,19 @@
+: connected
+
+id: 5b6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d
+event: closed_loop.state_transition
+data: {"id":"5b6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d","ts":"2026-10-11T08:42:13.184512+00:00","actor":"USER","action":"closed_loop.state_transition","entityKind":"ClosedLoop","entityId":"9f8e7d6c-5b4a-3210-fedc-ba9876543210","correlationId":"8c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f","before":"...","after":"..."}
+
+id: a1b2c3d4-e5f6-4789-a012-bcdef0123456
+event: goal.update
+data: {"id":"a1b2c3d4-e5f6-4789-a012-bcdef0123456","ts":"2026-10-11T08:43:01.012345+00:00","actor":"USER","action":"goal.update","entityKind":"Goal","entityId":"fedcba98-7654-3210-fedc-ba0987654321","correlationId":null,"before":null,"after":"..."}
+
+id: c4d5e6f7-a8b9-4c0d-9e1f-2a3b4c5d6e7f
+event: workflow.state_transition
+data: {"id":"c4d5e6f7-a8b9-4c0d-9e1f-2a3b4c5d6e7f","ts":"2026-10-11T08:43:18.998877+00:00","actor":"USER","action":"workflow.state_transition","entityKind":"Workflow","entityId":"01234567-89ab-cdef-0123-456789abcdef","correlationId":null,"before":"...","after":"..."}
+
+: keep-alive
+
+id: d8e9f0a1-b2c3-4d4e-8f5a-6b7c8d9e0f1a
+event: activity.state_transition
+data: {"id":"d8e9f0a1-b2c3-4d4e-8f5a-6b7c8d9e0f1a","ts":"2026-10-11T08:44:02.445566+00:00","actor":"USER","action":"activity.state_transition","entityKind":"Activity","entityId":"11223344-5566-7788-99aa-bbccddeeff00","correlationId":null,"before":"...","after":"..."}

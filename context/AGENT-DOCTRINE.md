@@ -217,3 +217,67 @@ Slice 4 was split into 4 PRs, all merged into `main`:
 - Per-route SLA / histogram buckets (only sum + count are emitted).
 - Anomaly alerting on `/metrics` (consumer-side concern).
 - Audit log retention / pruning policy.
+
+## Slice 5 close-out (2026-10-11)
+
+**Slice 5 = Eventing & Async Surfaces** (selected by user 2026-10-11;
+ordering PR1 -> PR2 -> PR3 -> PR4; after Slice 5 close, the
+queue order is Durability, then Composition).
+
+### PR1 (merged at fe6b186) -- SSE audit stream
+
+- `Store._audit_subscribers: list[asyncio.Queue[AuditEntry]]`. A
+  bounded queue per subscriber (maxsize=1024). The audit writer
+  iterates subscribers and uses `q.put_nowait`; on `QueueFull`
+  the message is dropped (the audit log is the durable record;
+  SSE is best-effort).
+- `GET /api/v1/_stream/audit` returns a `text/event-stream` body.
+  Optional `entityKind` / `entityId` filters; 15-second keep-alive
+  heartbeats. The subscriber queue is `unsubscribed` in the
+  generator's `finally:` clause.
+- HTTP-level SSE test dropped (`httpx.ASGITransport` buffers
+  streaming responses); fan-out coverage at the Store level.
+
+### PR2 (merged at a068e35) -- Webhook subscriptions
+
+- `webhook_subscription` + `webhook_delivery` tables. The
+  plaintext secret is returned exactly once on create; thereafter
+  only its SHA-256 fingerprint is on disk.
+- `POST /api/v1/webhookSubscriptions` issues; `GET` lists;
+  `DELETE /{webhookId}` removes; `GET /{webhookId}/deliveries`
+  paginates. Deliveries fire per audit row via
+  `Store._fanout_webhooks`.
+- Signing: HMAC-SHA256 over the JSON body using the
+  subscription's `secret_hash`; headers `X-Clam-Signature`
+  (hex digest) and `X-Clam-Event` (AuditAction value).
+
+### PR3 (merged at fc6448d) -- One-shot eval + async jobs
+
+- `POST /api/v1/closedLoop/{loopId}/eval` synchronously applies
+  the next state in one round trip.
+- `POST /api/v1/closedLoop/{loopId}/eval/async` enqueues and
+  returns 202 with a job id. The worker is dispatched on the
+  running loop; outcome (state + error) is recorded on
+  `eval_job`. `GET /api/v1/closedLoop/{loopId}/jobs/{jobId}`
+  returns 404 when the job belongs to a different loop
+  (cross-loop leakage prevention).
+- Decision heuristic (current implementation):
+  DESIGNED -> VALIDATED; VALIDATED -> PUBLISHED;
+  PUBLISHED -> ACTIVE; ACTIVE -> ACTIVE (no-op);
+  PAUSED -> ACTIVE; ERROR -> ACTIVE; RETIRED -> RETIRED.
+- Audit row fires from `transition_state`, so PR1 (SSE) and
+  PR2 (webhooks) carry through naturally for /eval.
+
+### Deferred to a later slice
+
+- Webhook retry with exponential backoff (PR2 records the
+  first attempt with `attempt=1`).
+- Webhook retry queue persisting across process restarts.
+- Per-subscription filters (entityKind / action).
+- Configurable decision rules (the current engine is a forward
+  heuristic; later slices may plug a real rule engine).
+- Job retry / backoff (current implementation runs the job
+  once; failed jobs are recorded but not retried).
+- Cross-process workers (in-process task only).
+- Webhook on job state changes (PR2 records job completion
+  but does not publish a webhook event).

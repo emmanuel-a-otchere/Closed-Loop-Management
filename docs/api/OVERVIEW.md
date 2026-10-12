@@ -336,6 +336,60 @@ audit row for the operation.
 Metrics counters are in-process and reset on restart. Persistent
 metric scraping is the consumer-side concern (Prometheus, etc.).
 
+## Eventing (Slice 5)
+
+Slice 5 surfaces real-time + push-based delivery of the audit log.
+
+### SSE audit stream
+
+`GET /api/v1/_stream/audit` returns `text/event-stream`; each
+incoming audit row is published as:
+
+```
+id: <audit_id>
+event: <audit_action>
+data: {"id":..., "ts":..., "actor":"USER", "action":"...", ...}
+
+```
+
+Filters: `entityKind` (e.g. `ClosedLoop`, `Activity`,
+`Workflow`, `Goal`), `entityId` (a UUID). The stream emits a
+`: keep-alive` heartbeat every 15 seconds when no rows are
+flowing. Subscribers are bounded by a per-consumer
+`asyncio.Queue` (maxsize=1024); on a full queue, the writer
+drops the message (the audit log persists the row regardless).
+
+### Webhook subscriptions
+
+`POST /api/v1/webhookSubscriptions` registers a subscriber.
+The plaintext signing secret is returned exactly once in the
+response; thereafter only its SHA-256 fingerprint is on disk.
+
+Every audit row triggers an HTTP POST to every active
+subscription. The body is the audit row as JSON; the headers
+carry:
+
+```
+X-Clam-Signature: sha256=<hex digest of HMAC-SHA256>
+X-Clam-Event:     <AuditAction value>
+```
+
+`GET /api/v1/webhookSubscriptions` lists; `DELETE
+/api/v1/webhookSubscriptions/{webhookId}` removes; `GET
+/api/v1/webhookSubscriptions/{webhookId}/deliveries` paginates
+the recorded delivery attempts.
+
+### One-shot /eval + async transitions
+
+`POST /api/v1/closedLoop/{loopId}/eval` synchronously applies
+the next state. Returns the new state, a `transitioned` flag,
+the decision model kind (OODA / MAPE / CUSTOM), and a rationale.
+
+`POST /api/v1/closedLoop/{loopId}/eval/async` returns 202 with
+a job id. Poll `GET /api/v1/closedLoop/{loopId}/jobs/{jobId}`
+for status; the endpoint returns 404 if the job belongs to a
+different loop (cross-loop leakage prevention).
+
 ## OAS validation
 
 The committed OAS document is validated by:
