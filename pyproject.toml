@@ -60,6 +60,12 @@ toolkit-goalsim = [
 toolkit-compare-decisions = [
     "rich>=13.7",
 ]
+toolkit-topology-script = [
+    "httpx>=0.27",
+]
+toolkit-audit-consumer = [
+    "httpx>=0.27",
+]
 
 [project.scripts]
 machines-service = "machines.service.clam.cli:main"
@@ -70,6 +76,8 @@ clam-maturity-assessment = "machines.toolkits.maturity_assessment.cli:main"
 clam-kpi-calculator = "machines.toolkits.kpi_calculator.cli:main"
 clam-goalsim = "machines.toolkits.goalsim.cli:main"
 clam-compare-decisions = "machines.toolkits.compare_decisions.cli:main"
+clam-topology-script = "machines.toolkits.topology_script.cli:main"
+clam-audit-consumer = "machines.toolkits.audit_consumer.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["machines"]
