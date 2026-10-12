@@ -1,0 +1,23 @@
+# Decision model comparison: loop=latency-guardian
+
+| metric | OODA | CUSTOM |
+| ------ | -------- | -------- |
+| final state | paused | retired |
+| transitions | 10 | 4 |
+| ticks to active | 2 | 2 |
+
+## Trajectories
+
+| tick | OODA | CUSTOM |
+| ---- | ---------- | ---------- |
+| 0 | validated | validated |
+| 1 | published | published |
+| 2 | active | active |
+| 3 | paused | retired |
+| 4 | active | - |
+| 5 | paused | - |
+| 6 | active | - |
+| 7 | paused | - |
+| 8 | active | - |
+| 9 | paused | - |
+
