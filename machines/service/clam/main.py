@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 import uuid
@@ -53,11 +54,41 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await store.init()
+        # Slice 6 PR2: restore in-memory metrics counters from the
+        # latest persisted snapshot (if any).
+        await store.restore_metrics_from_snapshot()
+
+        async def _snapshot_loop() -> None:
+            import asyncio as _asyncio
+
+            interval = float(
+                __import__("os").environ.get(
+                    "CLAM_METRICS_SNAPSHOT_INTERVAL", "60"
+                )
+            )
+            while True:
+                try:
+                    await _asyncio.sleep(interval)
+                    await store.snapshot_metrics()
+                except Exception:
+                    # Never let the snapshot loop crash the app.
+                    pass
+
+        snapshot_task = asyncio.create_task(_snapshot_loop())
         try:
             yield
         finally:
-            # aiosqlite connections are short-lived; nothing to close.
-            pass
+            # Take one final snapshot before exiting so the next
+            # process restart can restore.
+            try:
+                await store.snapshot_metrics()
+            except Exception:
+                pass
+            snapshot_task.cancel()
+            try:
+                await snapshot_task
+            except (asyncio.CancelledError, Exception):
+                pass
 
     app = FastAPI(
         title="Closed Loop Automation Management (CLAM)",

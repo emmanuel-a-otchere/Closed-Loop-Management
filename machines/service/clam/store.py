@@ -206,6 +206,17 @@ CREATE TABLE IF NOT EXISTS eval_job (
 );
 CREATE INDEX IF NOT EXISTS idx_eval_job_loop
     ON eval_job(loop_id, enqueued_at DESC);
+CREATE TABLE IF NOT EXISTS metrics_snapshot (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taken_at TEXT NOT NULL,
+    request_total_json TEXT NOT NULL,
+    request_latency_ms_sum_json TEXT NOT NULL,
+    request_latency_ms_count_json TEXT NOT NULL,
+    audit_total_json TEXT NOT NULL,
+    token_total INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_metrics_snapshot_taken
+    ON metrics_snapshot(taken_at DESC);
 """
 
 
@@ -2326,6 +2337,135 @@ class Store:
             async with db.execute("SELECT COUNT(*) FROM audit_log") as cur:
                 row = await cur.fetchone()
             return int(row[0]) if row else 0
+
+    # --- Slice 6 PR2: persistent metrics snapshot ----------------------------
+
+    async def snapshot_metrics(self) -> int:
+        """Persist the current in-memory metrics counters (PR2).
+
+        Returns the snapshot row id. The snapshot captures
+        ``_request_total`` / ``_request_latency_ms_{sum,count}`` /
+        ``_audit_total`` / ``_token_total`` as JSON blobs keyed by
+        the existing label tuples.
+        """
+        import json
+
+        now = datetime.now(UTC).isoformat()
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "INSERT INTO metrics_snapshot "
+                "(taken_at, request_total_json, "
+                "request_latency_ms_sum_json, "
+                "request_latency_ms_count_json, "
+                "audit_total_json, token_total) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    now,
+                    json.dumps(
+                        {
+                            f"{p}|{m}|{s}": c
+                            for (p, m, s), c in self._request_total.items()
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            f"{p}|{m}": float(v)
+                            for (p, m), v in (
+                                self._request_latency_ms_sum.items()
+                            )
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            f"{p}|{m}": int(c)
+                            for (p, m), c in (
+                                self._request_latency_ms_count.items()
+                            )
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            f"{e}|{a}": c
+                            for (e, a), c in self._audit_total.items()
+                        }
+                    ),
+                    int(self._token_total),
+                ),
+            )
+            await db.commit()
+            return int(cur.lastrowid or 0)
+
+    async def latest_metrics_snapshot(
+        self,
+    ) -> dict[str, object] | None:
+        """Return the most recent metrics snapshot row (PR2)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, taken_at, request_total_json, "
+                "request_latency_ms_sum_json, "
+                "request_latency_ms_count_json, "
+                "audit_total_json, token_total "
+                "FROM metrics_snapshot "
+                "ORDER BY taken_at DESC, id DESC LIMIT 1"
+            ) as cur:
+                row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def restore_metrics_from_snapshot(self) -> bool:
+        """Restore in-memory counters from the latest snapshot (PR2).
+
+        Called once on startup so /metrics persists across restarts.
+        Returns True when a snapshot was loaded.
+        """
+        import json
+
+        row = await self.latest_metrics_snapshot()
+        if row is None:
+            return False
+
+        rt = json.loads(str(row["request_total_json"]))
+        rls = json.loads(str(row["request_latency_ms_sum_json"]))
+        rlc = json.loads(str(row["request_latency_ms_count_json"]))
+        at = json.loads(str(row["audit_total_json"]))
+        new_request_total: dict[tuple[str, str, int], int] = {}
+        for k, val in rt.items():
+            parts = k.split("|")
+            if len(parts) != 3:
+                continue
+            p, m, s = parts
+            new_request_total[(p, m, int(s))] = int(val)
+        self._request_total = new_request_total
+
+        new_lat_sum: dict[tuple[str, str], float] = {}
+        for k, val in rls.items():
+            parts = k.split("|")
+            if len(parts) != 2:
+                continue
+            p, m = parts
+            new_lat_sum[(p, m)] = float(val)
+        self._request_latency_ms_sum = new_lat_sum
+
+        new_lat_count: dict[tuple[str, str], int] = {}
+        for k, val in rlc.items():
+            parts = k.split("|")
+            if len(parts) != 2:
+                continue
+            p, m = parts
+            new_lat_count[(p, m)] = int(val)
+        self._request_latency_ms_count = new_lat_count
+
+        new_audit: dict[tuple[str, str], int] = {}
+        for k, val in at.items():
+            parts = k.split("|")
+            if len(parts) != 2:
+                continue
+            e, a = parts
+            new_audit[(e, a)] = int(val)
+        self._audit_total = new_audit
+
+        self._token_total = int(str(row["token_total"]))
+        return True
 
     def format_prometheus(self) -> str:
         """Render counters as Prometheus text format (PR4).
