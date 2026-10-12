@@ -1,0 +1,36 @@
+{
+  "_comment": "Sample response from GET /metrics/snapshot. The latest snapshot of the in-memory counters; taken every CLAM_METRICS_SNAPSHOT_INTERVAL seconds (default 60). The /metrics Prometheus body appends the same `clam_metrics_snapshot_ts` so operators can tell whether the counter is freshly accumulated or restored from a snapshot.",
+  "exists": true,
+  "id": 1842,
+  "takenAt": "2026-10-12T11:42:13.184512+00:00",
+  "tokenTotal": 3,
+  "requestTotal": {
+    "/api/v1/closedLoop|GET|200": 412,
+    "/api/v1/closedLoop|POST|201": 31,
+    "/api/v1/audit|GET|200": 17,
+    "/api/v1/auth/tokens|POST|201": 6,
+    "/metrics|GET|200": 51
+  },
+  "requestLatencyMsSum": {
+    "/api/v1/closedLoop|GET": 1924.180000,
+    "/api/v1/closedLoop|POST": 412.910000,
+    "/api/v1/audit|GET": 88.140000,
+    "/api/v1/auth/tokens|POST": 18.560000,
+    "/metrics|GET": 12.430000
+  },
+  "requestLatencyMsCount": {
+    "/api/v1/closedLoop|GET": 412,
+    "/api/v1/closedLoop|POST": 31,
+    "/api/v1/audit|GET": 17,
+    "/api/v1/auth/tokens|POST": 6,
+    "/metrics|GET": 51
+  },
+  "auditTotal": {
+    "ClosedLoop|closed_loop.state_transition": 87,
+    "Goal|goal.update": 14,
+    "Activity|activity.state_transition": 23,
+    "AuthToken|auth.token.issue": 6,
+    "AuthToken|auth.token.revoke": 2,
+    "AuthToken|auth.token.rotate": 1
+  }
+}

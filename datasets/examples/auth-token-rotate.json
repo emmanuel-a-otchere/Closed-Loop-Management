@@ -1,0 +1,8 @@
+{
+  "_comment": "Sample response from POST /api/v1/auth/tokens/{tokenId}/rotate. The plaintext is shown exactly once in the response; only its SHA-256 fingerprint is persisted. The old token is retired (revoked_at set); the new token inherits the old token's name + scopes. An auth.token.rotate audit row is written tied to the old token's derived UUID5 entity_id. The old plaintext is no longer valid as a bearer.",
+  "tokenId": "k4Q7nR2xLw1M",
+  "plaintext": "xN1Y3c2kP9dQ4eR5tU7vW8xZ0aB2cD3eF4gH5iJ6kL7mN8oP9",
+  "name": "ops",
+  "scopes": ["admin"],
+  "issuedAt": "2026-10-12T11:43:01.012345+00:00"
+}

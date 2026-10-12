@@ -390,6 +390,52 @@ a job id. Poll `GET /api/v1/closedLoop/{loopId}/jobs/{jobId}`
 for status; the endpoint returns 404 if the job belongs to a
 different loop (cross-loop leakage prevention).
 
+## Durability (Slice 6)
+
+Slice 6 makes previously in-process state durable and adds
+lifecycle primitives.
+
+### Audit log retention
+
+`POST /api/v1/audit/prune?before=<ISO-8601>` (ADMIN) deletes
+every row with `ts < before`. `POST /api/v1/audit/pruneByDays?
+days=<int 1..3650>` is a convenience wrapper around
+`today - N days`. The audit log is the durable record of
+state changes; pruning is destructive. External archive
+before invoking in production.
+
+### Persistent metrics counters
+
+The Prometheus counters in `/metrics` previously reset on
+restart. The `metrics_snapshot` table now snapshots the
+in-memory counters every `CLAM_METRICS_SNAPSHOT_INTERVAL`
+seconds (default 60). The lifespan restores the latest
+snapshot on startup and takes one final snapshot on
+shutdown. `GET /metrics/snapshot` returns the latest row
+as JSON. The Prometheus body appends
+`clam_metrics_snapshot_ts` so operators can tell whether
+the counter is freshly accumulated or restored from a
+snapshot.
+
+### Durable token store + rotation
+
+Tokens issued at runtime are persisted to the `auth_token`
+table (`token_id`, `secret_hash`, `name`, `scopes_json`,
+`issued_at`, `expires_at`, `revoked_at`) and survive
+process restarts. `GET /api/v1/auth/tokens/{tokenId}` reads
+a single token with `expiresAt` + `revokedAt` surfaced.
+`POST /api/v1/auth/tokens/{tokenId}/rotate` issues a fresh
+plaintext secret and retires the old token; an
+`auth.token.rotate` audit row is written. The plaintext is
+returned exactly once. `TokenStore` is async-aware;
+constructed with a `Store` it delegates to the durable
+path; the legacy in-memory implementation remains for tests
+that opt out of `CLAM_AUTH_ENABLED`.
+
+The default token expiry window is governed by
+`CLAM_TOKEN_DEFAULT_EXPIRES_DAYS` (unset => no expiry,
+matching the Slice 3 PR1 behaviour).
+
 ## OAS validation
 
 The committed OAS document is validated by:

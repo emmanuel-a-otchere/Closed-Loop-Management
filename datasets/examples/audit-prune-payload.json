@@ -1,0 +1,6 @@
+{
+  "_comment": "Sample response from POST /api/v1/audit/prune?before=<ISO-8601>. The audit log is the durable record of state changes; pruning is destructive. External archive before invoking in production.",
+  "deleted": 1842,
+  "remaining": 27,
+  "before": "2026-07-13T00:00:00+00:00"
+}
