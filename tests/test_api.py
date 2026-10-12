@@ -2280,3 +2280,135 @@ async def test_oas_3_1_stream_audit_path_present(
     spec = r.json()
     paths = set(spec["paths"].keys())
     assert "/api/v1/_stream/audit" in paths
+
+
+# --- Slice 5 PR2 tests --------------------------------------------------------
+
+
+async def test_webhook_create_returns_secret(
+    client: AsyncClient,
+) -> None:
+    """POST /webhookSubscriptions returns the plaintext secret once."""
+    r = await client.post(
+        "/api/v1/webhookSubscriptions",
+        json={
+            "url": "http://example.com/hook",
+            "description": "test",
+        },
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert "secret" in body
+    assert len(body["secret"]) >= 32
+
+
+async def test_webhook_create_then_list(
+    client: AsyncClient,
+) -> None:
+    """POST then GET lists the subscription."""
+    r = await client.post(
+        "/api/v1/webhookSubscriptions",
+        json={"url": "http://example.com/h", "description": "d"},
+    )
+    sub_id = r.json()["id"]
+    r = await client.get("/api/v1/webhookSubscriptions")
+    assert r.status_code == 200
+    items = r.json()
+    assert any(it["id"] == sub_id for it in items)
+
+
+async def test_webhook_create_validation_rejects_bad_url(
+    client: AsyncClient,
+) -> None:
+    """Bad URLs are rejected with 422."""
+    r = await client.post(
+        "/api/v1/webhookSubscriptions",
+        json={"url": "not-a-url"},
+    )
+    assert r.status_code == 422
+
+
+async def test_webhook_delete_404(client: AsyncClient) -> None:
+    """DELETE on unknown id returns 404."""
+    from uuid import uuid4
+
+    r = await client.delete(f"/api/v1/webhookSubscriptions/{uuid4()}")
+    assert r.status_code == 404
+
+
+async def test_webhook_delete_then_get_404(
+    client: AsyncClient,
+) -> None:
+    """A deleted subscription is no longer listed."""
+    r = await client.post(
+        "/api/v1/webhookSubscriptions",
+        json={"url": "http://example.com/h"},
+    )
+    sub_id = r.json()["id"]
+    r = await client.delete(f"/api/v1/webhookSubscriptions/{sub_id}")
+    assert r.status_code == 204
+    r = await client.get("/api/v1/webhookSubscriptions")
+    assert all(it["id"] != sub_id for it in r.json())
+
+
+async def test_audit_event_fans_out_to_webhook(
+    tmp_path,
+) -> None:
+    """record_audit dispatches to all active subscriptions."""
+    from uuid import uuid4
+
+    from machines.service.clam.models import AuditAction, AuditActor
+    from machines.service.clam.store import Store
+
+    store = Store(tmp_path / "fanout.db")
+    await store.init()
+    # Insert two subscriptions.
+    sub_id_a = (await store.create_webhook_subscription(
+        url="http://a.example/h", description="a", secret_hash="hash-a",
+    ))[0]
+    sub_id_b = (await store.create_webhook_subscription(
+        url="http://b.example/h", description="b", secret_hash="hash-b",
+    ))[0]
+    # Use the test helper to fan out and record deliveries.
+    from datetime import UTC, datetime
+
+    from machines.service.clam.models import AuditEntry
+
+    fake_entry = AuditEntry(
+        id=uuid4(),
+        ts=datetime.now(UTC),
+        actor=AuditActor.USER,
+        action=AuditAction.WORKFLOW_STATE_TRANSITION,
+        entityKind="Workflow",
+        entityId=uuid4(),
+    )
+    await store.deliver_webhook_sync(
+        sub_id=sub_id_a, entry=fake_entry, secret="hash-a"
+    )
+    await store.deliver_webhook_sync(
+        sub_id=sub_id_b, entry=fake_entry, secret="hash-b"
+    )
+    # Both deliveries recorded.
+    deliveries_a, _ = await store.list_webhook_deliveries(
+        subscription_id=sub_id_a
+    )
+    deliveries_b, _ = await store.list_webhook_deliveries(
+        subscription_id=sub_id_b
+    )
+    assert len(deliveries_a) == 1
+    assert len(deliveries_b) == 1
+    # Both attempts failed (DNS / network).
+    assert deliveries_a[0]["status_code"] is None
+    assert deliveries_b[0]["status_code"] is None
+
+
+async def test_oas_3_1_webhook_paths_present(
+    client: AsyncClient,
+) -> None:
+    """Webhook paths surface in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/webhookSubscriptions" in paths
+    assert "/api/v1/webhookSubscriptions/{webhookId}" in paths
+    assert "/api/v1/webhookSubscriptions/{webhookId}/deliveries" in paths

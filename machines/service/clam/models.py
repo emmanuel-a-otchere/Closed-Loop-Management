@@ -731,3 +731,65 @@ class AuditPage(BaseModel):
     items: list[AuditEntry]
     limit: int
     nextCursor: str | None = None
+
+
+# --- Slice 5 PR2: Webhook subscriptions ---------------------------------------
+
+
+class WebhookSubscriptionCreate(BaseModel):
+    """Payload to register a webhook subscriber."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: HttpUrl
+    description: str | None = None
+
+
+class WebhookSubscriptionInfo(BaseModel):
+    """Public view of a registered webhook subscription."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    url: str
+    description: str | None
+    createdAt: datetime
+    active: bool
+    lastAttemptAt: datetime | None
+    lastStatus: int | None
+
+
+class WebhookSubscriptionIssued(BaseModel):
+    """Response on create; carries the plaintext secret exactly once."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    url: str
+    description: str | None
+    secret: str
+    createdAt: datetime
+
+
+class WebhookDelivery(BaseModel):
+    """One webhook delivery attempt."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    subscriptionId: UUID
+    auditId: UUID
+    attemptedAt: datetime
+    statusCode: int | None
+    error: str | None
+    attempt: int
+
+
+class WebhookDeliveryPage(BaseModel):
+    """Cursor-paginated webhook delivery rows."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[WebhookDelivery]
+    limit: int
+    nextCursor: str | None = None

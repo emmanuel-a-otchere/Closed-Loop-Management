@@ -1814,6 +1814,245 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "WebhookDelivery": {
+        "additionalProperties": false,
+        "description": "One webhook delivery attempt.",
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "attemptedAt": {
+            "format": "date-time",
+            "title": "Attemptedat",
+            "type": "string"
+          },
+          "auditId": {
+            "format": "uuid",
+            "title": "Auditid",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "statusCode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statuscode"
+          },
+          "subscriptionId": {
+            "format": "uuid",
+            "title": "Subscriptionid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subscriptionId",
+          "auditId",
+          "attemptedAt",
+          "statusCode",
+          "error",
+          "attempt"
+        ],
+        "title": "WebhookDelivery",
+        "type": "object"
+      },
+      "WebhookDeliveryPage": {
+        "additionalProperties": false,
+        "description": "Cursor-paginated webhook delivery rows.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WebhookDelivery"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "limit"
+        ],
+        "title": "WebhookDeliveryPage",
+        "type": "object"
+      },
+      "WebhookSubscriptionCreate": {
+        "additionalProperties": false,
+        "description": "Payload to register a webhook subscriber.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "WebhookSubscriptionCreate",
+        "type": "object"
+      },
+      "WebhookSubscriptionInfo": {
+        "additionalProperties": false,
+        "description": "Public view of a registered webhook subscription.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lastAttemptAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastattemptat"
+          },
+          "lastStatus": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Laststatus"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "createdAt",
+          "active",
+          "lastAttemptAt",
+          "lastStatus"
+        ],
+        "title": "WebhookSubscriptionInfo",
+        "type": "object"
+      },
+      "WebhookSubscriptionIssued": {
+        "additionalProperties": false,
+        "description": "Response on create; carries the plaintext secret exactly once.",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "secret": {
+            "title": "Secret",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "description",
+          "secret",
+          "createdAt"
+        ],
+        "title": "WebhookSubscriptionIssued",
+        "type": "object"
+      },
       "Workflow": {
         "additionalProperties": false,
         "properties": {
@@ -4298,6 +4537,178 @@
         "summary": "Update a goal (partial)",
         "tags": [
           "goal"
+        ]
+      }
+    },
+    "/api/v1/webhookSubscriptions": {
+      "get": {
+        "operationId": "list_webhooks_api_v1_webhookSubscriptions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookSubscriptionInfo"
+                  },
+                  "title": "Response List Webhooks Api V1 Webhooksubscriptions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List webhook subscriptions",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "post": {
+        "description": "Register a new subscriber. Plaintext secret returned exactly\nonce.",
+        "operationId": "create_webhook_api_v1_webhookSubscriptions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookSubscriptionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSubscriptionIssued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a webhook subscription",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhookSubscriptions/{webhookId}": {
+      "delete": {
+        "operationId": "delete_webhook_api_v1_webhookSubscriptions__webhookId__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhookId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhookid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a webhook subscription",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhookSubscriptions/{webhookId}/deliveries": {
+      "get": {
+        "operationId": "list_webhook_deliveries_api_v1_webhookSubscriptions__webhookId__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhookId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Webhookid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List delivery attempts for a subscription",
+        "tags": [
+          "webhooks"
         ]
       }
     },

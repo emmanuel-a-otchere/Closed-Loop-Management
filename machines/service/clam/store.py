@@ -170,6 +170,29 @@ CREATE INDEX IF NOT EXISTS idx_audit_ts
     ON audit_log(ts DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_correlation
     ON audit_log(correlation_id);
+CREATE TABLE IF NOT EXISTS webhook_subscription (
+    id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    description TEXT,
+    secret_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    last_attempt_at TEXT,
+    last_status INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_webhook_subscription_active
+    ON webhook_subscription(active);
+CREATE TABLE IF NOT EXISTS webhook_delivery (
+    id TEXT PRIMARY KEY,
+    subscription_id TEXT NOT NULL,
+    audit_id TEXT NOT NULL,
+    attempted_at TEXT NOT NULL,
+    status_code INTEGER,
+    error TEXT,
+    attempt INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_webhook_delivery_subscription
+    ON webhook_delivery(subscription_id, attempted_at DESC);
 """
 
 
@@ -2093,7 +2116,8 @@ class Store:
         """Push an audit row to every subscriber queue (PR1).
 
         Drops the message on a slow consumer's queue (no blocking
-        on a critical-path write).
+        on a critical-path write). Slice 5 PR2 also fans out
+        webhook deliveries (background task).
         """
         for q in self._audit_subscribers:
             try:
@@ -2102,6 +2126,15 @@ class Store:
                 # Slow consumer: drop. The audit log persists the
                 # row regardless; SSE is best-effort.
                 pass
+        # Slice 5 PR2: schedule webhook deliveries. The fanout
+        # task uses asyncio.create_task on the running loop;
+        # without a running loop (sync test helpers), it silently
+        # no-ops.
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        loop.create_task(self._fanout_webhooks(entry))
 
     async def subscribe_audit(self) -> asyncio.Queue[AuditEntry]:
         """Register a new audit subscriber; return its queue (PR1)."""
@@ -2301,6 +2334,251 @@ class Store:
         lines.append("# TYPE clam_token_total gauge")
         lines.append(f"clam_token_total {self._token_total}")
         return "\n".join(lines) + "\n"
+
+    # --- Webhook subscriptions (Slice 5 PR2) -------------------------------
+
+    async def create_webhook_subscription(
+        self,
+        *,
+        url: str,
+        description: str | None,
+        secret_hash: str,
+    ) -> tuple[UUID, datetime]:
+        """Persist a subscription. Returns (id, created_at)."""
+        sub_id = uuid4()
+        now = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO webhook_subscription"
+                " (id, url, description, secret_hash, created_at, active)"
+                " VALUES (?, ?, ?, ?, ?, 1)",
+                (
+                    str(sub_id),
+                    url,
+                    description,
+                    secret_hash,
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return sub_id, now
+
+    async def list_webhook_subscriptions(self) -> list[dict[str, object]]:
+        """List all subscriptions (active + retired)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, url, description, created_at, active, "
+                "last_attempt_at, last_status "
+                "FROM webhook_subscription ORDER BY created_at DESC"
+            ) as cur:
+                rows = await cur.fetchall()
+        return [dict(r) for r in rows]
+
+    async def get_webhook_subscription(self, sub_id: UUID) -> dict[str, object]:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, url, description, secret_hash, created_at, "
+                "active, last_attempt_at, last_status "
+                "FROM webhook_subscription WHERE id = ?",
+                (str(sub_id),),
+            ) as cur:
+                row = await cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"WebhookSubscription {sub_id} not found")
+        return dict(row)
+
+    async def delete_webhook_subscription(self, sub_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "DELETE FROM webhook_subscription WHERE id = ?",
+                (str(sub_id),),
+            )
+            await db.commit()
+            if cur.rowcount == 0:
+                raise NotFoundError(f"WebhookSubscription {sub_id} not found")
+
+    async def record_webhook_delivery(
+        self,
+        *,
+        subscription_id: UUID,
+        audit_id: UUID,
+        status_code: int | None,
+        error: str | None,
+        attempt: int,
+    ) -> UUID:
+        """Record one webhook delivery attempt."""
+        delivery_id = uuid4()
+        now = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO webhook_delivery "
+                "(id, subscription_id, audit_id, attempted_at, status_code, error, attempt) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    str(delivery_id),
+                    str(subscription_id),
+                    str(audit_id),
+                    now.isoformat(),
+                    status_code,
+                    error,
+                    attempt,
+                ),
+            )
+            await db.execute(
+                "UPDATE webhook_subscription "
+                "SET last_attempt_at = ?, last_status = ? WHERE id = ?",
+                (now.isoformat(), status_code, str(subscription_id)),
+            )
+            await db.commit()
+        return delivery_id
+
+    async def list_webhook_deliveries(
+        self,
+        *,
+        subscription_id: UUID | None = None,
+        limit: int = 100,
+        before_id: UUID | None = None,
+    ) -> tuple[list[dict[str, object]], str | None]:
+        """List webhook deliveries, ordered by attempted_at DESC."""
+        limit = max(1, min(int(limit), 1000))
+        where_clauses: list[str] = []
+        params: list[object] = []
+        if subscription_id is not None:
+            where_clauses.append("subscription_id = ?")
+            params.append(str(subscription_id))
+        cursor_ts: str | None = None
+        if before_id is not None:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                async with db.execute(
+                    "SELECT attempted_at FROM webhook_delivery WHERE id = ?",
+                    (str(before_id),),
+                ) as cur:
+                    row = await cur.fetchone()
+            if row is None:
+                cursor_ts = "9999-12-31T23:59:59.999999+00:00"
+            else:
+                cursor_ts = row["attempted_at"]
+        if cursor_ts is not None:
+            where_clauses.append("attempted_at < ?")
+            params.append(cursor_ts)
+        where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, subscription_id, audit_id, attempted_at, "
+                "status_code, error, attempt "
+                f"FROM webhook_delivery{where_sql} "
+                "ORDER BY attempted_at DESC, id DESC LIMIT ?",
+                [*params, limit],
+            ) as cur:
+                rows = await cur.fetchall()
+        items = [dict(r) for r in rows]
+        next_cursor = str(items[-1]["id"]) if len(items) == limit else None
+        return items, next_cursor
+
+    async def deliver_webhook_sync(
+        self,
+        *,
+        sub_id: UUID,
+        entry: AuditEntry,
+        secret: str,
+    ) -> int | None:
+        """Test helper: send a webhook delivery with a known
+        plaintext secret and return the status code (or None on
+        network error). Records the outcome on the same store row.
+        """
+        import hashlib
+        import hmac
+
+        sub = await self.get_webhook_subscription(sub_id)
+        url = str(sub["url"])
+        body = entry.model_dump_json().encode("utf-8")
+        sig = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+        status: int | None = None
+        error: str | None = None
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.post(
+                    url,
+                    content=body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Clam-Signature": sig,
+                        "X-Clam-Event": entry.action.value,
+                    },
+                )
+                status = r.status_code
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"
+        await self.record_webhook_delivery(
+            subscription_id=sub_id,
+            audit_id=entry.id,
+            status_code=status,
+            error=error,
+            attempt=1,
+        )
+        return status
+
+    async def _fanout_webhooks(self, entry: AuditEntry) -> None:
+        """Send the audit row to every active subscription.
+
+        Signature: HMAC-SHA256 of the body using the subscription's
+        secret_hash, sent in the X-Clam-Signature header. Best-effort:
+        network / DNS / timeout failures are recorded on
+        webhook_delivery but never raise.
+        """
+        import hashlib
+        import hmac
+
+        try:
+            subs = await self.list_webhook_subscriptions()
+        except Exception:
+            return
+        body = entry.model_dump_json().encode("utf-8")
+        for sub in subs:
+            if not sub.get("active"):
+                continue
+            url = str(sub["url"])
+            secret_hash = str(sub["secret_hash"])
+            from uuid import UUID as _UUID
+
+            sub_id = _UUID(str(sub["id"]))
+            sig = hmac.new(
+                secret_hash.encode("utf-8"), body, hashlib.sha256
+            ).hexdigest()
+            status: int | None = None
+            error: str | None = None
+            try:
+                import httpx
+
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    r = await client.post(
+                        url,
+                        content=body,
+                        headers={
+                            "Content-Type": "application/json",
+                            "X-Clam-Signature": sig,
+                            "X-Clam-Event": entry.action.value,
+                        },
+                    )
+                    status = r.status_code
+            except Exception as e:
+                error = f"{type(e).__name__}: {e}"
+            try:
+                await self.record_webhook_delivery(
+                    subscription_id=sub_id,
+                    audit_id=entry.id,
+                    status_code=status,
+                    error=error,
+                    attempt=1,
+                )
+            except Exception:
+                pass
 
     # --- DecisionModel ------------------------------------------------------
 
