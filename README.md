@@ -253,18 +253,13 @@ plus OAS validation and the D-004 / D-005 / cardinal-author gates.
 ## Lineage
 
 This repo began in 2022 as an information-engineering exercise around
-managing closed loops. The original 2022 README + ERD defined the
-comprehensive conceptual model: closed loop design studio, manager,
-controller, with sub-functions for design, validation, publication,
+specifying and managing closed loops. The original 2022 README + ERD 
+defined the comprehensive conceptual model: closed loop design studio, 
+manager, controller, with sub-functions for design, validation, publication,
 catalog, monitoring, orchestration, administration, and choreography.
 That conceptual model is the foundation.
 
-The original README content from 2022-2023 is retained verbatim in git
-history (commit `be64beb`). Slice 1 (commit `4bb6cdd`) promoted the
-model into a typed, served REST API. The paradigm revamp frames the
-repo as the full body of machine assets -- not just an API.
-
 ## License
 
-Apache 2.0. Copyright 2022-2026 Emmanuel A. Otchere.
+Apache 2.0.
 See [LICENSE](LICENSE).
