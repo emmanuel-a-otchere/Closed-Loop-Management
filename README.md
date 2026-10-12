@@ -6,7 +6,7 @@
 Every operational system that adapts to its environment is a closed loop.
 A thermostat, a back-pressure regulator, an auto-scaler, a rebalancing
 trader. Each takes in a signal, makes a decision, applies an action, and
-the action changes the signal that comes back in. **Closed-Loop-Management
+the action changes the signal that comes back in. **Closed-Loop-Automation-Management
 (CLAM)** is the body of work that turns closed loops into first-class
 managed artefacts: discoverable, lifecycle-controlled, linkable to one
 another, and observable end-to-end.
