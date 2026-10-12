@@ -1062,6 +1062,60 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "EvalRequest": {
+        "additionalProperties": false,
+        "description": "Body for POST /api/v1/closedLoop/{id}/eval.",
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "async": {
+            "default": false,
+            "title": "Async",
+            "type": "boolean"
+          }
+        },
+        "title": "EvalRequest",
+        "type": "object"
+      },
+      "EvalResult": {
+        "additionalProperties": false,
+        "description": "Synchronous result for /eval: the new state + decision summary.",
+        "properties": {
+          "decisionKind": {
+            "title": "Decisionkind",
+            "type": "string"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "transitioned": {
+            "title": "Transitioned",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "state",
+          "transitioned",
+          "decisionKind",
+          "rationale"
+        ],
+        "title": "EvalResult",
+        "type": "object"
+      },
       "Goal": {
         "additionalProperties": false,
         "properties": {
@@ -1465,6 +1519,104 @@
         },
         "title": "HTTPValidationError",
         "type": "object"
+      },
+      "JobInfo": {
+        "additionalProperties": false,
+        "description": "Public view of an enqueued / completed job.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completedat"
+          },
+          "enqueuedAt": {
+            "format": "date-time",
+            "title": "Enqueuedat",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "loopId": {
+            "format": "uuid",
+            "title": "Loopid",
+            "type": "string"
+          },
+          "resultState": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultstate"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startedat"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          }
+        },
+        "required": [
+          "id",
+          "loopId",
+          "action",
+          "state",
+          "enqueuedAt",
+          "startedAt",
+          "completedAt",
+          "resultState",
+          "error"
+        ],
+        "title": "JobInfo",
+        "type": "object"
+      },
+      "JobState": {
+        "description": "Lifecycle of an async job (PR3).",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
+        ],
+        "title": "JobState",
+        "type": "string"
       },
       "LinkDirection": {
         "enum": [
@@ -3378,6 +3530,118 @@
         ]
       }
     },
+    "/api/v1/closedLoop/{loopId}/eval": {
+      "post": {
+        "description": "Run the next-state decision and apply it in one round trip.",
+        "operationId": "eval_loop_api_v1_closedLoop__loopId__eval_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalRequest",
+                "default": {
+                  "async": false
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvalResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One-shot decision + transition (synchronous)",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/closedLoop/{loopId}/eval/async": {
+      "post": {
+        "description": "Enqueue an eval and return the job id immediately.",
+        "operationId": "enqueue_eval_async_api_v1_closedLoop__loopId__eval_async_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalRequest",
+                "default": {
+                  "async": false
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enqueue an async one-shot eval",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
     "/api/v1/closedLoop/{loopId}/goalRollup": {
       "get": {
         "description": "Compute a goal achievement rollup for the closed loop.\n\nAggregates goals from:\n- the closed loop's own ``goals`` array (CLOSED_LOOP scope with scopeRef matching the loop id)\n- any workflow the loop references (WORKFLOW scope)\n- any activity those workflows reference (ACTIVITY scope)\n\nEach goal is evaluated against its target direction. The endpoint\nreturns 404 if the closed loop does not exist.",
@@ -3419,6 +3683,59 @@
           }
         },
         "summary": "Aggregate goal achievement across a closed loop and all of its child resources",
+        "tags": [
+          "closedLoop"
+        ]
+      }
+    },
+    "/api/v1/closedLoop/{loopId}/jobs/{jobId}": {
+      "get": {
+        "operationId": "get_job_api_v1_closedLoop__loopId__jobs__jobId__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "loopId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Loopid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Jobid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get an async eval job",
         "tags": [
           "closedLoop"
         ]

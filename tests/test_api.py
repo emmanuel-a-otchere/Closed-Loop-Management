@@ -2412,3 +2412,116 @@ async def test_oas_3_1_webhook_paths_present(
     assert "/api/v1/webhookSubscriptions" in paths
     assert "/api/v1/webhookSubscriptions/{webhookId}" in paths
     assert "/api/v1/webhookSubscriptions/{webhookId}/deliveries" in paths
+
+
+# --- Slice 5 PR3 tests --------------------------------------------------------
+
+
+async def test_eval_advances_state_designed_to_validated(
+    client: AsyncClient,
+) -> None:
+    """POST /eval on a designed loop transitions to validated."""
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(f"/api/v1/closedLoop/{loop}/eval")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["state"] == "validated"
+    assert body["transitioned"] is True
+    # /decision: loopState changed per TODO
+    assert "OODA" in body["decisionKind"]
+
+
+async def test_eval_no_op_when_active(
+    client: AsyncClient,
+) -> None:
+    """POST /eval on an active loop is a no-op."""
+    dm_id = await _create_decision_model(client, kind="MAPE")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    # Move to active through published.
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "validated"},
+    )
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "published"},
+    )
+    await client.post(
+        f"/api/v1/closedLoop/{loop}/state",
+        json={"targetState": "active"},
+    )
+    r = await client.post(f"/api/v1/closedLoop/{loop}/eval")
+    body = r.json()
+    assert body["state"] == "active"
+    assert body["transitioned"] is False
+
+
+async def test_eval_404_on_unknown_loop(
+    client: AsyncClient,
+) -> None:
+    """/eval on unknown loop returns 404."""
+    from uuid import uuid4
+
+    r = await client.post(f"/api/v1/closedLoop/{uuid4()}/eval")
+    assert r.status_code == 404
+
+
+async def test_eval_async_returns_202_with_job_id(
+    client: AsyncClient,
+) -> None:
+    """Async eval enqueues a job and returns 202."""
+    import asyncio
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.post(f"/api/v1/closedLoop/{loop}/eval/async")
+    assert r.status_code == 202
+    body = r.json()
+    assert body["state"] in ("queued", "running", "succeeded")
+    assert body["action"] == "eval"
+    # Drain the background task.
+    await asyncio.sleep(0.05)
+    # GET job
+    r = await client.get(
+        f"/api/v1/closedLoop/{loop}/jobs/{body['id']}"
+    )
+    assert r.status_code == 200
+    j = r.json()
+    assert j["state"] in ("running", "succeeded")
+    assert j["loopId"] == loop
+
+
+async def test_eval_async_404_on_unknown_loop(
+    client: AsyncClient,
+) -> None:
+    """/eval/async on unknown loop returns 404."""
+    from uuid import uuid4
+
+    r = await client.post(f"/api/v1/closedLoop/{uuid4()}/eval/async")
+    assert r.status_code == 404
+
+
+async def test_eval_async_404_on_unknown_job(
+    client: AsyncClient,
+) -> None:
+    """GET on unknown job returns 404."""
+    from uuid import uuid4
+
+    dm_id = await _create_decision_model(client, kind="OODA")
+    loop = await _create_closed_loop(client, dm_id=dm_id)
+    r = await client.get(
+        f"/api/v1/closedLoop/{loop}/jobs/{uuid4()}"
+    )
+    assert r.status_code == 404
+
+
+async def test_oas_3_1_eval_paths_present(
+    client: AsyncClient,
+) -> None:
+    """Eval + jobs paths surface in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/closedLoop/{loopId}/eval" in paths
+    assert "/api/v1/closedLoop/{loopId}/eval/async" in paths
+    assert "/api/v1/closedLoop/{loopId}/jobs/{jobId}" in paths

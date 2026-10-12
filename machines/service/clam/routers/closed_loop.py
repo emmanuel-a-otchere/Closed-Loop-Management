@@ -13,6 +13,10 @@ from ..models import (
     ClosedLoopCreate,
     ClosedLoopGoalRollup,
     ClosedLoopUpdate,
+    EvalRequest,
+    EvalResult,
+    JobInfo,
+    JobState,
     Page,
     StateResponse,
     StateTransitionRequest,
@@ -204,6 +208,126 @@ async def goal_rollup(
     except NotFoundError as exc:
         return _not_found_response(exc)
     return ClosedLoopGoalRollup.model_validate(rollup)
+
+
+# --- Slice 5 PR3: one-shot eval + async jobs --------------------------------
+
+
+@router.post(
+    "/{loopId}/eval",
+    response_model=EvalResult,
+    summary="One-shot decision + transition (synchronous)",
+)
+async def eval_loop(
+    request: Request,
+    loopId: UUID,  # noqa: N803
+    payload: EvalRequest = EvalRequest(),
+):
+    """Run the next-state decision and apply it in one round trip."""
+    try:
+        store = _store(request)
+        loop, transitioned, kind, rationale = (
+            await store.run_eval_synchronously(loopId)
+        )
+    except NotFoundError as exc:
+        return _not_found_response(exc)
+    return EvalResult(
+        state=loop.state.value,
+        transitioned=transitioned,
+        decisionKind=kind,
+        rationale=rationale,
+    )
+
+
+@router.post(
+    "/{loopId}/eval/async",
+    response_model=JobInfo,
+    status_code=202,
+    summary="Enqueue an async one-shot eval",
+)
+async def enqueue_eval_async(
+    request: Request,
+    loopId: UUID,  # noqa: N803
+    payload: EvalRequest = EvalRequest(),
+):
+    """Enqueue an eval and return the job id immediately."""
+    try:
+        store = _store(request)
+        await store.get_closed_loop(loopId)
+    except NotFoundError as exc:
+        return _not_found_response(exc)
+    job_id, enqueued_at = await store.enqueue_eval_job(
+        loop_id=loopId, action="eval"
+    )
+
+    async def _run() -> None:
+        try:
+            await store.update_job_running(job_id)
+            loop, _, _, _ = await store.run_eval_synchronously(loopId)
+            await store.update_job_succeeded(job_id, loop.state.value)
+        except Exception as exc:
+            await store.update_job_failed(
+                job_id, f"{type(exc).__name__}: {exc}"
+            )
+
+    import asyncio as _asyncio
+
+    try:
+        loop_obj = _asyncio.get_running_loop()
+    except RuntimeError:
+        return JobInfo(
+            id=job_id,
+            loopId=loopId,
+            action="eval",
+            state=JobState.QUEUED,
+            enqueuedAt=enqueued_at,
+            startedAt=None,
+            completedAt=None,
+            resultState=None,
+            error="No running event loop; the job will not run.",
+        )
+    loop_obj.create_task(_run())
+    return JobInfo(
+        id=job_id,
+        loopId=loopId,
+        action="eval",
+        state=JobState.QUEUED,
+        enqueuedAt=enqueued_at,
+        startedAt=None,
+        completedAt=None,
+        resultState=None,
+        error=None,
+    )
+
+
+@router.get(
+    "/{loopId}/jobs/{jobId}",
+    response_model=JobInfo,
+    summary="Get an async eval job",
+)
+async def get_job(
+    request: Request,
+    loopId: UUID,  # noqa: N803
+    jobId: UUID,  # noqa: N803
+):
+    row = await _store(request).get_job(jobId)
+    if row is None or str(row["loop_id"]) != str(loopId):
+        return error_response(
+            status_code=404,
+            code=ErrorCode.NOT_FOUND,
+            message=f"Job {jobId} not found for loop {loopId}",
+        )
+    return JobInfo(
+        id=UUID(str(row["id"])),
+        loopId=UUID(str(row["loop_id"])),
+        action=str(row["action"]),
+        state=JobState(str(row["state"])),
+        enqueuedAt=row["enqueued_at"],
+        startedAt=row.get("started_at"),
+        completedAt=row.get("completed_at"),
+        resultState=row.get("result_state"),
+        error=row.get("error"),
+    )
 
 
 __all__ = ["router"]
