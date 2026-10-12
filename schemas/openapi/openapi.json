@@ -3139,6 +3139,93 @@
         ]
       }
     },
+    "/api/v1/audit/prune": {
+      "post": {
+        "description": "Delete audit rows with ``ts < before``. ADMIN scope required.\n\nThe audit log is the durable record of state changes; pruning\nis destructive. External archive before issuing in production.",
+        "operationId": "prune_audit_api_v1_audit_prune_post",
+        "parameters": [
+          {
+            "description": "ISO-8601 timestamp; rows with ts < this are deleted.",
+            "in": "query",
+            "name": "before",
+            "required": true,
+            "schema": {
+              "description": "ISO-8601 timestamp; rows with ts < this are deleted.",
+              "format": "date-time",
+              "title": "Before",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prune audit rows older than a timestamp (ADMIN only)",
+        "tags": [
+          "observability"
+        ]
+      }
+    },
+    "/api/v1/audit/pruneByDays": {
+      "post": {
+        "description": "Convenience: delete audit rows older than ``days`` days.",
+        "operationId": "prune_audit_by_days_api_v1_audit_pruneByDays_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": true,
+            "schema": {
+              "maximum": 3650,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prune audit rows older than N days (ADMIN only)",
+        "tags": [
+          "observability"
+        ]
+      }
+    },
     "/api/v1/audit/{auditId}": {
       "get": {
         "description": "Return a single audit row, or 404.",

@@ -2298,6 +2298,35 @@ class Store:
         """Set the current token count (PR4)."""
         self._token_total = total
 
+    # --- Slice 6 PR1: audit retention + prune -------------------------------
+
+    async def prune_audit_before(
+        self,
+        *,
+        before_ts: datetime,
+    ) -> int:
+        """Delete audit rows older than ``before_ts``.
+
+        Returns the number of rows deleted. The audit log is the
+        durable record of state changes; pruning is destructive.
+        Callers should retain an external archive before issuing
+        this in production.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "DELETE FROM audit_log WHERE ts < ?",
+                (before_ts.isoformat(),),
+            )
+            await db.commit()
+            return int(cur.rowcount or 0)
+
+    async def count_audit(self) -> int:
+        """Total audit rows (PR1)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute("SELECT COUNT(*) FROM audit_log") as cur:
+                row = await cur.fetchone()
+            return int(row[0]) if row else 0
+
     def format_prometheus(self) -> str:
         """Render counters as Prometheus text format (PR4).
 

@@ -5,11 +5,12 @@ Lists and retrieves audit rows. Requires READ scope.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 
+from ..auth import Scope, resolve_principal
 from ..errors import ErrorCode, error_response
 from ..models import AuditAction, AuditActor, AuditEntry, AuditPage
 
@@ -101,6 +102,60 @@ async def get_audit(
                 message=str(exc),
             )  # type: ignore[return-value]
         raise
+
+
+@router.post(
+    "/prune",
+    summary="Prune audit rows older than a timestamp (ADMIN only)",
+)
+async def prune_audit(
+    request: Request,
+    before: datetime = Query(
+        ..., description="ISO-8601 timestamp; rows with ts < this are deleted."
+    ),
+):
+    """Delete audit rows with ``ts < before``. ADMIN scope required.
+
+    The audit log is the durable record of state changes; pruning
+    is destructive. External archive before issuing in production.
+    """
+    from ..auth import require_scope
+
+    principal = resolve_principal(request)
+    denial = require_scope(principal, Scope.ADMIN)
+    if denial is not None:
+        return denial
+    store = request.app.state.store
+    deleted = await store.prune_audit_before(before_ts=before)
+    remaining = await store.count_audit()
+    return {"deleted": deleted, "remaining": remaining, "before": before.isoformat()}
+
+
+@router.post(
+    "/pruneByDays",
+    summary="Prune audit rows older than N days (ADMIN only)",
+)
+async def prune_audit_by_days(
+    request: Request,
+    days: int = Query(..., ge=1, le=3650),
+):
+    """Convenience: delete audit rows older than ``days`` days."""
+    from ..auth import require_scope
+
+    principal = resolve_principal(request)
+    denial = require_scope(principal, Scope.ADMIN)
+    if denial is not None:
+        return denial
+    store = request.app.state.store
+    before = datetime.now() - timedelta(days=days)
+    deleted = await store.prune_audit_before(before_ts=before)
+    remaining = await store.count_audit()
+    return {
+        "deleted": deleted,
+        "remaining": remaining,
+        "before": before.isoformat(),
+        "days": days,
+    }
 
 
 __all__ = ["router"]
