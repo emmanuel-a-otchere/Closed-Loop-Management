@@ -386,7 +386,8 @@
           "closed_loop_link.create",
           "closed_loop_link.delete",
           "auth.token.issue",
-          "auth.token.revoke"
+          "auth.token.revoke",
+          "auth.token.rotate"
         ],
         "title": "AuditAction",
         "type": "string"
@@ -533,6 +534,64 @@
           "scopes"
         ],
         "title": "AuthTokenCreate",
+        "type": "object"
+      },
+      "AuthTokenDetail": {
+        "additionalProperties": false,
+        "description": "Full view of an issued token (PR3).\n\nCarries ``expiresAt`` and ``revokedAt`` so callers can\nreason about expiry and rotation status.",
+        "properties": {
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "title": "Issuedat",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revokedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revokedat"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "tokenId": {
+            "title": "Tokenid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tokenId",
+          "name",
+          "scopes",
+          "issuedAt"
+        ],
+        "title": "AuthTokenDetail",
         "type": "object"
       },
       "AuthTokenInfo": {
@@ -3366,6 +3425,90 @@
           }
         },
         "summary": "Revoke an auth token (admin scope required when auth is enabled)",
+        "tags": [
+          "auth"
+        ]
+      },
+      "get": {
+        "description": "Return the full view of an issued token (expiresAt + revokedAt).",
+        "operationId": "get_token_api_v1_auth_tokens__tokenId__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "title": "Tokenid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a single auth token (PR3, ADMIN scope)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/tokens/{tokenId}/rotate": {
+      "post": {
+        "description": "Issue a fresh plaintext secret, retire the old token.\n\nWrites an ``auth.token.rotate`` audit row tied to the old\ntoken's derived UUID5 entity_id. The response carries the\nnew plaintext exactly once.",
+        "operationId": "rotate_token_api_v1_auth_tokens__tokenId__rotate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "title": "Tokenid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenIssued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rotate an auth token (PR3, ADMIN scope)",
         "tags": [
           "auth"
         ]

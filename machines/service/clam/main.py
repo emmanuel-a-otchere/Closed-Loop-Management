@@ -49,7 +49,17 @@ def create_app(db_path: Path | None = None) -> FastAPI:
 
     resolved_db = Path(db_path or os.environ.get("CLAM_DB_PATH", "clam.db"))
     store = Store(resolved_db)
-    token_store = TokenStore()
+    # Slice 6 PR3: wire the durable (DB-backed) TokenStore. Tokens
+    # issued at runtime are persisted into the ``auth_token`` table.
+    default_expires_days = (
+        int(os.environ["CLAM_TOKEN_DEFAULT_EXPIRES_DAYS"])
+        if os.environ.get("CLAM_TOKEN_DEFAULT_EXPIRES_DAYS", "").isdigit()
+        else None
+    )
+    token_store = TokenStore(
+        store=store,
+        default_expires_days=default_expires_days,
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -146,7 +156,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         Also enforces scope requirements for write methods when auth
         is enabled.
         """
-        principal = resolve_principal(request)
+        principal = await resolve_principal(request)
         request.state.principal = principal
 
         if auth_enabled():

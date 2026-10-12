@@ -19,7 +19,14 @@ from fastapi import APIRouter, Path, Request, status
 
 from ..auth import Principal, Scope, auth_enabled, require_scope
 from ..errors import ErrorCode, error_response
-from ..models import AuditAction, AuditActor, AuthTokenCreate, AuthTokenInfo, AuthTokenIssued
+from ..models import (
+    AuditAction,
+    AuditActor,
+    AuthTokenCreate,
+    AuthTokenDetail,
+    AuthTokenInfo,
+    AuthTokenIssued,
+)
 
 router = APIRouter(
     prefix="/api/v1/auth",
@@ -35,7 +42,7 @@ def _admin_required(request: Request) -> Principal:
     return request.state.principal
 
 
-def _reject_if_unauthed(request: Request):
+async def _reject_if_unauthed(request: Request):
     """Reject unauthenticated requests when auth is enabled.
 
     When auth is bypassed (CLAM_AUTH_ENABLED=false), the principal is
@@ -54,9 +61,14 @@ def _reject_if_unauthed(request: Request):
         request.method == "POST"
         and request.url.path == "/api/v1/auth/tokens"
         and store is not None
-        and not store.list_tokens()
     ):
-        return None
+        # Async count of tokens (covers both in-memory and durable).
+        if getattr(store, "is_durable", False):
+            current = await store.list_tokens_async()
+        else:
+            current = store.list_tokens()
+        if not current:
+            return None
     denial = require_scope(principal, Scope.ADMIN)
     if denial is not None:
         return denial
@@ -72,7 +84,7 @@ def _reject_if_unauthed(request: Request):
 async def issue_token(
     request: Request, payload: AuthTokenCreate
 ) -> AuthTokenIssued | object:
-    denial = _reject_if_unauthed(request)
+    denial = await _reject_if_unauthed(request)
     if denial is not None:
         return denial
     scopes: list[Scope] = []
@@ -97,7 +109,7 @@ async def issue_token(
             code=ErrorCode.INTERNAL_ERROR,
             message="Auth subsystem is not initialised.",
         )
-    issued = store.issue(name=payload.name, scopes=scopes)
+    issued = await store.issue(name=payload.name, scopes=scopes)
     # PR2: audit hook.
     clam_store = getattr(request.app.state, "store", None)
     if clam_store is not None:
@@ -136,7 +148,7 @@ async def issue_token(
     summary="List active auth tokens (admin scope required when auth is enabled)",
 )
 async def list_tokens(request: Request):
-    denial = _reject_if_unauthed(request)
+    denial = await _reject_if_unauthed(request)
     if denial is not None:
         return denial
     store = _store(request)
@@ -156,7 +168,7 @@ async def revoke_token(
     request: Request,
     tokenId: str = Path(..., description="Token id to revoke"),
 ):
-    denial = _reject_if_unauthed(request)
+    denial = await _reject_if_unauthed(request)
     if denial is not None:
         return denial
     store = _store(request)
@@ -166,7 +178,7 @@ async def revoke_token(
             code=ErrorCode.INTERNAL_ERROR,
             message="Auth subsystem is not initialised.",
         )
-    if not store.revoke(tokenId):
+    if not await store.revoke(tokenId):
         return error_response(
             status_code=404,
             code=ErrorCode.NOT_FOUND,
@@ -184,6 +196,104 @@ async def revoke_token(
         )
         # PR4: update the active token count.
         clam_store.set_token_total(len(store.list_tokens()))
+
+
+@router.get(
+    "/tokens/{tokenId}",
+    response_model=AuthTokenDetail,
+    summary="Get a single auth token (PR3, ADMIN scope)",
+)
+async def get_token(request: Request, tokenId: str = Path(...)):
+    """Return the full view of an issued token (expiresAt + revokedAt)."""
+    denial = await _reject_if_unauthed(request)
+    if denial is not None:
+        return denial
+    store = _store(request)
+    if store is None:
+        return error_response(
+            status_code=503,
+            code=ErrorCode.INTERNAL_ERROR,
+            message="Auth subsystem is not initialised.",
+        )
+    row = await store.get_token(tokenId)
+    if row is None:
+        return error_response(
+            status_code=404,
+            code=ErrorCode.NOT_FOUND,
+            message=f"Token {tokenId!r} not found.",
+        )
+    return AuthTokenDetail(
+        tokenId=str(row["tokenId"]),
+        name=str(row["name"]),
+        scopes=list(row["scopes"]),
+        issuedAt=row["issuedAt"],
+        expiresAt=row["expiresAt"],
+        revokedAt=row["revokedAt"],
+    )
+
+
+@router.post(
+    "/tokens/{tokenId}/rotate",
+    response_model=AuthTokenIssued,
+    status_code=status.HTTP_201_CREATED,
+    summary="Rotate an auth token (PR3, ADMIN scope)",
+)
+async def rotate_token(request: Request, tokenId: str = Path(...)):
+    """Issue a fresh plaintext secret, retire the old token.
+
+    Writes an ``auth.token.rotate`` audit row tied to the old
+    token's derived UUID5 entity_id. The response carries the
+    new plaintext exactly once.
+    """
+    denial = await _reject_if_unauthed(request)
+    if denial is not None:
+        return denial
+    store = _store(request)
+    if store is None:
+        return error_response(
+            status_code=503,
+            code=ErrorCode.INTERNAL_ERROR,
+            message="Auth subsystem is not initialised.",
+        )
+    issued = await store.rotate(tokenId)
+    if issued is None:
+        return error_response(
+            status_code=404,
+            code=ErrorCode.NOT_FOUND,
+            message=(
+                f"Token {tokenId!r} not found or already revoked; "
+                "rotation requires a live token."
+            ),
+        )
+    clam_store = getattr(request.app.state, "store", None)
+    if clam_store is not None:
+        old_audit_id = uuid.uuid5(
+            uuid.NAMESPACE_URL, f"token:{tokenId}"
+        )
+        await clam_store.record_audit(
+            actor=AuditActor.USER,
+            action=AuditAction.AUTH_TOKEN_ROTATE,
+            entity_kind="AuthToken",
+            entity_id=old_audit_id,
+            after=AuthTokenDetail(
+                tokenId=issued.token_id,
+                name=issued.name,
+                scopes=[s.value for s in issued.scopes],
+                issuedAt=issued.issued_at,
+                expiresAt=None,
+                revokedAt=None,
+            ),
+        )
+        clam_store.set_token_total(
+            await clam_store.count_active_auth_tokens()
+        )
+    return AuthTokenIssued(
+        tokenId=issued.token_id,
+        plaintext=issued.plaintext,
+        name=issued.name,
+        scopes=[s.value for s in issued.scopes],
+        issuedAt=issued.issued_at,
+    )
 
 
 @router.get(

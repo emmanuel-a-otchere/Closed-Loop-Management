@@ -2728,3 +2728,146 @@ async def test_oas_3_1_metrics_snapshot_path_present(
     spec = r.json()
     paths = set(spec["paths"].keys())
     assert "/metrics/snapshot" in paths
+
+
+# --- Slice 6 PR3 tests: durable token store + rotation ----------------------
+
+
+async def test_token_persists_across_process_restart(
+    tmp_path,
+) -> None:
+    """Tokens issued in process A are still valid in process B."""
+    db = tmp_path / "auth-tok.db"
+    from machines.service.clam.auth import Scope, TokenStore
+    from machines.service.clam.store import Store
+
+    store_a = Store(db)
+    await store_a.init()
+    tokens_a = TokenStore(store=store_a)
+    issued = await tokens_a.issue(name="ops", scopes=[Scope.ADMIN])
+    # Process B: fresh Store + TokenStore, same DB.
+    store_b = Store(db)
+    await store_b.init()
+    tokens_b = TokenStore(store=store_b)
+    principal = await tokens_b.authenticate(issued.plaintext)
+    assert principal is not None
+    assert principal.name == "ops"
+    assert Scope.ADMIN in principal.scopes
+
+
+async def test_token_revoke_durable(
+    tmp_path,
+) -> None:
+    """A revoked token is no longer authenticable after restart."""
+    db = tmp_path / "auth-rev.db"
+    from machines.service.clam.auth import Scope, TokenStore
+    from machines.service.clam.store import Store
+
+    store_a = Store(db)
+    await store_a.init()
+    tokens_a = TokenStore(store=store_a)
+    issued = await tokens_a.issue(name="ops", scopes=[Scope.ADMIN])
+    assert await tokens_a.revoke(issued.token_id) is True
+
+    store_b = Store(db)
+    await store_b.init()
+    tokens_b = TokenStore(store=store_b)
+    principal = await tokens_b.authenticate(issued.plaintext)
+    assert principal is None
+
+
+async def test_token_rotate_issues_new_and_revokes_old(
+    client: AsyncClient,
+) -> None:
+    """POST /api/v1/auth/tokens/{id}/rotate returns new plaintext
+    and the previous token id is now revoked.
+    """
+    issue1 = await client.post(
+        "/api/v1/auth/tokens",
+        json={"name": "ops", "scopes": ["admin"]},
+    )
+    assert issue1.status_code == 201
+    token_id = issue1.json()["tokenId"]
+    plaintext = issue1.json()["plaintext"]
+    # Rotate.
+    r = await client.post(
+        f"/api/v1/auth/tokens/{token_id}/rotate",
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["tokenId"] != token_id
+    assert body["plaintext"] != plaintext
+    # The old token id now reports revokedAt.
+    r = await client.get(f"/api/v1/auth/tokens/{token_id}")
+    assert r.status_code == 200
+    assert r.json()["revokedAt"] is not None
+    # The new token id is still active.
+    r = await client.get(f"/api/v1/auth/tokens/{body['tokenId']}")
+    assert r.status_code == 200
+    assert r.json()["revokedAt"] is None
+    # Sanity: plaintexts differ in length + content.
+    assert plaintext != body["plaintext"]
+
+
+async def test_rotate_returns_404_when_missing(
+    client: AsyncClient,
+) -> None:
+    """Rotating an unknown token id returns 404."""
+    r = await client.post("/api/v1/auth/tokens/nonexistent/rotate")
+    assert r.status_code == 404
+
+
+async def test_get_token_returns_expires_at_and_revoked_at(
+    client: AsyncClient,
+) -> None:
+    """GET /api/v1/auth/tokens/{id} surfaces expiresAt + revokedAt."""
+    issue = await client.post(
+        "/api/v1/auth/tokens",
+        json={"name": "ops", "scopes": ["admin"]},
+    )
+    assert issue.status_code == 201
+    token_id = issue.json()["tokenId"]
+    r = await client.get(f"/api/v1/auth/tokens/{token_id}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["tokenId"] == token_id
+    assert "expiresAt" in body
+    assert "revokedAt" in body
+    # Revoke + read again.
+    r = await client.delete(f"/api/v1/auth/tokens/{token_id}")
+    assert r.status_code == 204
+    r = await client.get(f"/api/v1/auth/tokens/{token_id}")
+    body = r.json()
+    assert body["revokedAt"] is not None
+
+
+async def test_rotate_writes_audit_row(
+    client: AsyncClient,
+) -> None:
+    """A rotation writes an auth.token.rotate audit row."""
+    issue = await client.post(
+        "/api/v1/auth/tokens",
+        json={"name": "ops", "scopes": ["admin"]},
+    )
+    token_id = issue.json()["tokenId"]
+    r = await client.post(
+        f"/api/v1/auth/tokens/{token_id}/rotate",
+    )
+    assert r.status_code == 201
+    r = await client.get(
+        "/api/v1/audit?entityKind=AuthToken",
+    )
+    rows = r.json()["items"]
+    actions = [row["action"] for row in rows]
+    assert "auth.token.rotate" in actions
+
+
+async def test_oas_3_1_token_rotate_path_present(
+    client: AsyncClient,
+) -> None:
+    """The rotate path surfaces in the OAS spec."""
+    r = await client.get("/openapi.json")
+    spec = r.json()
+    paths = set(spec["paths"].keys())
+    assert "/api/v1/auth/tokens/{tokenId}/rotate" in paths
+    assert "/api/v1/auth/tokens/{tokenId}" in paths

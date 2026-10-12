@@ -30,11 +30,15 @@ import os
 import secrets
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
+if TYPE_CHECKING:
+    from .store import Store
 
 
 class Scope(StrEnum):
@@ -104,27 +108,65 @@ def _fingerprint(token: str) -> str:
 
 
 class TokenStore:
-    """In-memory token registry.
+    """Auth token registry (Slice 6 PR3 -- DB-backed by default).
 
-    Stores the SHA-256 fingerprint of each token rather than the raw
-    plaintext. The interface is shaped to be swapped for a DB-backed
-    implementation later.
+    When constructed with a ``Store`` argument, ``issue`` /
+    ``revoke`` / ``authenticate`` / ``list_tokens`` / ``rotate``
+    all delegate to the durable ``auth_token`` table so tokens
+    survive process restarts. When constructed without a ``Store``
+    (the legacy in-memory shape), behaviour matches the Slice 3
+    PR1 implementation.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        store: Store | None = None,
+        *,
+        default_expires_days: int | None = None,
+    ) -> None:
         self._tokens: dict[str, _StoredToken] = {}
+        # Annotate as ``Any`` so callers don't need a TYPE_CHECKING
+        # dance; runtime accepts either an in-memory or DB-backed
+        # implementation.
+        self._store: Any = store
+        self._default_expires_days = default_expires_days
 
-    def issue(self, *, name: str, scopes: Iterable[Scope]) -> IssuedToken:
+    @property
+    def is_durable(self) -> bool:
+        return self._store is not None
+
+    def _resolve_expires(self) -> datetime | None:
+        if not self._default_expires_days:
+            return None
+        return datetime.now(UTC) + timedelta(
+            days=int(self._default_expires_days)
+        )
+
+    async def issue(
+        self, *, name: str, scopes: Iterable[Scope]
+    ) -> IssuedToken:
         plaintext = secrets.token_urlsafe(32)
         token_id = secrets.token_urlsafe(8)
         fingerprint = _fingerprint(plaintext)
-        scopes_set = frozenset(scopes)
+        scopes_list = [s for s in scopes]
+        scopes_set = frozenset(scopes_list)
+        issued_at = datetime.now(UTC)
+        expires_at = self._resolve_expires()
+        if self._store is not None:
+            await self._store.create_auth_token(
+                token_id=token_id,
+                secret_hash=fingerprint,
+                name=name,
+                scopes=[s.value for s in scopes_set],
+                issued_at=issued_at,
+                expires_at=expires_at,
+            )
         record = _StoredToken(
             token_id=token_id,
             fingerprint=fingerprint,
             name=name,
             scopes=scopes_set,
-            issued_at=datetime.now(UTC),
+            issued_at=issued_at,
         )
         self._tokens[fingerprint] = record
         return IssuedToken(
@@ -135,14 +177,27 @@ class TokenStore:
             issued_at=record.issued_at,
         )
 
-    def revoke(self, token_id: str) -> bool:
+    async def revoke(self, token_id: str) -> bool:
+        if self._store is not None:
+            return await self._store.revoke_auth_token(token_id)
         for record in self._tokens.values():
             if record.token_id == token_id:
                 self._tokens.pop(record.fingerprint, None)
                 return True
         return False
 
-    def authenticate(self, plaintext: str) -> Principal | None:
+    async def authenticate(self, plaintext: str) -> Principal | None:
+        if self._store is not None:
+            row = await self._store.authenticate_auth_token(plaintext)
+            if row is None:
+                return None
+            return Principal(
+                name=str(row["name"]),
+                scopes=frozenset(
+                    Scope(s) for s in row["scopes"]
+                ),
+                is_anonymous=False,
+            )
         record = self._tokens.get(_fingerprint(plaintext))
         if record is None:
             return None
@@ -153,6 +208,19 @@ class TokenStore:
         )
 
     def list_tokens(self) -> list[dict[str, object]]:
+        if self._store is not None:
+            # Async sibling below; sync list always returns what the
+            # in-memory map currently has. Operators can call the
+            # async ``list_tokens_async`` for the durable view.
+            return [
+                {
+                    "tokenId": r.token_id,
+                    "name": r.name,
+                    "scopes": sorted(s.value for s in r.scopes),
+                    "issuedAt": r.issued_at.isoformat(),
+                }
+                for r in self._tokens.values()
+            ]
         return [
             {
                 "tokenId": r.token_id,
@@ -162,6 +230,112 @@ class TokenStore:
             }
             for r in self._tokens.values()
         ]
+
+    async def list_tokens_async(self) -> list[dict[str, object]]:
+        """Async listing used by the PR3 router when auth is durable."""
+        if self._store is None:
+            return self.list_tokens()
+        rows = await self._store.list_auth_tokens()
+        return [
+            {
+                "tokenId": str(r["tokenId"]),
+                "name": str(r["name"]),
+                "scopes": list(r["scopes"]),
+                "issuedAt": r["issuedAt"].isoformat(),
+                "expiresAt": (
+                    r["expiresAt"].isoformat()
+                    if r["expiresAt"] is not None
+                    else None
+                ),
+                "revokedAt": (
+                    r["revokedAt"].isoformat()
+                    if r["revokedAt"] is not None
+                    else None
+                ),
+            }
+            for r in rows
+        ]
+
+    async def get_token(self, token_id: str) -> dict[str, object] | None:
+        """Single-token view (PR3 surfaces expiresAt + revokedAt)."""
+        if self._store is None:
+            for record in self._tokens.values():
+                if record.token_id == token_id:
+                    return {
+                        "tokenId": record.token_id,
+                        "name": record.name,
+                        "scopes": sorted(s.value for s in record.scopes),
+                        "issuedAt": record.issued_at.isoformat(),
+                        "expiresAt": None,
+                        "revokedAt": None,
+                    }
+            return None
+        row = await self._store.get_auth_token(token_id)
+        if row is None:
+            return None
+        return {
+            "tokenId": str(row["tokenId"]),
+            "name": str(row["name"]),
+            "scopes": list(row["scopes"]),
+            "issuedAt": row["issuedAt"].isoformat(),
+            "expiresAt": (
+                row["expiresAt"].isoformat()
+                if row["expiresAt"] is not None
+                else None
+            ),
+            "revokedAt": (
+                row["revokedAt"].isoformat()
+                if row["revokedAt"] is not None
+                else None
+            ),
+        }
+
+    async def rotate(
+        self, token_id: str
+    ) -> IssuedToken | None:
+        """Issue a fresh plaintext, retire the old (PR3)."""
+        plaintext = secrets.token_urlsafe(32)
+        new_token_id = secrets.token_urlsafe(8)
+        fingerprint = _fingerprint(plaintext)
+        issued_at = datetime.now(UTC)
+        expires_at = self._resolve_expires()
+        if self._store is not None:
+            row = await self._store.rotate_auth_token(
+                old_token_id=token_id,
+                new_token_id=new_token_id,
+                new_secret_hash=fingerprint,
+                issued_at=issued_at,
+                expires_at=expires_at,
+            )
+            if row is None:
+                return None
+            return IssuedToken(
+                token_id=new_token_id,
+                plaintext=plaintext,
+                name=str(row["name"]),
+                scopes=frozenset(Scope(s) for s in row["scopes"]),
+                issued_at=issued_at,
+            )
+        # Legacy in-memory path.
+        for record in self._tokens.values():
+            if record.token_id == token_id:
+                self._tokens.pop(record.fingerprint, None)
+                new_record = _StoredToken(
+                    token_id=new_token_id,
+                    fingerprint=fingerprint,
+                    name=record.name,
+                    scopes=record.scopes,
+                    issued_at=issued_at,
+                )
+                self._tokens[fingerprint] = new_record
+                return IssuedToken(
+                    token_id=new_token_id,
+                    plaintext=plaintext,
+                    name=new_record.name,
+                    scopes=new_record.scopes,
+                    issued_at=new_record.issued_at,
+                )
+        return None
 
 
 _ANONYMOUS = Principal(name="anonymous", scopes=frozenset(), is_anonymous=True)
@@ -185,7 +359,7 @@ def _extract_bearer(request: Request) -> str | None:
     return parts[1]
 
 
-def resolve_principal(request: Request) -> Principal:
+async def resolve_principal(request: Request) -> Principal:
     """Resolve the principal for ``request``.
 
     When auth is disabled (default), returns the anonymous principal.
@@ -200,7 +374,7 @@ def resolve_principal(request: Request) -> Principal:
     token = _extract_bearer(request)
     if token is None:
         return Principal(name="", scopes=frozenset(), is_anonymous=True)
-    principal = store.authenticate(token)
+    principal = await store.authenticate(token)
     if principal is None:
         return Principal(name="", scopes=frozenset(), is_anonymous=True)
     return principal
