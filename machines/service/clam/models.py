@@ -793,3 +793,51 @@ class WebhookDeliveryPage(BaseModel):
     items: list[WebhookDelivery]
     limit: int
     nextCursor: str | None = None
+
+
+# --- Slice 5 PR3: One-shot eval + async transitions --------------------------
+
+
+class EvalRequest(BaseModel):
+    """Body for POST /api/v1/closedLoop/{id}/eval."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    async_: bool = Field(default=False, alias="async")
+    actor: str | None = None
+
+
+class EvalResult(BaseModel):
+    """Synchronous result for /eval: the new state + decision summary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    state: str
+    transitioned: bool
+    decisionKind: str
+    rationale: str
+
+
+class JobState(StrEnum):
+    """Lifecycle of an async job (PR3)."""
+
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class JobInfo(BaseModel):
+    """Public view of an enqueued / completed job."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    loopId: UUID
+    action: str
+    state: JobState
+    enqueuedAt: datetime
+    startedAt: datetime | None
+    completedAt: datetime | None
+    resultState: str | None
+    error: str | None

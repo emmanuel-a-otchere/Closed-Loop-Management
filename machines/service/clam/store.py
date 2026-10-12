@@ -193,6 +193,19 @@ CREATE TABLE IF NOT EXISTS webhook_delivery (
 );
 CREATE INDEX IF NOT EXISTS idx_webhook_delivery_subscription
     ON webhook_delivery(subscription_id, attempted_at DESC);
+CREATE TABLE IF NOT EXISTS eval_job (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    state TEXT NOT NULL,
+    enqueued_at TEXT NOT NULL,
+    started_at TEXT,
+    completed_at TEXT,
+    result_state TEXT,
+    error TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_eval_job_loop
+    ON eval_job(loop_id, enqueued_at DESC);
 """
 
 
@@ -2579,6 +2592,147 @@ class Store:
                 )
             except Exception:
                 pass
+
+    # --- Slice 5 PR3: one-shot eval + async jobs ---------------------------
+
+    async def enqueue_eval_job(
+        self,
+        *,
+        loop_id: UUID,
+        action: str,
+    ) -> tuple[UUID, datetime]:
+        """Enqueue an async eval / transition job."""
+        job_id = uuid4()
+        now = datetime.now(UTC)
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO eval_job"
+                " (id, loop_id, action, state, enqueued_at)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (
+                    str(job_id),
+                    str(loop_id),
+                    action,
+                    "queued",
+                    now.isoformat(),
+                ),
+            )
+            await db.commit()
+        return job_id, now
+
+    async def get_job(self, job_id: UUID) -> dict[str, object] | None:
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT id, loop_id, action, state, enqueued_at, "
+                "started_at, completed_at, result_state, error "
+                "FROM eval_job WHERE id = ?",
+                (str(job_id),),
+            ) as cur:
+                row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def update_job_running(self, job_id: UUID) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE eval_job SET state = ?, started_at = ? "
+                "WHERE id = ?",
+                ("running", datetime.now(UTC).isoformat(), str(job_id)),
+            )
+            await db.commit()
+
+    async def update_job_succeeded(
+        self, job_id: UUID, result_state: str
+    ) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE eval_job SET state = ?, completed_at = ?, "
+                "result_state = ? WHERE id = ?",
+                (
+                    "succeeded",
+                    datetime.now(UTC).isoformat(),
+                    result_state,
+                    str(job_id),
+                ),
+            )
+            await db.commit()
+
+    async def update_job_failed(
+        self, job_id: UUID, error: str
+    ) -> None:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE eval_job SET state = ?, completed_at = ?, "
+                "error = ? WHERE id = ?",
+                (
+                    "failed",
+                    datetime.now(UTC).isoformat(),
+                    error[:500],
+                    str(job_id),
+                ),
+            )
+            await db.commit()
+
+    async def decide_loop_target(
+        self, loop: ClosedLoop
+    ) -> tuple[ClosedLoopState, str]:
+        """Pick the next state for a one-shot eval (PR3).
+
+        Returns (target_state, rationale). The default heuristic is:
+          DESIGNED -> VALIDATED  ('design validation')
+          VALIDATED -> PUBLISHED  ('publish when activities / workflows are validated')
+          PUBLISHED -> ACTIVE  ('go live')
+          ACTIVE -> ACTIVE  ('one cycle observed; staying active')
+          PAUSED -> ACTIVE  ('resume')
+          ERROR -> ACTIVE  ('recover')
+          RETIRED -> RETIRED  ('terminal')
+
+        The decision model payload on the loop is referenced in the
+        rationale so callers can see which model kind produced the
+        decision.
+        """
+        dm = loop.decisionModelRef
+        kind = "OODA"  # default
+        if isinstance(dm, str):
+            kind = "EXTERNAL"
+        else:
+            try:
+                kind = json.loads(loop.model_dump_json()).get(
+                    "decisionModelRef", {}
+                ).get("kind", "OODA")
+            except Exception:
+                kind = "OODA"
+        forward = {
+            ClosedLoopState.DESIGNED: ClosedLoopState.VALIDATED,
+            ClosedLoopState.VALIDATED: ClosedLoopState.PUBLISHED,
+            ClosedLoopState.PUBLISHED: ClosedLoopState.ACTIVE,
+            ClosedLoopState.ACTIVE: ClosedLoopState.ACTIVE,
+            ClosedLoopState.PAUSED: ClosedLoopState.ACTIVE,
+            ClosedLoopState.ERROR: ClosedLoopState.ACTIVE,
+            ClosedLoopState.RETIRED: ClosedLoopState.RETIRED,
+        }
+        target = forward[loop.state]
+        rationale = (
+            f"{kind} one-shot: {loop.state.value} -> {target.value}"
+        )
+        return target, rationale
+
+    async def run_eval_synchronously(
+        self, loop_id: UUID
+    ) -> tuple[ClosedLoop, bool, str, str]:
+        """Apply the next state. Returns (loop, transitioned, kind, rationale)."""
+        loop = await self.get_closed_loop(loop_id)
+        target, rationale = await self.decide_loop_target(loop)
+        if target == loop.state:
+            # No-op.
+            return loop, False, "OODA", rationale
+        await self.transition_state(
+            loop_id,
+            StateTransitionRequest(targetState=target),
+        )
+        # Reload the row to return the new state.
+        loop = await self.get_closed_loop(loop_id)
+        return loop, True, "OODA", rationale
 
     # --- DecisionModel ------------------------------------------------------
 
