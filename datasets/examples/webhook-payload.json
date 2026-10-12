@@ -1,0 +1,32 @@
+{
+  "_comment": "Sample webhook payload for a closed-loop state transition. The X-Clam-Signature header in production is HMAC-SHA256 of this body using the subscription's plaintext secret; the on-disk column is the SHA-256 fingerprint of that secret.",
+  "id": "5b6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+  "ts": "2026-10-11T08:42:13.184512+00:00",
+  "actor": "USER",
+  "action": "closed_loop.state_transition",
+  "entityKind": "ClosedLoop",
+  "entityId": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+  "correlationId": "8c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+  "before": {
+    "id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+    "name": "energy-arbitrage-loop",
+    "state": "validated",
+    "decisionModelRef": {"kind": "OODA"},
+    "goalIds": [],
+    "workflowIds": [],
+    "links": [],
+    "createdAt": "2026-10-09T11:01:00+00:00",
+    "updatedAt": "2026-10-10T17:22:00+00:00"
+  },
+  "after": {
+    "id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+    "name": "energy-arbitrage-loop",
+    "state": "published",
+    "decisionModelRef": {"kind": "OODA"},
+    "goalIds": [],
+    "workflowIds": [],
+    "links": [],
+    "createdAt": "2026-10-09T11:01:00+00:00",
+    "updatedAt": "2026-10-11T08:42:13+00:00"
+  }
+}
