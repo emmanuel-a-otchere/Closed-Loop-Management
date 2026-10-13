@@ -1,6 +1,6 @@
 # Closed-Loop-Management
 
-> **The paradigm for managing closed loops through automation, expressed
+> **Assets for managing closed loops through automation, expressed
 > as a service, a data model, and a suite of supporting toolkits.**
 
 Every operational system that adapts to its environment is a closed loop.
