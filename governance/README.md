@@ -41,6 +41,59 @@ specification is preserved as markdown:
 
 These documents are the source of truth for the programme context.
 
+
+
+## Package 1 (2026-10-18)
+
+The canonical change-request package prepared on 2026-10-18 and
+landed in this tree under the `governance/` root is persisted
+verbatim at:
+
+- [`PACKAGE1-MANIFEST.json`](PACKAGE1-MANIFEST.json) -- the
+  package's own inventory of the 21 files it shipped.
+- [`PACKAGE1-README.md`](PACKAGE1-README.md) -- the package's
+  own purpose and recommended application sequence.
+- [`data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md`](data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md)
+  -- the cross-cutting proposal covering intent, requirements,
+  constraints, observations, decisions, actions, outcomes,
+  verification, evidence, policy, deployment, operational
+  events, health, scenarios, and coordination contracts.
+- [`data-model/CLAM-MODEL-RELATIONSHIPS.md`](data-model/CLAM-MODEL-RELATIONSHIPS.md)
+  -- conceptual relationship view including a Mermaid diagram.
+- [`data-model/MIGRATION-AND-COMPATIBILITY.md`](data-model/MIGRATION-AND-COMPATIBILITY.md)
+  -- migration and compatibility principles for any
+  binding-model change.
+- [`schemas/proposals/evidence-record.schema.json`](schemas/proposals/evidence-record.schema.json)
+  -- proposal schema for evidence records.
+- [`schemas/proposals/scenario.schema.json`](schemas/proposals/scenario.schema.json)
+  -- proposal schema for verification scenarios.
+- [`schemas/proposals/policy.schema.json`](schemas/proposals/policy.schema.json)
+  -- proposal schema for policies and constraints.
+- [`datasets/proposals/*.example.json`](datasets/proposals/) --
+  one illustrative example per schema.
+- [`traceability/CR-requirements.csv`](traceability/CR-requirements.csv)
+  -- 18-row requirement-to-CR mapping (two requirements per
+  CR-CLAM-002..010).
+
+The authoritative change-request documents are the canonical
+package versions in `governance/CR/CR-CLAM-002..010-*.md`. They
+supersede the earlier short-form harvest from the CR-CLAM-000
+review (which was the seed). No binding model, schema,
+lifecycle, or runtime behaviour has changed in this landing;
+these are still *proposed* artefacts awaiting CR-CLAM-001
+Stage 4 governance acceptance and subsequent binding-decision
+PRs.
+
+## Implementation plan
+
+The holistic multi-CR implementation plan reads as
+[`PLANS/CLAM-IMPLEMENTATION-PLAN-2026-10.md`](PLANS/CLAM-IMPLEMENTATION-PLAN-2026-10.md).
+It sequences the 9 CRs as 8 slices across v2.0.0 and v2.1.0
+releases, with binding-model decisions gated by explicit
+compatibility review per the migration principles. The plan
+itself is proposed; each slice PR is the artefact that carries
+the CR forward.
+
 ## Change Requests (CR)
 
 The CR catalogue consists of ten change requests in four phases:
@@ -49,14 +102,14 @@ The CR catalogue consists of ten change requests in four phases:
 | --- | --- | --- | --- |
 | [CR-CLAM-001](CR/CR-CLAM-001-normative-capability-model.md) | Normative capability model (with 7 capability domains A-G) | 1 | P0 |
 | [CR-CLAM-002](CR/CR-CLAM-002-closed-loop-semantic-model-and-state-separation.md) | Semantic model and state separation | 1 | P0 |
-| [CR-CLAM-003](CR/CR-CLAM-003-intent-constraints-and-capability-traceability.md) | Intent/constraints/capability traceability | 1 | P0 |
-| [CR-CLAM-004](CR/CR-CLAM-004-clam-conformance-and-design-validation-toolkit.md) | Conformance and design validation toolkit | 2 | P1 |
+| [CR-CLAM-003](CR/CR-CLAM-003-intent-requirements-constraints-and-capability-traceability.md) | Intent, requirements, constraints, and capability traceability | 1 | P0 |
+| [CR-CLAM-004](CR/CR-CLAM-004-clam-semantic-conformance-and-design-validation-toolkit.md) | CLAM semantic conformance and design validation toolkit | 2 | P1 |
 | [CR-CLAM-005](CR/CR-CLAM-005-scenario-based-simulation-and-behavioural-verification.md) | Scenario-based simulation | 2 | P1 |
-| [CR-CLAM-006](CR/CR-CLAM-006-evidence-and-outcome-verification-framework.md) | Evidence and outcome verification | 2 | P1 |
+| [CR-CLAM-006](CR/CR-CLAM-006-evidence-model-and-outcome-verification-framework.md) | Evidence model and outcome verification framework | 2 | P1 |
 | [CR-CLAM-007](CR/CR-CLAM-007-runtime-governance-and-bounded-autonomy.md) | Runtime governance and bounded autonomy | 3 | P1 |
 | [CR-CLAM-008](CR/CR-CLAM-008-inter-loop-coordination-and-conflict-management.md) | Inter-loop coordination | 3 | P1 |
-| [CR-CLAM-009](CR/CR-CLAM-009-operational-observability-and-recovery.md) | Operational observability and recovery | 4 | P2 |
-| [CR-CLAM-010](CR/CR-CLAM-010-evidence-based-maturity-and-improvement.md) | Evidence-based maturity and improvement | 4 | P2 |
+| [CR-CLAM-009](CR/CR-CLAM-009-operational-observability-health-assessment-and-recovery.md) | Operational observability, health assessment, and recovery | 4 | P2 |
+| [CR-CLAM-010](CR/CR-CLAM-010-evidence-based-capability-maturity-and-continuous-improvement.md) | Evidence-based capability maturity and continuous improvement | 4 | P2 |
 
 CR-CLAM-001 is the only CR with no upstream dependency. The other
 nine are sequenced by their declared dependencies; the explicit

@@ -1,81 +1,78 @@
----
-cr_id: CR-CLAM-005
-title: Scenario-Based Simulation and Behavioural Verification
-status: Proposed
-priority: P1
-type: Tool enhancement
-repository: emmanuel-a-otchere/Closed-Loop-Management
-dependencies: [CR-CLAM-003, CR-CLAM-004]
-source_review: CR-CLAM-000 (Section 7, CR-CLAM-005)
-
----
-
 # CR-CLAM-005: Scenario-Based Simulation and Behavioural Verification
 
-## Change summary
+| Field | Value |
+|---|---|
+| CR ID | CR-CLAM-005 |
+| Status | Proposed |
+| Priority | P1 |
+| Change class | Simulation and verification tooling |
+| Repository | `emmanuel-a-otchere/Closed-Loop-Management` |
+| Dependencies | CR-CLAM-002, CR-CLAM-003, and CR-CLAM-004. |
 
-Extend the loop simulator into a scenario-based verification environment with deterministic replay, fault injection, scenario definitions, expected-vs-observed comparison, and machine-readable evidence output.
+## 1. Problem statement
 
-## Problem statement
+Driving a decision cycle through the API demonstrates an execution path but does not necessarily establish behavioural correctness, resilience, convergence, constraint compliance, or goal achievement under changing conditions.
 
-A simulator that successfully drives decision cycles does not necessarily establish that a loop achieves its goals or remains within its operational constraints. The current simulator can replay a happy path; the missing piece is negative-path verification.
+## 2. Objective
 
-## Motivation and rationale
+Extend the simulator's specification and toolkit to execute reproducible scenarios and compare observed behaviour with declared expected outcomes and acceptance criteria.
 
-Required scenario categories include normal conditions, disturbance and recovery, missing/delayed observations, invalid/contradictory input, failed/repeated actions, goal conflicts, resource contention, constraint violations, dependency loss, non-convergence, and recovery after interruption. Only structured scenario definitions enable regression testing in CI.
+## 3. Scope
 
-## Proposed change
+- Define a versioned scenario model including initial conditions, actors/components, observations, disturbances, timing, expected behaviour, constraints, acceptance criteria, and termination conditions.
+- Support deterministic seeds and replayable traces where the simulation environment permits.
+- Define scenario classes for nominal operation, disturbance, stale/missing observations, contradictory inputs, action failure/retry, resource contention, constraint violation, dependency loss, non-convergence, and recovery.
+- Record observations, decisions, action attempts/results, state transitions, metrics, and verification findings in a trace format.
+- Connect simulation output to the evidence and KPI contracts.
+- Clearly distinguish simulated evidence from production/real-world operational evidence.
 
-Add scenario execution to the simulator:
+## 4. Required deliverables
 
-- **Scenario definition format** -- a typed YAML/JSON describing initial conditions, disturbances, expected outcomes, acceptance criteria.
-- **Replay** -- deterministic execution with a pinned RNG seed and timestamps; replay reproduces observed state exactly.
-- **Fault injection** -- declare faults at named injection points (observation delay, action failure, dependency loss).
-- **Comparison engine** -- compares expected vs observed action sequences, observed states, and goal progression.
-- **Evidence output** -- emits per-scenario evidence records consumable by CR-CLAM-006.
+- Scenario specification and schema.
+- Scenario runner/replay contract.
+- Reference scenarios and expected results.
+- Trace format and simulator report.
+- Regression suite for nominal, boundary, and fault cases.
 
-Critical distinction: simulation of the management lifecycle (state machine) is not the same as simulation of the loop's actual behaviour. Scenarios must target both.
+## 5. Acceptance criteria
 
-## Repository changes (deliverables)
+- [ ] **AC-005-01:** Each scenario declares setup, perturbations, expected outcomes, acceptance criteria, and termination conditions.
+- [ ] **AC-005-02:** Runs record enough metadata to identify scenario, model version, simulator version, and random seed where used.
+- [ ] **AC-005-03:** Failed criteria are reported as failures, not successful runs.
+- [ ] **AC-005-04:** Replay determinism is tested and limitations are documented.
+- [ ] **AC-005-05:** Simulation results are explicitly labelled and cannot be mistaken for production observations.
+- [ ] **AC-005-06:** At least one fault scenario demonstrates a detectable deviation and one demonstrates a defined recovery or safe stop.
 
-- `machines/toolkits/loop-simulator/scenario.md (scenario definition spec)`
-- `machines/toolkits/loop-simulator/replay.py`
-- `machines/toolkits/loop-simulator/fault-injection.py`
-- `datasets/scenarios/ (positive and negative fixtures with ground truth)`
-- `Regression scenarios wired into `.github/workflows/conformance.yml``
+## 6. Out of scope
 
-## Acceptance criteria
+Building a general-purpose physics simulator; executing production actions; treating simulation as a substitute for operational assurance.
 
-1. A scenario specifies initial conditions, disturbances, expected outcomes, and acceptance criteria.
-2. The simulator records relevant actions, observations, and state transitions.
-3. Failed acceptance criteria produce explicit verification failures with stable identifiers.
-4. Regression scenarios execute in CI on every PR.
-5. Simulation evidence is consumable by the KPI calculator and assurance tooling.
+## 7. Dependencies and sequencing
 
-## Out of scope
+CR-CLAM-002, CR-CLAM-003, and CR-CLAM-004.
 
-- Production traffic replay against live systems.
-- Vendor-specific simulation engines (the toolkit remains technology-neutral).
+This CR is a proposed specification and change boundary. Dependencies must be verified against the repository's accepted CR/ADR state before implementation. A dependency listed here is not evidence that the upstream CR has been approved or implemented.
 
-## Dependencies
+## 8. Verification approach
 
-- Depends on: CR-CLAM-003, CR-CLAM-004
+Scenario acceptance tests, repeat-run comparison, trace validation, failure injection, and regression tests.
 
-## Follow-on relationship
+## 9. Data-model impact
 
-- CR-CLAM-006 (evidence framework) consumes the simulation evidence.
-- CR-CLAM-008 (inter-loop coordination) defines coordination scenarios.
+This CR is expected to enrich or consume the CLAM information model as described in `docs/data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md`. Candidate concepts are not automatically binding entities. Before implementation, reconcile them with existing Pydantic models, OpenAPI schemas, persistence, examples, and API operations. Avoid duplicating a concept already represented adequately.
 
-## Risks and mitigations
+## 10. Compatibility and migration
 
-| Risk | Mitigation |
-| --- | --- |
-| Scenarios become stale as the model evolves. | Each scenario carries an explicit model-version pin; CI rejects scenarios older than the pinned version. |
-| Non-determinism undermines replay value. | All time and randomness pass through a scenario-controlled clock and RNG; sources of environmental drift must be injected or stubbed. |
+Preserve the current binding model and API behaviour until the required compatibility decision is accepted. Any breaking change must specify a versioning strategy, migration/adapter path, deprecation period where appropriate, and regression evidence.
 
-## Source
+## 11. Follow-on work
 
-This CR is a harvest of the canonical proposal in
-[`governance/reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md`](../../reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md),
-Section 7, CR-CLAM-005. The full prose, including its tables and rationale, is
-preserved verbatim in that file.
+CR-CLAM-006, 007, 008, and 010.
+
+## 12. Governance notes
+
+- Investigation precedes implementation where semantics or architecture remain uncertain.
+- Record material architectural decisions in ADRs under repository governance.
+- Implement only the scope approved for this CR.
+- Update traceability and conformance tests with each delivered requirement.
+- Do not claim a capability is implemented until evidence supports the claim.

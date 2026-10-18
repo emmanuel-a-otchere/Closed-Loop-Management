@@ -20,6 +20,32 @@ adheres to [Semantic Versioning](https://semver.org/).
   landing; subsequent CR-CLAM-001 PRs will produce the normative
   capability, architecture-boundary, requirement-catalogue, and
   traceability artefacts called for by the canonical proposal.
+- Package 1 integration (CR-CLAM-002..010 authoritative spec).
+  Replaces the short-form CR-CLAM-002..010 harvests with the
+  canonical package versions prepared 2026-10-18. The
+  replacement files carry named acceptance criteria
+  (`AC-NNN-NN`), a verification-approach section, a
+  data-model-impact section, a compatibility/migration section,
+  and common governance notes per CR. Adds a new
+  `governance/data-model/` tree with three cross-cutting
+  documents: the data-model enrichment proposal, the
+  Mermaid relationship diagram, and the migration-and-
+  compatibility principles. Adds `governance/schemas/proposals/`
+  (three proposal JSON Schemas with `proposal-0.1` version),
+  `governance/datasets/proposals/` (one illustrative example
+  per schema), `governance/traceability/CR-requirements.csv`
+  (an 18-row requirement-to-CR mapping with two requirements
+  per CR), `governance/PACKAGE1-MANIFEST.json` and
+  `governance/PACKAGE1-README.md` (the package's own
+  inventory as a referral record), and
+  `governance/PLANS/CLAM-IMPLEMENTATION-PLAN-2026-10.md` (the
+  holistic multi-CR implementation plan covering all nine
+  CRs as eight dependency-ordered slices across two releases).
+  The README, traceability CSV, and CHANGELOG entries all
+  cross-reference each other for navigation. No binding
+  model, schema, lifecycle, or runtime behaviour changes in
+  this landing; the canonical proposals remain Proposed
+  pending CR-CLAM-001 governance acceptance.
 
 ### Added
 - Slice 5 PR1 -- SSE audit stream endpoint. GET /api/v1/_stream/audit

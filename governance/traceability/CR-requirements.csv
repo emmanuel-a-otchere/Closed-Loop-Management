@@ -1,0 +1,19 @@
+cr_id,requirement_id,proposed_requirement,verification
+CR-CLAM-002,MODEL-001,"Separate lifecycle, execution, goal, and assurance state dimensions",Conceptual model review; state interaction tests
+CR-CLAM-002,MODEL-002,"Define identity, version, provenance, and relationship integrity conventions",Model/schema review
+CR-CLAM-003,TRACE-001,"Trace intent and goals to requirements, constraints, and acceptance criteria",Traceability validator tests
+CR-CLAM-003,TRACE-002,"Detect dangling, contradictory, or unverified links",Negative fixture tests
+CR-CLAM-004,CONF-001,"Layer schema, semantic, lifecycle, traceability, and release validation",CI and fixture suite
+CR-CLAM-004,CONF-002,Emit deterministic diagnostic reports,Repeat-run comparison
+CR-CLAM-005,SIM-001,Run versioned scenarios with disturbances and acceptance criteria,Scenario acceptance tests
+CR-CLAM-005,SIM-002,Distinguish simulated evidence from operational evidence,Trace schema tests
+CR-CLAM-006,EVID-001,"Link evidence to criterion, subject, and applicable model/configuration version",Schema and reference tests
+CR-CLAM-006,EVID-002,"Represent satisfied, not satisfied, and indeterminate verification",Outcome-verification tests
+CR-CLAM-007,GOV-001,"Define applicable permissions, constraints, and enforcement responsibility",Policy and boundary tests
+CR-CLAM-007,GOV-002,"Define safe response, recovery, and revalidation requirements",Decision-table and fault tests
+CR-CLAM-008,COORD-001,Validate typed inter-loop links and contract compatibility,Compatibility fixtures
+CR-CLAM-008,COORD-002,Trace conflict handling and system-level outcome evaluation,Conflict scenario tests
+CR-CLAM-009,OPS-001,Separate operational health from lifecycle state,Model and API tests
+CR-CLAM-009,OPS-002,Detect stale/missing telemetry and trace recovery,Event sequence tests
+CR-CLAM-010,MAT-001,Trace maturity scores to criteria and evidence,Scoring tests
+CR-CLAM-010,MAT-002,Prevent critical gaps being masked by aggregate scores,Critical-gap test cases

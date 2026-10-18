@@ -1,86 +1,78 @@
----
-cr_id: CR-CLAM-007
-title: Runtime Governance and Bounded Autonomy
-status: Proposed
-priority: P1
-type: Operational safety and governance
-repository: emmanuel-a-otchere/Closed-Loop-Management
-dependencies: [CR-CLAM-002, CR-CLAM-003, CR-CLAM-006]
-source_review: CR-CLAM-000 (Section 7, CR-CLAM-007)
-
----
-
 # CR-CLAM-007: Runtime Governance and Bounded Autonomy
 
-## Change summary
+| Field | Value |
+|---|---|
+| CR ID | CR-CLAM-007 |
+| Status | Proposed |
+| Priority | P1 |
+| Change class | Operational governance and control boundaries |
+| Repository | `emmanuel-a-otchere/Closed-Loop-Management` |
+| Dependencies | CR-CLAM-002, CR-CLAM-003, and CR-CLAM-006; CR-CLAM-004 supplies conformance checks. |
 
-Define the management contracts under which a running loop may act, recover, suspend, or escalate -- covering permitted/prohibited actions, operating envelopes, preconditions, escalation, human-approval requirements, and emergency suspension.
+## 1. Problem statement
 
-## Problem statement
+Lifecycle control does not, by itself, establish which actions a loop is permitted to take, under what conditions, or how it must respond to constraint violations, uncertainty, or loss of assurance.
 
-A lifecycle API does not by itself establish the conditions under which a running loop may act, recover, or continue operating. Without explicit governance, a loop in `active` state has no documented upper bound on its actions.
+## 2. Objective
 
-## Motivation and rationale
+Define technology-neutral management contracts for bounded autonomy, policy applicability, action authorisation, operating envelopes, human intervention, suspension, recovery, and revalidation.
 
-Autonomy is not the same as AI. A loop can be autonomous without using AI; a loop can use an AI model without having authority to act autonomously. The model must distinguish these characteristics independently and apply different controls to each.
+## 3. Scope
 
-## Proposed change
+- Model permitted/prohibited action classes, operating envelope, resource/budget limits, rate limits, preconditions, postconditions, escalation triggers, and required approvals where applicable.
+- Distinguish AI usage, automation level, decision authority, and degree of autonomy as separate attributes.
+- Define policy identity, version, scope, priority/precedence, effective period, and enforcement responsibility.
+- Define responses to violated constraints, stale observations, unavailable dependencies, and degraded assurance.
+- Specify conditions for suspend, safe-stop, recovery, revalidation, reapproval, and rollback.
+- State explicitly that policy enforcement may be performed by an external execution/control component; CLAM must define and verify the management contract.
 
-Define a bounded-autonomy specification with the following controls, each machine-readable:
+## 4. Required deliverables
 
-- Permitted actions and prohibited actions.
-- Operating envelope (numeric ranges, time windows, scope tags).
-- Resource and budget limits.
-- Maximum action rates and concurrency caps.
-- Preconditions for execution.
-- Escalation conditions and routes.
-- Human approval requirements (which actions require a human signer).
-- Emergency suspension triggers and procedures.
-- Recovery and reactivation conditions, including mandatory revalidation.
+- Bounded-autonomy and runtime-governance specification.
+- Proposed policy/constraint schema and examples.
+- Decision table for violation and recovery handling.
+- Human intervention and approval requirements.
+- Test scenarios and assurance evidence requirements.
 
-Sequence qualification from the source review: this CR establishes governance semantics before any production-oriented autonomous execution adapter is authorised. The programme is NOT a green light for unrestricted execution.
+## 5. Acceptance criteria
 
-## Repository changes (deliverables)
+- [ ] **AC-007-01:** Applicable permissions and constraints can be identified for a governed loop/action.
+- [ ] **AC-007-02:** Each defined violation class has an explicit response or documented escalation.
+- [ ] **AC-007-03:** Recovery cannot bypass required validation and approval gates.
+- [ ] **AC-007-04:** AI use is not treated as equivalent to autonomy or permission to act.
+- [ ] **AC-007-05:** Enforcement responsibility is identified for each normative policy class.
+- [ ] **AC-007-06:** Any unresolved high-consequence control requirement is flagged as a release blocker rather than silently defaulted.
 
-- `docs/architecture/control-boundaries.md`
-- `schemas/policies/bounded-autonomy-1.0.md`
-- `machines/scripts/enforce_envelope.py`
-- `docs/governance/reauthorisation-procedure.md`
-- `Example envelopes for two representative loop profiles`
+## 6. Out of scope
 
-## Acceptance criteria
+Implementing an unrestricted action executor; defining domain-specific safety certification; claiming that a policy schema alone enforces runtime safety.
 
-1. Every governed action is subject to explicitly defined permissions and constraints.
-2. Violations have specified responses (block, alert, escalate, suspend) keyed by type.
-3. Recovery cannot bypass required validation or authorisation.
-4. AI usage and autonomy level are represented as distinct characteristics with distinct controls.
-5. Human intervention requirements are machine-readable where applicable.
+## 7. Dependencies and sequencing
 
-## Out of scope
+CR-CLAM-002, CR-CLAM-003, and CR-CLAM-006; CR-CLAM-004 supplies conformance checks.
 
-- Authorising any specific autonomous execution adapter.
-- Mandating a particular policy engine.
-- Building real-time human-in-the-loop UI flows (separate ADR required).
+This CR is a proposed specification and change boundary. Dependencies must be verified against the repository's accepted CR/ADR state before implementation. A dependency listed here is not evidence that the upstream CR has been approved or implemented.
 
-## Dependencies
+## 8. Verification approach
 
-- Depends on: CR-CLAM-002, CR-CLAM-003, CR-CLAM-006
+Policy validation, decision-table tests, fault scenarios, authorisation-boundary tests, and review of safe-stop/recovery cases.
 
-## Follow-on relationship
+## 9. Data-model impact
 
-- CR-CLAM-008 (inter-loop coordination) reuses the envelope model for system-wide reasoning.
-- CR-CLAM-009 (observability) emits alerts when envelope breaches occur.
+This CR is expected to enrich or consume the CLAM information model as described in `docs/data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md`. Candidate concepts are not automatically binding entities. Before implementation, reconcile them with existing Pydantic models, OpenAPI schemas, persistence, examples, and API operations. Avoid duplicating a concept already represented adequately.
 
-## Risks and mitigations
+## 10. Compatibility and migration
 
-| Risk | Mitigation |
-| --- | --- |
-| Envelope model becomes too rigid for adaptive loops. | Envelopes are time-windowed; a loop with adaptive envelopes must declare its adaptive rule as part of its specification, subject to the same review as the loop itself. |
-| Operators bypass controls to fix incidents. | Emergency override paths are themselves part of the model and emit evidence; override without evidence is a violation. |
+Preserve the current binding model and API behaviour until the required compatibility decision is accepted. Any breaking change must specify a versioning strategy, migration/adapter path, deprecation period where appropriate, and regression evidence.
 
-## Source
+## 11. Follow-on work
 
-This CR is a harvest of the canonical proposal in
-[`governance/reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md`](../../reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md),
-Section 7, CR-CLAM-007. The full prose, including its tables and rationale, is
-preserved verbatim in that file.
+CR-CLAM-008, 009, and 010.
+
+## 12. Governance notes
+
+- Investigation precedes implementation where semantics or architecture remain uncertain.
+- Record material architectural decisions in ADRs under repository governance.
+- Implement only the scope approved for this CR.
+- Update traceability and conformance tests with each delivered requirement.
+- Do not claim a capability is implemented until evidence supports the claim.

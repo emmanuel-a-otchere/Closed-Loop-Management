@@ -1,80 +1,78 @@
----
-cr_id: CR-CLAM-008
-title: Inter-Loop Coordination and Conflict Management
-status: Proposed
-priority: P1
-type: Architecture and operational management
-repository: emmanuel-a-otchere/Closed-Loop-Management
-dependencies: [CR-CLAM-002, CR-CLAM-005, CR-CLAM-007]
-source_review: CR-CLAM-000 (Section 7, CR-CLAM-008)
-
----
-
 # CR-CLAM-008: Inter-Loop Coordination and Conflict Management
 
-## Change summary
+| Field | Value |
+|---|---|
+| CR ID | CR-CLAM-008 |
+| Status | Proposed |
+| Priority | P1 |
+| Change class | Cross-loop model and coordination contracts |
+| Repository | `emmanuel-a-otchere/Closed-Loop-Management` |
+| Dependencies | CR-CLAM-002, CR-CLAM-003, CR-CLAM-005, and CR-CLAM-007. |
 
-Specify inter-loop contracts for input/output compatibility, dependency ordering, shared-resource allocation, conflicting goals, conflicting actions, failure propagation, escalation, and system-wide outcome verification.
+## 1. Problem statement
 
-## Problem statement
+A typed link between loops expresses connectivity but does not establish interface compatibility, dependency semantics, shared-resource behaviour, conflict resolution, or system-level outcome correctness.
 
-The existing model can represent relationships between loops, but a relationship alone does not establish that connected loops are compatible or that their combined behaviour is safe and effective.
+## 2. Objective
 
-## Motivation and rationale
+Define the information model and validation requirements for coordinated loops, including contracts, dependencies, conflicts, failure propagation, and system-level verification.
 
-Two loops that are individually safe can be unsafe together (resource starvation, conflicting actions, cascading failure). The inter-loop contract makes those interactions explicit and detect failure propagation at the system level rather than the loop level.
+## 3. Scope
 
-## Proposed change
+- Specify link/coordination contract semantics: source, target, relationship type, direction, exchanged information, timing/quality expectations, and version compatibility.
+- Represent dependency ordering and availability requirements.
+- Define conflict categories covering incompatible goals, actions, policies, and shared-resource demand.
+- Define coordination policy references, resolution responsibility, escalation, and unresolved-conflict handling.
+- Specify propagation and containment of dependency failure.
+- Define system-level outcome and assurance assessment across participating loops.
 
-Define contracts for five interaction classes:
+## 4. Required deliverables
 
-- **Compatibility**: input/output type matching, schema version compatibility, coordinate-system compatibility.
-- **Dependency ordering**: precedence rules, ordering locks, time-ordered events.
-- **Shared resources**: allocation strategies, contention detection, recovery rules.
-- **Conflicting goals**: detection rules, resolution policies (priority, override, escalate).
-- **Conflicting actions**: lockout rules, ordering, conflict resolution traces.
+- Inter-loop coordination model.
+- Compatibility and conflict rules.
+- Coordination scenarios and fixtures.
+- System-level verification requirements.
+- Migration guidance for existing ClosedLoopLink records.
 
-In addition, define failure-propagation semantics (does a loop's `error` state abort downstream?) and system-level outcome verification criteria.
+## 5. Acceptance criteria
 
-## Repository changes (deliverables)
+- [ ] **AC-008-01:** Every link has a defined semantic type and valid source/target references.
+- [ ] **AC-008-02:** Incompatible interface/model versions can be detected.
+- [ ] **AC-008-03:** Conflict handling is explicit; unresolved material conflicts cannot be reported as resolved.
+- [ ] **AC-008-04:** Dependency failures and their affected loops can be traced.
+- [ ] **AC-008-05:** System-level goal assessment does not rely solely on the individual status of each loop.
+- [ ] **AC-008-06:** Existing links remain interpretable or have a documented migration.
 
-- `docs/architecture/inter-loop-coordination.md`
-- `schemas/data-model/inter-loop-contract-1.0.md`
-- `machines/toolkits/inter-loop-validator/ (conflict and compatibility checks)`
-- `datasets/examples/inter-loop-coordination-2-loops.json and -3-loops.json`
-- `Coordination scenarios in `datasets/scenarios/inter-loop-*``
+## 6. Out of scope
 
-## Acceptance criteria
+Building a distributed scheduler or consensus engine; prescribing a specific graph database or message broker; assuming all loops require central orchestration.
 
-1. Incompatible links can be identified before publication (validator failure in CI).
-2. Resource and goal conflicts have defined resolution policies.
-3. Failures can be traced across dependent loops via the trace model from CR-CLAM-003.
-4. Coordination decisions are auditable (evidence records per decision).
-5. System-wide outcomes can be evaluated independently of individual loop status.
+## 7. Dependencies and sequencing
 
-## Out of scope
+CR-CLAM-002, CR-CLAM-003, CR-CLAM-005, and CR-CLAM-007.
 
-- Building a distributed runtime for multi-loop execution.
-- Global optimisation across all loops (each loop's envelope remains its own boundary).
+This CR is a proposed specification and change boundary. Dependencies must be verified against the repository's accepted CR/ADR state before implementation. A dependency listed here is not evidence that the upstream CR has been approved or implemented.
 
-## Dependencies
+## 8. Verification approach
 
-- Depends on: CR-CLAM-002, CR-CLAM-005, CR-CLAM-007
+Reference-integrity tests, incompatible-link fixtures, conflict scenarios, dependency-failure tests, and system-level outcome tests.
 
-## Follow-on relationship
+## 9. Data-model impact
 
-- CR-CLAM-009 (observability) reuses the failure-propagation semantics to scope alerts.
-- CR-CLAM-010 (maturity) scores inter-loop coordination maturity separately.
+This CR is expected to enrich or consume the CLAM information model as described in `docs/data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md`. Candidate concepts are not automatically binding entities. Before implementation, reconcile them with existing Pydantic models, OpenAPI schemas, persistence, examples, and API operations. Avoid duplicating a concept already represented adequately.
 
-## Risks and mitigations
+## 10. Compatibility and migration
 
-| Risk | Mitigation |
-| --- | --- |
-| Coordination rules become incompatible with each other across versions. | Inter-loop contracts declare a contract version; the validator rejects combinations whose version matrix is not closed. |
+Preserve the current binding model and API behaviour until the required compatibility decision is accepted. Any breaking change must specify a versioning strategy, migration/adapter path, deprecation period where appropriate, and regression evidence.
 
-## Source
+## 11. Follow-on work
 
-This CR is a harvest of the canonical proposal in
-[`governance/reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md`](../../reviews/2026-10-18-CR-CLAM-000-capability-review-and-roadmap.md),
-Section 7, CR-CLAM-008. The full prose, including its tables and rationale, is
-preserved verbatim in that file.
+CR-CLAM-009 and 010.
+
+## 12. Governance notes
+
+- Investigation precedes implementation where semantics or architecture remain uncertain.
+- Record material architectural decisions in ADRs under repository governance.
+- Implement only the scope approved for this CR.
+- Update traceability and conformance tests with each delivered requirement.
+- Do not claim a capability is implemented until evidence supports the claim.

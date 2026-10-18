@@ -1,0 +1,27 @@
+{
+  "id": "evidence-example-001",
+  "schemaVersion": "proposal-0.1",
+  "evidenceType": "simulation-trace",
+  "origin": "simulation",
+  "recordedAt": "2026-10-18T12:00:00Z",
+  "observedAt": "2026-10-18T11:59:59Z",
+  "subjectRef": "closed-loop-example-001",
+  "modelVersion": "clam-model-proposal-0.1",
+  "configurationRef": "configuration-example-003",
+  "sourceRef": "simulator-run-example-007",
+  "correlationId": "scenario-nominal-001-run-007",
+  "supports": [
+    "acceptance-criterion-example-001"
+  ],
+  "integrity": null,
+  "quality": {
+    "status": "valid",
+    "confidence": null,
+    "notes": "Illustrative synthetic record; not operational evidence."
+  },
+  "payloadRef": "trace://simulator-run-example-007",
+  "provenance": [
+    "scenario-nominal-001",
+    "simulator-version-example"
+  ]
+}
