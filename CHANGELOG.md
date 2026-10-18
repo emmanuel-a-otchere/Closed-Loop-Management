@@ -6,6 +6,21 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Documentation
+- Governance programme land (CR-CLAM-000 harvest). Adds the
+  `governance/` tree with: `reviews/` (verbatim preserves of the
+  CR-CLAM-000 capability review and CR-CLAM-001 canonical
+  proposal, both .docx -> .md), `CR/` (canonical CR docs for
+  CR-CLAM-001..010 with stable identifiers, frontmatter,
+  acceptance criteria, out-of-scope boundaries, and explicit
+  dependency statements), `ADR/` (ADR-CLAM-0001 on CLAM scope
+  and ADR-CLAM-0002 on the definition of successful operation),
+  and a top-level `governance/README.md` indexing the artefacts.
+  No API, schema, lifecycle, or runtime behaviour changes in this
+  landing; subsequent CR-CLAM-001 PRs will produce the normative
+  capability, architecture-boundary, requirement-catalogue, and
+  traceability artefacts called for by the canonical proposal.
+
 ### Added
 - Slice 5 PR1 -- SSE audit stream endpoint. GET /api/v1/_stream/audit
   exposes text/event-stream per-process fan-out from the audit log
