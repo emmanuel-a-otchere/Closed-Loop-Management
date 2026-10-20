@@ -233,7 +233,6 @@ pyproject.toml
 | Area | Where it lives |
 | --- | --- |
 | Project board | https://github.com/users/emmanuel-a-otchere/projects/13 |
-| Kanban board | http://192.168.50.160:7000/board/14 (`discord-closed-loop-automation`) |
 | Card doctrine | `context/AGENT-DOCTRINE.md` |
 | WBS epics | `.github/epics/slice-{1..5}.md` |
 | Milestones | `v1.0.0 MVP`, `v1.1.0 Features`, `v2.0.0 Architecture` |
