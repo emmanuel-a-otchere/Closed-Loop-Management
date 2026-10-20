@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/clam/proposals/evidence-record.schema.json",
+  "title": "CLAM Proposed Evidence Record",
+  "description": "Proposal only. Replace the placeholder $id and reconcile semantics before binding use.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "schemaVersion",
+    "evidenceType",
+    "origin",
+    "recordedAt",
+    "subjectRef",
+    "supports"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "proposal-0.1"
+    },
+    "evidenceType": {
+      "type": "string",
+      "enum": [
+        "observation",
+        "measurement",
+        "simulation-trace",
+        "test-result",
+        "operational-event",
+        "document",
+        "other"
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "simulation",
+        "test",
+        "operational",
+        "analysis",
+        "external"
+      ]
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "subjectRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "configurationRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "supports": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "integrity": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "digest": {
+          "type": "string"
+        },
+        "verified": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "quality": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "stale",
+            "missing",
+            "invalid",
+            "uncertain",
+            "unknown"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "payloadRef": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Reference to a payload stored elsewhere; avoid embedding large or sensitive raw data."
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  }
+}

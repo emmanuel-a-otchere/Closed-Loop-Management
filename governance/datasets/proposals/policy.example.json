@@ -1,0 +1,32 @@
+{
+  "id": "policy-example-001",
+  "schemaVersion": "proposal-0.1",
+  "name": "Stale observation control",
+  "kind": "constraint",
+  "scope": {
+    "subjectRefs": [
+      "closed-loop-example-001"
+    ],
+    "actionTypes": [
+      "automatic-adjustment"
+    ],
+    "environmentRef": null
+  },
+  "rule": {
+    "statement": "Do not assert verified goal satisfaction when required observations are stale.",
+    "expression": null,
+    "parameters": {
+      "maxObservationAgeSeconds": 10
+    }
+  },
+  "priority": 100,
+  "effectiveFrom": "2026-10-18T00:00:00Z",
+  "effectiveUntil": null,
+  "version": "1.0.0",
+  "enforcementResponsibility": "execution-adapter-or-policy-enforcement-point",
+  "violationResponse": "mark-assurance-degraded-and-follow-approved-safe-response",
+  "approvalRequired": false,
+  "provenance": [
+    "CR-CLAM-007-proposal"
+  ]
+}

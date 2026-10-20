@@ -1,0 +1,56 @@
+{
+  "id": "scenario-disturbance-001",
+  "schemaVersion": "proposal-0.1",
+  "name": "Observation delay and recovery",
+  "purpose": "Illustrate evaluation of a loop under delayed observations.",
+  "subjectRef": "closed-loop-example-001",
+  "modelVersion": "clam-model-proposal-0.1",
+  "seed": 42,
+  "initialConditions": [
+    {
+      "name": "service-load",
+      "value": 0.65,
+      "unit": "ratio"
+    },
+    {
+      "name": "observation-age",
+      "value": 1,
+      "unit": "seconds"
+    }
+  ],
+  "disturbances": [
+    {
+      "at": "cycle-3",
+      "kind": "observation-delay",
+      "parameters": {
+        "delaySeconds": 30
+      },
+      "description": "Introduce stale feedback."
+    }
+  ],
+  "constraints": [
+    "policy-example-001"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "acceptance-criterion-example-001",
+      "description": "The loop must not claim goal satisfaction while required feedback is stale.",
+      "evaluationRef": "goal-disposition-rule-example-001",
+      "expected": "indeterminate",
+      "severity": "blocking"
+    }
+  ],
+  "termination": {
+    "condition": "max-cycles-or-safe-stop",
+    "maxDurationSeconds": 120,
+    "maxCycles": 10
+  },
+  "expectedOutcome": {
+    "goalDisposition": "indeterminate-until-valid-observation",
+    "assuranceDisposition": "degraded"
+  },
+  "metadata": {
+    "synthetic": true,
+    "notForProduction": true
+  }
+}

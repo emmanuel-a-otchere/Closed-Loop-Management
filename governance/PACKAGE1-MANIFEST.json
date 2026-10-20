@@ -1,0 +1,51 @@
+{
+  "package": "CLAM CR-CLAM-002\u2013010 and data-model enrichment proposal",
+  "status": "proposed_not_applied",
+  "prepared": "2026-10-18",
+  "target_repository": "https://github.com/emmanuel-a-otchere/Closed-Loop-Management",
+  "change_requests": [
+    "CR-CLAM-002",
+    "CR-CLAM-003",
+    "CR-CLAM-004",
+    "CR-CLAM-005",
+    "CR-CLAM-006",
+    "CR-CLAM-007",
+    "CR-CLAM-008",
+    "CR-CLAM-009",
+    "CR-CLAM-010"
+  ],
+  "binding_model_changed": false,
+  "production_code_included": false,
+  "notes": [
+    "The CRs are proposed artefacts for review; they have not been committed to the target repository.",
+    "The JSON Schemas and examples under schemas/proposals and datasets/proposals are illustrative proposal artefacts, not binding CLAM contracts.",
+    "CR-CLAM-001 is treated as a proposed prerequisite; verify its approval state before implementation."
+  ],
+  "files": [
+    "README.md",
+    "datasets/proposals/evidence-record.example.json",
+    "datasets/proposals/policy.example.json",
+    "datasets/proposals/scenario.example.json",
+    "docs/data-model/CLAM-DATA-MODEL-ENRICHMENT-PROPOSAL.md",
+    "docs/data-model/CLAM-MODEL-RELATIONSHIPS.md",
+    "docs/data-model/MIGRATION-AND-COMPATIBILITY.md",
+    "governance/CR/CR-CLAM-002.md",
+    "governance/CR/CR-CLAM-003.md",
+    "governance/CR/CR-CLAM-004.md",
+    "governance/CR/CR-CLAM-005.md",
+    "governance/CR/CR-CLAM-006.md",
+    "governance/CR/CR-CLAM-007.md",
+    "governance/CR/CR-CLAM-008.md",
+    "governance/CR/CR-CLAM-009.md",
+    "governance/CR/CR-CLAM-010.md",
+    "schemas/proposals/evidence-record.schema.json",
+    "schemas/proposals/policy.schema.json",
+    "schemas/proposals/scenario.schema.json",
+    "traceability/CR-requirements.csv"
+  ],
+  "validation_notes": [
+    "PASS schema meta-validation: evidence-record.schema.json",
+    "PASS schema meta-validation: scenario.schema.json",
+    "PASS schema meta-validation: policy.schema.json"
+  ]
+}
