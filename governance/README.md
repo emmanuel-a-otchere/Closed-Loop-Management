@@ -17,8 +17,27 @@ governance/
 |-- ADR/             # Architectural Decision Records (ADR).
 |-- decisions/       # Operational or tactical decisions that are
 |                    # not architectural (separate from ADR/).
+|-- PLANS/           # Holistic and closure implementation plans.
+|-- capability-inventory.md  # CR-CLAM-001 Stage 1 reconnaissance
+|                    # inventory (component-to-domain map).
 |-- README.md        # This file.
 ```
+
+## Operational and tactical decisions
+
+- [`decisions/D-2026-10-20-standards-references.md`](decisions/D-2026-10-20-standards-references.md)
+  -- standards citations in repository artefacts follow the
+  AGENT-DOCTRINE rule 4 vocabulary; embargoed-SDO citations
+  replaced with ITU-T / ISO-IEC-IEEE / NIST substitutes.
+
+## Plans
+
+- [`PLANS/CLAM-IMPLEMENTATION-PLAN-2026-10.md`](PLANS/CLAM-IMPLEMENTATION-PLAN-2026-10.md)
+  -- the holistic eight-slice programme for CR-CLAM-002..010.
+- [`PLANS/RECON-CLOSURE-PLAN-2026-10.md`](PLANS/RECON-CLOSURE-PLAN-2026-10.md)
+  -- the 2026-10-20 reconnaissance findings register and its
+  4-tranche closure plan (hygiene, CR-CLAM-001 execution,
+  slice programme, DX enrichment).
 
 ## Reviews
 

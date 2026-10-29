@@ -47,7 +47,7 @@ jobs:
           clam-oas-validator schemas/openapi/openapi.json
       - name: Snapshot check
         run: |
-          git diff --quiet schemas/openapi/openapi.json || (echo "::warning::OpenAPI snapshot drifted from generated OAS. Re-run machines/scripts/export_openapi.py locally and commit."; exit 0)
+          git diff --quiet schemas/openapi/openapi.json || (echo "::error::OpenAPI snapshot drifted from generated OAS. Re-run machines/scripts/export_openapi.py locally and commit."; exit 1)
 
   cardinal-rules:
     runs-on: ubuntu-latest

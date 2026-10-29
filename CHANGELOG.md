@@ -6,6 +6,38 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Governance
+- Reconnaissance closure plan (2026-10-20). Adds
+  `governance/PLANS/RECON-CLOSURE-PLAN-2026-10.md`: a 12-finding
+  register from the 2026-10-20 recon mapped to four tranches
+  (hygiene, CR-CLAM-001 execution, CR-CLAM-002..010 slice
+  programme, DX enrichment).
+- CR-CLAM-001 Stage 1 (reconnaissance). Adds
+  `governance/capability-inventory.md`: component-to-capability-
+  domain map for the service, toolkits, schemas, datasets, docs,
+  tests, and CI, with non-normative gap observations feeding the
+  Stage 2 capability gap analysis.
+- Standards-references decision. Adds
+  `governance/decisions/D-2026-10-20-standards-references.md`:
+  AGENT-DOCTRINE rule 4 applies to the README; embargoed-SDO
+  citations replaced with ITU-T / ISO-IEC-IEEE / NIST
+  substitutes.
+
+### Documentation
+- README truthfulness pass: asset table now lists all nine
+  toolkits (adds goalsim, compare-decisions, topology-script,
+  audit-consumer), project board link corrected to projects/14,
+  test-suite line updated to the 179-test reality, repo tree
+  reflects the nine toolkits and the governance tree, and the
+  epics index notes slices 6..7 landing via PRs #23..#30.
+  Related-standards section replaced per decision
+  D-2026-10-20.
+
+### Fixed
+- CI: the OAS snapshot check now fails the build on drift
+  (previously emitted a warning and exited 0), enforcing the
+  OAS-first rule as a hard gate.
+
 ### Documentation
 - Governance programme land (CR-CLAM-000 harvest). Adds the
   `governance/` tree with: `reviews/` (verbatim preserves of the
