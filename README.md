@@ -66,10 +66,14 @@ artefacts.
 | **erd-to-oas toolkit** | `machines/toolkits/erd_to_oas/` | Reads an .xlsx ERD, emits an OAS schema fragment. |
 | **maturity-assessment toolkit** | `machines/toolkits/maturity_assessment/` | Non-technical questionnaire + CSV scoring template. |
 | **kpi-calculator toolkit** | `machines/toolkits/kpi_calculator/` | Consumes a simulator trace, emits a KPI report. |
+| **goalsim toolkit** | `machines/toolkits/goalsim/` | Goal-satisfaction simulation over a loop's goal set. |
+| **compare-decisions toolkit** | `machines/toolkits/compare_decisions/` | Side-by-side comparison of decision-model outcomes. |
+| **topology-script toolkit** | `machines/toolkits/topology_script/` | Topology-as-script: declare loop graphs, links, and goalsim specs as code. |
+| **audit-consumer toolkit** | `machines/toolkits/audit_consumer/` | Tails the SSE audit stream, exports audit rows as CSV/JSON. |
 | **Datasets** | `datasets/examples/` | Reference payloads (OODA closed loop, OODA / MAPE / CUSTOM decision models). |
 | **Diagrams** | `docs/diagrams/` | Mermaid + PlantUML sources for ERD, lifecycle, state machine, sequence, use cases. |
 | **Docs** | `docs/` | API tour, examples, conceptual position paper. |
-| **Tests** | `tests/` | 9+ pytest tests covering every endpoint and state transition. |
+| **Tests** | `tests/` | pytest suite (179 tests) covering every endpoint and state transition. |
 
 ## The CLAM state machine
 
@@ -204,6 +208,10 @@ machines/
     erd_to_oas/
     maturity_assessment/
     kpi_calculator/
+    goalsim/
+    compare_decisions/
+    topology_script/
+    audit_consumer/
 schemas/
   openapi/openapi.json         # OAS 3.1 snapshot (CI artifact)
   openapi/postman/             # Postman v2.1 collection
@@ -220,7 +228,9 @@ tests/                         # pytest + httpx test suite
 context/AGENT-DOCTRINE.md      # Governance rules for agents
 .github/
   workflows/ci.yml             # pytest + ruff + mypy + OAS validate + cardinal rules
-  epics/slice-{1..5}.md        # WBS epic specs
+governance/                     # CR programme, ADRs, plans, traceability
+  epics/slice-{1..5}.md        # WBS epic specs (slices 1..5; slices 6..7
+                               # tracked via merged PRs #23..#30)
   ISSUE_TEMPLATE/              # bug, feature
   CODEOWNERS                   # cardinal author rule
 CHANGELOG.md
@@ -232,9 +242,9 @@ pyproject.toml
 
 | Area | Where it lives |
 | --- | --- |
-| Project board | https://github.com/users/emmanuel-a-otchere/projects/13 |
+| Project board | https://github.com/users/emmanuel-a-otchere/projects/14 |
 | Card doctrine | `context/AGENT-DOCTRINE.md` |
-| WBS epics | `.github/epics/slice-{1..5}.md` |
+| WBS epics | `.github/epics/slice-{1..5}.md` (slices 6..7 landed via PRs #23..#30) |
 | Milestones | `v1.0.0 MVP`, `v1.1.0 Features`, `v2.0.0 Architecture` |
 
 ## Development
@@ -259,8 +269,12 @@ catalog, monitoring, orchestration, administration, and choreography.
 That conceptual model is the foundation.
 
 **Related Standards:**
-- **TM Forum IG1219A AI Closed Loop Automation Management** - https://www.tmforum.org/resources/introductory-guide/ig1219a-ai-closed-loop-automation-management-v2-0-0/
-- **TM Forum TR284C AI Closed Loop Automation API** - https://www.tmforum.org/resources/standard/tr284c-ai-closed-loop-automation-apis-v1-2-0/
+- **ITU-T M.3050 series** -- SDO-neutral assurance requirements frameworks for management-plane design.
+- **ISO/IEC/IEEE 42010** -- architecture description and boundary specification practice.
+- **NIST SP 800-160 Vol.1** -- systems security engineering: traceability and assurance-evidence discipline.
+
+See `governance/decisions/D-2026-10-20-standards-references.md` for the
+decision record on standards citations in this repository.
 
 
 ## License
