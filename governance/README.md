@@ -20,6 +20,9 @@ governance/
 |-- PLANS/           # Holistic and closure implementation plans.
 |-- capability-inventory.md  # CR-CLAM-001 Stage 1 reconnaissance
 |                    # inventory (component-to-domain map).
+|-- capability-gap-analysis.md  # CR-CLAM-001 Stage 2 analysis
+|                    # (implemented / partial / proposed /
+|                    # unverified classification per domain).
 |-- README.md        # This file.
 ```
 
