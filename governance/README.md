@@ -23,6 +23,15 @@ governance/
 |-- capability-gap-analysis.md  # CR-CLAM-001 Stage 2 analysis
 |                    # (implemented / partial / proposed /
 |                    # unverified classification per domain).
+|-- capability-model.md     # CR-CLAM-001 Stage 3 normative
+|                    # capability model (seven domains).
+|-- architecture-boundaries.md  # CR-CLAM-001 Stage 3 normative
+|                    # boundary table (B-01..B-09).
+|-- capability-requirements.md  # CR-CLAM-001 Stage 3 normative
+|                    # requirement catalogue (stable IDs).
+|-- capability-traceability.md  # CR-CLAM-001 Stage 3 traceability
+|                    # matrix (requirement -> implementation
+|                    # -> evidence -> status -> follow-on CR).
 |-- README.md        # This file.
 ```
 
