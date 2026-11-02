@@ -17,3 +17,4 @@ CR-CLAM-009,OPS-001,Separate operational health from lifecycle state,Model and A
 CR-CLAM-009,OPS-002,Detect stale/missing telemetry and trace recovery,Event sequence tests
 CR-CLAM-010,MAT-001,Trace maturity scores to criteria and evidence,Scoring tests
 CR-CLAM-010,MAT-002,Prevent critical gaps being masked by aggregate scores,Critical-gap test cases
+CR-CLAM-001,CAP-001,"Establish the normative capability baseline (inventory, gap analysis, model, boundaries, requirements, traceability, concept disposition)","Stage 4 acceptance record: governance/CR-CLAM-001-ACCEPTANCE.md (AC-001..AC-012 pass)"

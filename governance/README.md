@@ -32,6 +32,9 @@ governance/
 |-- capability-traceability.md  # CR-CLAM-001 Stage 3 traceability
 |                    # matrix (requirement -> implementation
 |                    # -> evidence -> status -> follow-on CR).
+|-- CR-CLAM-001-ACCEPTANCE.md  # CR-CLAM-001 Stage 4 acceptance
+|                    # record (AC-001..AC-012 verdicts, ADR
+|                    # ratification, follow-on backlog).
 |-- README.md        # This file.
 ```
 
@@ -162,8 +165,9 @@ expand beyond CR-CLAM-001:
   with a three-valued judgement (satisfied / not satisfied /
   indeterminate). Anchors CR-CLAM-002 and CR-CLAM-006.
 
-Both ADRs are currently **Proposed** and become **Accepted** when
-the governance review in CR-CLAM-001 Stage 4 completes.
+Both ADRs were ratified **Accepted** on 2026-10-20 by the
+CR-CLAM-001 Stage 4 governance review (acceptance record:
+[`CR-CLAM-001-ACCEPTANCE.md`](CR-CLAM-001-ACCEPTANCE.md)).
 
 ## Operational discipline
 

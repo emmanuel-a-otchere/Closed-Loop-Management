@@ -7,6 +7,19 @@ adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Governance
+- CR-CLAM-001 Stage 4 (review and acceptance) -- CR-CLAM-001
+  is **Accepted**. Adds
+  `governance/CR-CLAM-001-ACCEPTANCE.md`: verdict table for all
+  twelve AC-001..AC-012 criteria with evidence pointers,
+  ADR ratification, the implementation-ready follow-on backlog
+  (slices S02..S08 with carried requirements), and governance
+  notes. ADR-CLAM-0001 and ADR-CLAM-0002 advance from Proposed
+  to Accepted (2026-10-20). The CR-CLAM-001 frontmatter status
+  advances to Accepted. The traceability CSV gains a CR-CLAM-001
+  evidence row pointing at the acceptance record. This closes
+  the CR-CLAM-001 four-stage procedure and unblocks the
+  CR-CLAM-002..010 programme (slices S02..S08) per
+  CLAM-IMPLEMENTATION-PLAN-2026-10.
 - CR-CLAM-001 Stage 3 (normative specification). Adds five
   normative artefacts: `governance/capability-model.md` (seven
   domains, purpose/scope/responsibilities, relationship rules),
