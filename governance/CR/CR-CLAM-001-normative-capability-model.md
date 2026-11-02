@@ -1,7 +1,7 @@
 ---
 cr_id: CR-CLAM-001
 title: Establish the Normative Closed-Loop Management Capability Model
-status: Proposed
+status: Accepted (2026-10-20; acceptance record: governance/CR-CLAM-001-ACCEPTANCE.md)
 priority: P0
 type: Foundational
 repository: emmanuel-a-otchere/Closed-Loop-Management

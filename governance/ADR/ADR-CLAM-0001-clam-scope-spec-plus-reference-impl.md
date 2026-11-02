@@ -1,7 +1,7 @@
 ---
 adr_id: ADR-CLAM-0001
 title: CLAM is a normative management model with a reference implementation and supporting engineering toolchain
-status: Proposed (pending Section 10 Decision A)
+status: Accepted (ratified 2026-10-20 via CR-CLAM-001 Stage 4; see governance/CR-CLAM-001-ACCEPTANCE.md)
 date: 2026-10-18
 source_review: CR-CLAM-000 (Section 10, Decision A)
 decides: CLAM scope (spec vs impl vs both)
@@ -11,9 +11,9 @@ decides: CLAM scope (spec vs impl vs both)
 
 ## Status
 
-Proposed. Lands as **Accepted** only when this decision is ratified
-through the governance review required by CR-CLAM-001 (Stage 4) and
-the resulting update to this ADR carries a recorded acceptance date.
+**Accepted**, ratified 2026-10-20 through the CR-CLAM-001 Stage 4
+governance review (acceptance record:
+[`../CR-CLAM-001-ACCEPTANCE.md`](../CR-CLAM-001-ACCEPTANCE.md)).
 
 ## Context
 

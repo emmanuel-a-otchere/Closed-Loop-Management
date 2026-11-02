@@ -1,7 +1,7 @@
 ---
 adr_id: ADR-CLAM-0002
 title: Defining successful closed-loop operation -- verified outcomes against declared intent and constraints
-status: Proposed (pending Section 10 Decision B)
+status: Accepted (ratified 2026-10-20 via CR-CLAM-001 Stage 4; binding formalisation carried by CR-CLAM-002/006)
 date: 2026-10-18
 source_review: CR-CLAM-000 (Section 10, Decision B)
 decides: What counts as a successful closed-loop operation
@@ -11,10 +11,12 @@ decides: What counts as a successful closed-loop operation
 
 ## Status
 
-Proposed. Terminology is formalised through CR-CLAM-002 (semantic
-model and state separation) and CR-CLAM-006 (evidence and outcome
-verification framework). This ADR states the decision in
-human-readable terms and is the canonical pointer when those CRs
+**Accepted**, ratified 2026-10-20 through the CR-CLAM-001 Stage 4
+governance review (acceptance record:
+[`../CR-CLAM-001-ACCEPTANCE.md`](../CR-CLAM-001-ACCEPTANCE.md)).
+Terminology is formalised through CR-CLAM-002 (semantic model and
+state separation) and CR-CLAM-006 (evidence and outcome verification
+framework); this ADR remains the canonical pointer when those CRs
 land their binding definitions.
 
 ## Context
