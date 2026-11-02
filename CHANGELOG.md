@@ -7,6 +7,19 @@ adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Governance
+- CR-CLAM-001 Stage 3 (normative specification). Adds five
+  normative artefacts: `governance/capability-model.md` (seven
+  domains, purpose/scope/responsibilities, relationship rules),
+  `governance/architecture-boundaries.md` (boundary table
+  B-01..B-09 anchored on the manage/execute distinction),
+  `governance/capability-requirements.md` (19 stable-ID
+  normative requirements with verification methods and status),
+  `governance/capability-traceability.md` (requirement to
+  implementation to evidence to follow-on CR matrix), and
+  `governance/data-model/concept-disposition-2026-10.md`
+  (binding A-E disposition for all 18 enrichment candidate
+  concepts with promotion rules). Satisfies AC-001..AC-003 and
+  AC-007..AC-009 evidence for the Stage 4 acceptance review.
 - CR-CLAM-001 Stage 2 (capability analysis). Adds
   `governance/capability-gap-analysis.md`: domain-by-domain
   implemented / partial / proposed / unverified classification
