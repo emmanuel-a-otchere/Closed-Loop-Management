@@ -7,6 +7,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Governance
+- CR-CLAM-001 Stage 2 (capability analysis). Adds
+  `governance/capability-gap-analysis.md`: domain-by-domain
+  implemented / partial / proposed / unverified classification
+  with evidence pointers per row, an aggregate status table, and
+  Stage 3 conclusions (no new CR scope required; every gap maps
+  to a named CR-CLAM-002..010 requirement). Satisfies AC-004,
+  AC-005, and AC-006 evidence for the Stage 3 review.
 - Reconnaissance closure plan (2026-10-20). Adds
   `governance/PLANS/RECON-CLOSURE-PLAN-2026-10.md`: a 12-finding
   register from the 2026-10-20 recon mapped to four tranches
